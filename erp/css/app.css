@@ -282,6 +282,20 @@ body {
   margin-bottom: 12px;
   border-radius: var(--radio-sm);
 }
+.aviso-respaldo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(233, 161, 59, .14);
+  border: 1px solid rgba(233, 161, 59, .45);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: var(--radio-sm);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.estado-respaldo { font-size: 13px; color: var(--texto-suave); margin-bottom: 12px; line-height: 1.7; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
 th {
   text-align: left; padding: 12px 14px; background: var(--th-bg);

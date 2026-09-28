@@ -2,7 +2,7 @@
 // JZAC ERP - Capa de datos (IndexedDB) · esquema 16 tablas
 // ============================================================
 const DB_NAME = 'jzac_erp_web';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const DB = {
   db: null,
@@ -28,8 +28,19 @@ function open() {
       if (!db.objectStoreNames.contains('gastos')) db.createObjectStore('gastos', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('notas_credito')) db.createObjectStore('notas_credito', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('detalle_nota')) db.createObjectStore('detalle_nota', { keyPath: 'id', autoIncrement: true });
+      if (!db.objectStoreNames.contains('respaldos')) db.createObjectStore('respaldos', { keyPath: 'id' });
     };
-    req.onsuccess = () => { DB.db = req.result; resolve(req.result); };
+    // otras pestanas con la version vieja deben soltar la base o el upgrade queda bloqueado
+    req.onblocked = () => {};
+    req.onsuccess = () => {
+      const base = req.result;
+      DB.db = base;
+      base.onversionchange = () => {
+        try { base.close(); } catch (e) { /* ya cerrada */ }
+        if (DB.db === base) { DB.db = null; DB.ready = open(); }
+      };
+      resolve(base);
+    };
     req.onerror = () => reject(req.error);
   });
 }

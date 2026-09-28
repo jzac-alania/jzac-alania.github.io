@@ -49,6 +49,7 @@
     const topArr = Object.entries(topProd).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
     cont.innerHTML = `
+      ${JZAC.backup.avisoHTML()}
       <div class="card mt16">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div>
@@ -140,6 +141,8 @@
 
     cont.querySelectorAll('[data-ir]').forEach((b) =>
       b.addEventListener('click', () => JZAC.ir(b.dataset.ir)));
+
+    JZAC.backup.enlazar(cont);
 
     cont.querySelector('[data-compartir]').addEventListener('click', () => {
       const texto = [

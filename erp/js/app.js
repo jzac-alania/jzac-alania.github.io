@@ -115,6 +115,7 @@
   }
 
   async function continuarLicencia(u) {
+    JZAC.backup.hacerSnapshot();
     const lic = await JZAC.lic.validar();
     const splash = document.getElementById('splash');
     if (splash) splash.classList.add('hidden');

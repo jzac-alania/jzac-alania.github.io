@@ -2,11 +2,16 @@
 // JZAC ERP - Configuracion: negocio, licencia y respaldo
 // ============================================================
 (function () {
-  const TABLAS = ['usuarios', 'clientes', 'productos', 'proveedores', 'pedidos_proveedor', 'detalle_pedido', 'ventas', 'detalle_venta', 'fiados', 'pagos_fiado', 'mermas', 'gastos', 'notas_credito', 'detalle_nota'];
+  const TABLAS = window.JZAC.TABLAS;
 
   async function render(cont) {
     const u = await JZAC.auth.usuarioActual();
     const lic = JZAC.lic.estado();
+    const info = await JZAC.backup.informacion();
+    const ultima = info.export.dias === 0 ? 'hoy' : info.export.dias === 1 ? 'ayer' : `hace ${info.export.dias} días`;
+    const copia = info.snapshot
+      ? (Date.now() - info.snapshot < 45 * 60 * 1000 ? 'hace unos minutos' : `hace ${Math.max(1, Math.round((Date.now() - info.snapshot) / 3600000))} h (${JZAC.ui.fh(info.snapshot)})`)
+      : 'aún no se ha guardado';
 
     cont.innerHTML = `
       <div class="grid grid-2">
@@ -46,10 +51,15 @@
 
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Respaldo de datos</div>
-            <div class="texto-suave" style="font-size:13px;margin-bottom:12px">Tu información vive solo en este dispositivo. Descarga respaldos periódicos.</div>
+            ${JZAC.backup.avisoHTML()}
+            <div class="estado-respaldo">
+              Última descarga de respaldo: <b>${ultima}</b>.<br>
+              Copia automática local: <b>${copia}</b>.
+            </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn" id="cf-exportar">Descargar respaldo (.json)</button>
               <button class="btn" id="cf-importar">Restaurar respaldo</button>
+              ${info.snapshot ? '<button class="btn" id="cf-copia">Restaurar copia automática</button>' : ''}
               <input type="file" id="cf-file" accept=".json" style="display:none">
             </div>
           </div>
@@ -95,7 +105,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.7.7<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.7.8<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -120,19 +130,16 @@
 
     document.getElementById('cf-licencia').addEventListener('click', () => JZAC.mostrarEstadoLicencia());
 
-    document.getElementById('cf-exportar').addEventListener('click', async () => {
-      const data = {};
-      for (const t of TABLAS) data[t] = await JZAC.db.listar(t);
-      data.cortes_caja = window.JZAC.cortes ? JZAC.cortes.leer() : [];
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'JZAC_ERP_respaldo_' + new Date().toISOString().slice(0, 10) + '.json';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
-      JZAC.ui.toast('Respaldo descargado.', 'bien');
+    document.getElementById('cf-exportar').addEventListener('click', () => JZAC.backup.exportar());
+
+    const btnCopia = document.getElementById('cf-copia');
+    if (btnCopia) btnCopia.addEventListener('click', async () => {
+      if (await JZAC.backup.restaurarSnapshot()) {
+        JZAC.ui.toast('Copia automática restaurada.', 'bien');
+        render(cont);
+      }
     });
+    JZAC.backup.enlazar(cont);
 
     document.getElementById('cf-importar').addEventListener('click', () => document.getElementById('cf-file').click());
     document.getElementById('cf-file').addEventListener('change', async (e) => {
