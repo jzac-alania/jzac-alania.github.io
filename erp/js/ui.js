@@ -9,6 +9,7 @@ const NAV = [
   { ruta: 'fiados',       label: 'Fiados',        mod: 'fiados',     ico: '📒' },
   { ruta: 'proveedores',  label: 'Proveedores',   mod: 'proveedores', ico: '🚚' },
   { ruta: 'gastos',       label: 'Gastos',        mod: 'gastos',     ico: '💸' },
+  { ruta: 'caja',         label: 'Caja',          mod: 'caja',       ico: '🧾' },
   { ruta: 'reportes',     label: 'Reportes',      mod: 'reportes',   ico: '📊' },
   { ruta: 'config',       label: 'Configuración', mod: 'config',     ico: '⚙️' }
 ];

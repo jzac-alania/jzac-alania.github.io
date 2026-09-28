@@ -294,6 +294,13 @@ tr:hover td { background: var(--fila-hover); }
 td.monto { text-align: right; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 th.monto { text-align: right; }
 
+/* ---------- desglose del corte de caja ---------- */
+.desglose { display: flex; flex-direction: column; }
+.desglose-fila { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 11px 2px; border-bottom: 1px dashed var(--borde); font-size: 15px; }
+.desglose-fila:last-child { border-bottom: none; }
+.desglose-fila b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.desglose-fila.desglose-total { border-top: 2px solid var(--borde); border-bottom: none; margin-top: 6px; padding-top: 13px; font-size: 16.5px; font-weight: 800; }
+
 /* ---------- badges ---------- */
 .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 .badge-verde { background: #E1F7E9; color: #147D3B; }

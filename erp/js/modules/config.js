@@ -95,7 +95,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.7.6<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.7.7<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -123,6 +123,7 @@
     document.getElementById('cf-exportar').addEventListener('click', async () => {
       const data = {};
       for (const t of TABLAS) data[t] = await JZAC.db.listar(t);
+      data.cortes_caja = window.JZAC.cortes ? JZAC.cortes.leer() : [];
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -145,6 +146,7 @@
           await JZAC.db.limpiar(t);
           for (const item of data[t] || []) await JZAC.db.guardar(t, item);
         }
+        if (Array.isArray(data.cortes_caja) && window.JZAC.cortes) JZAC.cortes.escribir(data.cortes_caja);
         JZAC.ui.toast('Respaldo restaurado.', 'bien');
         render(cont);
       } catch (err) {
