@@ -719,13 +719,13 @@
         if (!recibidoManual) { inRec.value = tot; }
         const rec = Number(inRec.value || 0);
         const vuelto = Math.max(0, rec - tot);
-        document.getElementById('txt-vuelto').textContent = (rec >= tot)
+        document.getElementById('txt-vuelto').innerHTML = (rec >= tot)
           ? `Vuelto: <b>${JZAC.ui.dinero(vuelto)}</b>`
           : `Falta: <b>${JZAC.ui.dinero(Math.max(0, tot - rec))}</b>`;
       } else if (metodo === 'Mixto') {
         const ef = Number(document.getElementById('in-efectivo').value || 0);
         const saldo = Math.max(0, tot - ef);
-        document.getElementById('txt-saldo').textContent = `Saldo por ${document.getElementById('sel-metodo2').value}: <b>${JZAC.ui.dinero(saldo)}</b>`;
+        document.getElementById('txt-saldo').innerHTML = `Saldo por ${document.getElementById('sel-metodo2').value}: <b>${JZAC.ui.dinero(saldo)}</b>`;
       }
     }
 
@@ -812,7 +812,7 @@
             <td class="center">${it.esPeso ? JZAC.ui.n(it.cantidad) + ' kg' : JZAC.ui.n(it.cantidad)}</td>
             <td class="monto">${JZAC.ui.dinero(it.precio)}</td>
             <td class="monto">${JZAC.ui.dinero(it.precio * it.cantidad)}</td>
-            <td class="derecha"><button class="btn btn-sm btn-peligro" data-quit="${i}">Quitar</button></td>
+            <td class="derecha"><button class="btn btn-sm btn-peligro" data-quit="${i}" title="Quitar producto" aria-label="Quitar producto">x</button></td>
           </tr>`).join('')}
       </table></div>`;
       caja.querySelectorAll('[data-quit]').forEach((b) => b.addEventListener('click', () => {

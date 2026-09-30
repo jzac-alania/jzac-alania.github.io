@@ -288,6 +288,20 @@ body {
   font-size: 26px; font-weight: 800; color: var(--texto);
   margin-top: 2px; letter-spacing: -.02em; line-height: 1.1;
 }
+.pos-carrito { container-type: inline-size; }
+.pos-carrito .tabla-wrap table { width: 100%; min-width: 0; table-layout: fixed; }
+.pos-carrito .tabla-wrap th { padding: 7px 4px; font-size: 11.5px; white-space: nowrap; overflow: hidden; }
+.pos-carrito .tabla-wrap td { padding: 6px 4px; font-size: 12.5px; white-space: nowrap; overflow: hidden; }
+.pos-carrito .tabla-wrap td:first-child { text-overflow: ellipsis; }
+.pos-carrito .tabla-wrap th:nth-child(2), .pos-carrito .tabla-wrap td:nth-child(2) { width: 46px; text-align: center; }
+.pos-carrito .tabla-wrap th:nth-child(3), .pos-carrito .tabla-wrap td:nth-child(3) { width: 54px; text-align: right; }
+.pos-carrito .tabla-wrap th:nth-child(4), .pos-carrito .tabla-wrap td:nth-child(4) { width: 74px; text-align: right; }
+.pos-carrito .tabla-wrap th:nth-child(5), .pos-carrito .tabla-wrap td:nth-child(5) { width: 32px; text-align: center; }
+.pos-carrito .tabla-wrap .btn-sm { padding: 3px 6px; font-size: 13px; line-height: 1.1; }
+@container (max-width: 270px) {
+  .pos-carrito .tabla-wrap th:nth-child(3),
+  .pos-carrito .tabla-wrap td:nth-child(3) { display: none; }
+}
 
 /* ---------- tablas ---------- */
 .tabla-wrap { overflow-x: auto; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); box-shadow: var(--sombra); }
