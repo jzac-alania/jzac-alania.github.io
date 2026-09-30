@@ -244,7 +244,7 @@ document.addEventListener('focusin', (e) => {
     if (!esc || ruta[0] !== 'ventas') return;
     if (e.target.closest('input, select, textarea')) return;
     if (document.querySelector('#modal-root .modal-fondo')) return;
-    if (esc.getRootNode().activeElement !== esc) esc.focus();
+    if (esc.getRootNode().activeElement !== esc) esc.focus({ preventScroll: true });
   };
   escapable();
 });
@@ -262,7 +262,7 @@ document.addEventListener('focusout', (e) => {
     if (document.querySelector('#modal-root .modal-fondo')) return;
     const a = document.activeElement;
     if (a && a.closest && a.closest('input, select, textarea') && a !== esc) return;
-    esc.focus();
+    esc.focus({ preventScroll: true });
   });
 }, true);
 window.JZAC.negocio = {

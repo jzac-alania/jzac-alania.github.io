@@ -268,6 +268,27 @@ body {
 
 .panel-hdr { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 
+/* ---------- POS: venta en 3 columnas (productos / carrito / cobro) ---------- */
+.carrito-pie {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--borde);
+  font-size: 14px;
+}
+.carrito-pie b { font-size: 17px; font-variant-numeric: tabular-nums; color: var(--texto); }
+@keyframes destello { from { box-shadow: 0 0 0 0 rgba(24, 178, 104, .5); } to { box-shadow: 0 0 0 16px rgba(24, 178, 104, 0); } }
+.pos-carrito.destella { animation: destello .55s ease-out; }
+.cobro-total {
+  background: var(--bg); border: 1px solid var(--borde-2);
+  border-radius: var(--radio-sm); padding: 12px 14px; margin: 4px 0 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.cobro-total > div { font-size: 14px; color: var(--texto-suave); }
+.cobro-total b { font-variant-numeric: tabular-nums; }
+.cobro-total #tot-final {
+  font-size: 26px; font-weight: 800; color: var(--texto);
+  margin-top: 2px; letter-spacing: -.02em; line-height: 1.1;
+}
+
 /* ---------- tablas ---------- */
 .tabla-wrap { overflow-x: auto; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); box-shadow: var(--sombra); }
 .tabla-wrap a { color: var(--verde-c); font-weight: 600; text-decoration: none; }
@@ -540,11 +561,20 @@ th.monto { text-align: right; }
     display: inline-block; font-size: 13px; color: var(--texto-suave);
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
-  /* caja de venta: productos a la izquierda con más espacio, pago a la derecha */
-  .pos-grid { grid-template-columns: minmax(0, 1.4fr) minmax(330px, 1fr); }
+  /* POS en 3 columnas: productos | carrito | cobro */
+  .pos-grid { align-items: start; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(320px, 350px); }
   /* modales más cómodos con mouse */
   .modal { max-width: 540px; }
   .modal.amplio { max-width: 780px; }
+}
+/* tablet/apretado: productos + carrito arriba, cobro abajo a todo el ancho */
+@media (min-width: 901px) and (max-width: 1199px) {
+  .pos-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .pos-cobro { grid-column: 1 / -1; }
+}
+/* escritorio ancho: el cobro se queda a la vista mientras haces scroll */
+@media (min-width: 1200px) {
+  .pos-cobro { position: sticky; top: 64px; }
 }
 @media (min-width: 1500px) {
   /* pantallas grandes: aprovechar el ancho en vez de dejar márgenes vacíos */

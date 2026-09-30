@@ -552,7 +552,7 @@
 
     cont.innerHTML = `
       <button class="btn btn-sm" id="volver" style="margin-bottom:14px">← Volver a ventas</button>
-      <div class="grid grid-2 pos-grid">
+      <div class="grid pos-grid">
         <div class="card">
           <div class="seccion-titulo" style="margin-top:0">1 · Productos</div>
           <div id="mas-vendidos" class="mas-vendidos" style="${topSell.length ? '' : 'display:none'}"></div>
@@ -586,10 +586,20 @@
               <button class="btn btn-primario" id="agregar-item">Agregar</button>
             </div>
           </div>
-          <div id="lista-items"></div>
         </div>
-        <div class="card">
-          <div class="seccion-titulo" style="margin-top:0">2 · Cliente y pago</div>
+        <div class="card pos-carrito" id="card-carrito">
+          <div class="panel-hdr" style="margin-bottom:10px">
+            <div class="seccion-titulo" style="margin:0">2 · Carrito <span class="badge badge-gris" id="badge-items" style="display:none">0</span></div>
+            <button class="btn btn-sm btn-suave" id="limpiar-items" style="display:none">Limpiar</button>
+          </div>
+          <div id="lista-items"></div>
+          <div class="carrito-pie" id="carrito-pie" style="display:none">
+            <span class="texto-suave" id="pie-cant"></span>
+            <b id="pie-sub"></b>
+          </div>
+        </div>
+        <div class="card pos-cobro">
+          <div class="seccion-titulo" style="margin-top:0">3 · Cobro</div>
           <div class="campo">
             <label>Cliente</label>
             <select id="sel-cliente">
@@ -632,9 +642,10 @@
             <label>Descuento (S/)</label>
             <input type="number" id="in-descuento" step="0.01" min="0" value="0">
           </div>
-          <div class="card" style="background:var(--bg);border:none">
-            <div class="derecha" style="font-size:14px">Subtotal: <b id="tot-sub">${JZAC.ui.dinero(0)}</b></div>
-            <div class="derecha negrita" style="font-size:22px;margin-top:4px" id="tot-final">${JZAC.ui.dinero(0)}</div>
+          <div class="cobro-total">
+            <div class="derecha">Subtotal: <b id="tot-sub">${JZAC.ui.dinero(0)}</b></div>
+            <div class="derecha" id="fila-dsc" style="display:none">Descuento: <b id="tot-dsc">${JZAC.ui.dinero(0)}</b></div>
+            <div class="derecha negrita" id="tot-final">${JZAC.ui.dinero(0)}</div>
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn btn-bloco" id="btn-gasto" title="Registrar un gasto sin salir de la caja (luz, pasaje, reposición...)">Gasto</button>
@@ -692,9 +703,16 @@
     }
 
     function actualizaTot() {
-      const { sub, tot } = totalVenta();
+      const { sub, dsc, tot } = totalVenta();
       document.getElementById('tot-sub').textContent = JZAC.ui.dinero(sub);
+      const filaDsc = document.getElementById('fila-dsc');
+      if (filaDsc) {
+        filaDsc.style.display = dsc > 0 ? '' : 'none';
+        if (dsc > 0) { document.getElementById('tot-dsc').textContent = '− ' + JZAC.ui.dinero(dsc); }
+      }
       document.getElementById('tot-final').textContent = JZAC.ui.dinero(tot);
+      const btnC = document.getElementById('guardar-venta');
+      if (btnC) { btnC.textContent = sub > 0 ? `Registrar venta · ${JZAC.ui.dinero(tot)}` : 'Registrar venta'; }
       const metodo = document.getElementById('sel-metodo').value;
       if (metodo === 'Efectivo') {
         const inRec = document.getElementById('in-recibido');
@@ -724,7 +742,16 @@
       if (existente) { existente.cantidad = Math.round(total * 1000) / 1000; }
       else { items.push({ productoId: p.id, nombre: p.nombre, cantidad: nuevo, precio, costo: Number(p.precioCompra || 0), esPeso: !!p.ventaPeso }); }
       pintaItems();
+      destellaCarrito();
       return true;
+    }
+
+    function destellaCarrito() {
+      const c = document.getElementById('card-carrito');
+      if (!c) return;
+      c.classList.remove('destella');
+      void c.offsetWidth;
+      c.classList.add('destella');
     }
 
     function pedirPeso(p, alAgregar) {
@@ -755,9 +782,27 @@
 
     function pintaItems() {
       const caja = document.getElementById('lista-items');
-      if (items.length === 0) {
+      const n = items.length;
+      const badge = document.getElementById('badge-items');
+      if (badge) {
+        badge.textContent = n;
+        badge.style.display = n ? '' : 'none';
+        badge.className = 'badge ' + (n ? 'badge-verde' : 'badge-gris');
+      }
+      const btnLimp = document.getElementById('limpiar-items');
+      if (btnLimp) { btnLimp.style.display = n ? '' : 'none'; }
+      const pie = document.getElementById('carrito-pie');
+      if (n === 0) {
         caja.innerHTML = JZAC.ui.vacio('Aún sin productos', 'Agrega productos a la venta.');
+        if (pie) { pie.style.display = 'none'; }
         actualizaTot(); return;
+      }
+      if (pie) {
+        pie.style.display = '';
+        document.getElementById('pie-cant').textContent = `${n} ${n === 1 ? 'producto' : 'productos'}`;
+        document.getElementById('pie-sub').textContent = JZAC.ui.dinero(
+          items.reduce((a, it) => a + it.precio * it.cantidad, 0)
+        );
       }
       caja.innerHTML = `<div class="tabla-wrap"><table>
         <tr><th>Producto</th><th class="center">Cant.</th><th class="monto">Pcio</th><th class="monto">Total</th><th></th></tr>
@@ -1157,12 +1202,28 @@
 
     document.getElementById('guardar-venta').addEventListener('click', registrarAhora);
     document.getElementById('btn-gasto').addEventListener('click', modalGastoRapido);
+
+    const btnLimpiar = document.getElementById('limpiar-items');
+    if (btnLimpiar) btnLimpiar.addEventListener('click', () => {
+      if (!items.length) return;
+      const m = JZAC.ui.modal(`
+        <div class="modal-hdr"><h3>Vaciar carrito</h3><button class="cierre" data-cerrar>×</button></div>
+        <p style="margin:0">Se quitarán los ${items.length} ${items.length === 1 ? 'producto' : 'productos'} de esta venta.</p>`,
+        `<button class="btn" data-cerrar>Cancelar</button>
+         <button class="btn btn-peligro" id="limp-ok">Vaciar carrito</button>`);
+      m.raiz.querySelector('#limp-ok').addEventListener('click', () => {
+        items = [];
+        pintaItems();
+        m.cerrar();
+        JZAC.ui.toast('Carrito vacío.', '');
+      });
+    });
   }
 
   function render(cont) {
     const seg = JZAC.rutaSeg();
     if (seg[1] === 'nueva') {
-      JZAC.auth.usuarioActual().then((u) => vistaNueva(cont, u)).catch(() => JZAC.ui.toast('Debes iniciar sesión.', 'mal'));
+      JZAC.auth.usuarioActual().then((u) => vistaNueva(cont, u)).catch((e) => { console.error('Fallo al abrir la venta:', e); JZAC.ui.toast('No se pudo abrir la venta.', 'mal'); });
     } else if (seg[1] === 'notas') {
       JZAC.auth.usuarioActual().then((u) => vistaNotas(cont, u));
     } else {
