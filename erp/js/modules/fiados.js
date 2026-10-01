@@ -72,6 +72,8 @@
                   <button class="btn btn-sm" data-detalle="${f.id}">Detalle (${np})</button>
                   ${saldo > 0 ? `<button class="btn btn-sm" data-agregar="${f.id}">+ Agregar</button>` : ''}
                   ${saldo > 0 ? `<button class="btn btn-sm btn-primario" data-pago="${f.id}">+ Pago</button>` : ''}
+                  <button class="btn btn-sm" data-editar="${f.id}">Editar</button>
+                  <button class="btn btn-sm btn-peligro" data-borrar="${f.id}">Eliminar</button>
                 </div></td>
               </tr>`;
             }).join('')}
@@ -88,6 +90,22 @@
       fiados.find((x) => x.id === Number(b.dataset.pago)), () => render(cont))));
     cont.querySelectorAll('[data-agregar]').forEach((b) => b.addEventListener('click', () => modalAgregar(
       fiados.find((x) => x.id === Number(b.dataset.agregar)), productos, () => render(cont))));
+    cont.querySelectorAll('[data-editar]').forEach((b) => b.addEventListener('click', () => modalEditarFiado(
+      fiados.find((x) => x.id === Number(b.dataset.editar)), clientes, productos, () => render(cont))));
+    cont.querySelectorAll('[data-borrar]').forEach((b) => b.addEventListener('click', async () => {
+      const f = fiados.find((x) => x.id === Number(b.dataset.borrar));
+      if (!(await JZAC.ui.confirmar(`¿Eliminar el fiado de <b>${JZAC.ui.esc(f.cliente)}</b>?<br>Se borrará su historial y sus pagos.`))) return;
+      await JZAC.db.ready;
+      const t = DB.db.transaction(['fiados', 'pagos_fiado'], 'readwrite');
+      t.objectStore('fiados').delete(f.id);
+      const ps = t.objectStore('pagos_fiado').openCursor();
+      ps.onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) { if (c.value.fiadoId === f.id) c.delete(); c.continue(); }
+      };
+      t.oncomplete = () => { JZAC.ui.toast('Fiado eliminado.', 'bien'); render(cont); };
+      t.onerror = () => JZAC.ui.toast('Error al eliminar el fiado.', 'mal');
+    }));
   }
 
   // picker de productos compartido por los modales de fiado
@@ -300,6 +318,84 @@
         t.onerror = () => rej(t.error);
       });
       JZAC.ui.toast('Productos agregados a la cuenta.', 'bien');
+      m.cerrar();
+      refrescar();
+    });
+  }
+
+  function modalEditarFiado(f, clientes, productos, refrescar) {
+    const existentes = [...(f.items || [])].sort((a, b) => a.fecha - b.fecha);
+    const sumaExistente = sumaItems(f);
+    const otros0 = Math.max(0, Math.round((Number(f.montoTotal || 0) - sumaExistente) * 100) / 100);
+    const nombresCli = clientes.map((c) => c.nombre);
+    if (!nombresCli.some((x) => JZAC.negocio.nombreClave(x) === JZAC.negocio.nombreClave(f.cliente))) nombresCli.unshift(f.cliente);
+
+    const m = JZAC.ui.modal(`
+      <div class="modal-hdr"><h3>Editar fiado · ${JZAC.ui.esc(f.cliente)}</h3><button class="cierre" data-cerrar>×</button></div>
+      <div class="texto-suave" style="margin-bottom:12px">Total: <b>${JZAC.ui.dinero(f.montoTotal)}</b> · pagado: <b style="color:var(--verde)">${JZAC.ui.dinero(f.montoPagado || 0)}</b></div>
+      <div class="campo"><label>Cliente</label>
+        <select id="f-cliente">${nombresCli.map((x) => `<option${x === f.cliente ? ' selected' : ''}>${JZAC.ui.esc(x)}</option>`).join('')}</select>
+      </div>
+      <div class="seccion-titulo">Historial: lo que ya llevó (${JZAC.ui.n(existentes.length)})</div>
+      ${existentes.length ? `<div class="tabla-wrap"><table>
+        <tr><th>Fecha</th><th>Hora</th><th>Producto</th><th class="center">Cant.</th><th class="monto">Precio</th><th class="monto">Subtotal</th></tr>
+        ${existentes.map((it) => `<tr>
+          <td style="white-space:nowrap">${JZAC.ui.fe(it.fecha)}</td>
+          <td style="white-space:nowrap">${hm(it.fecha)}</td>
+          <td>${JZAC.ui.esc(it.producto)}</td>
+          <td class="center">${JZAC.ui.n(it.cantidad)}</td>
+          <td class="monto">${JZAC.ui.dinero(it.precio)}</td>
+          <td class="monto">${JZAC.ui.dinero(it.subtotal)}</td>
+        </tr>`).join('')}</table></div>`
+        : '<div class="texto-suave">Todavía no lleva productos.</div>'}
+      <div class="seccion-titulo">Agregar más productos</div>
+      <div class="fila">
+        <div class="campo" style="margin:0"><label>Producto</label><input id="f-prod" list="dl-fiado-prod" placeholder="Escribe o elige..."></div>
+        <div class="campo" style="margin:0;max-width:86px"><label>Cant.</label><input type="number" id="f-cant" min="0.001" step="1" value="1"></div>
+        <div class="campo" style="margin:0;max-width:104px"><label>Precio (S/)</label><input type="number" id="f-precio" min="0" step="0.01" value="0"></div>
+        <div style="align-self:end"><button type="button" class="btn btn-primario" id="f-add">+ Agregar</button></div>
+      </div>
+      <datalist id="dl-fiado-prod"></datalist>
+      <div id="f-items"></div>
+      <div class="campo" style="margin-top:12px"><label>Otros cargos (S/)</label>
+        <input type="number" step="0.01" min="0" id="f-monto" value="${otros0}"></div>
+      <div class="campo"><label>Notas (opcional)</label><textarea rows="2" id="f-notas">${JZAC.ui.esc(f.notas || '')}</textarea></div>`,
+      `<button class="btn" data-cerrar>Cancelar</button>
+       <button class="btn btn-primario" id="guardar-f">Guardar cambios</button>`);
+
+    const raiz = m.raiz;
+    const picker = crearPicker(raiz, productos);
+
+    raiz.querySelector('#guardar-f').addEventListener('click', async () => {
+      const cliente = raiz.querySelector('#f-cliente').value;
+      const otros = Math.round(Number(raiz.querySelector('#f-monto').value || 0) * 100) / 100;
+      const notas = raiz.querySelector('#f-notas').value.trim();
+      if (!cliente) { JZAC.ui.toast('Selecciona el cliente.', 'mal'); return; }
+      const monto = Math.round((sumaExistente + picker.sub() + otros) * 100) / 100;
+      if (!(monto > 0)) { JZAC.ui.toast('El fiado debe tener un monto mayor a 0.', 'mal'); return; }
+      if (monto < Number(f.montoPagado || 0)) {
+        JZAC.ui.toast(`El monto total no puede ser menor a lo ya pagado (${JZAC.ui.dinero(f.montoPagado || 0)}).`, 'mal');
+        return;
+      }
+      await JZAC.db.ready;
+      await new Promise((res, rej) => {
+        const t = DB.db.transaction(['fiados'], 'readwrite');
+        const st = t.objectStore('fiados');
+        const g = st.get(f.id);
+        g.onsuccess = () => {
+          const f2 = g.result;
+          f2.cliente = cliente;
+          f2.montoTotal = monto;
+          f2.notas = notas;
+          f2.items = existentes.concat(picker.items);
+          f2.ultimaActividad = Date.now();
+          f2.estado = Number(f2.montoPagado || 0) >= monto ? 'Pagado' : 'Pendiente';
+          st.put(f2);
+        };
+        t.oncomplete = res;
+        t.onerror = () => rej(t.error);
+      });
+      JZAC.ui.toast(picker.items.length ? 'Fiado actualizado con los productos nuevos.' : 'Fiado actualizado.', 'bien');
       m.cerrar();
       refrescar();
     });
