@@ -119,6 +119,7 @@
                 <td>${p.estado === 'Pendiente' ? '<span class="badge badge-dorado">Pendiente</span>' : '<span class="badge badge-verde">Recibido</span>'}</td>
                 <td><div class="acciones">
                   <button class="btn btn-sm" data-ver="${p.id}">Ver</button>
+                  ${p.estado === 'Pendiente' ? `<button class="btn btn-sm" data-editar="${p.id}">Editar</button>` : ''}
                   ${p.estado === 'Pendiente' ? `<button class="btn btn-sm btn-primario" data-recibir="${p.id}">Recibir</button>` : ''}
                   <button class="btn btn-sm btn-whatsapp" data-wha="${p.id}">WhatsApp</button>
                   <button class="btn btn-sm btn-peligro" data-borrar="${p.id}">Eliminar</button>
@@ -133,6 +134,9 @@
     document.getElementById('nuevo-pedido').addEventListener('click', () => JZAC.ir('proveedores/pedido/nuevo'));
     cont.querySelectorAll('[data-ver]').forEach((b) => b.addEventListener('click', () => modalVerPedido(
       pedidos.find((x) => x.id === Number(b.dataset.ver)), detp)));
+    cont.querySelectorAll('[data-editar]').forEach((b) => b.addEventListener('click', () => {
+      JZAC.ir('proveedores/pedido/' + b.dataset.editar);
+    }));
     cont.querySelectorAll('[data-recibir]').forEach((b) => b.addEventListener('click', async () => {
       const p = pedidos.find((x) => x.id === Number(b.dataset.recibir));
       if (await JZAC.ui.confirmar(`Recibir el pedido <b>#${p.id}</b>?<br>Se sumará ${items_count(detp, p.id)} producto(s) al inventario y se actualizará el costo.`, 'Recibir pedido')) {
@@ -159,6 +163,14 @@
   }
 
   function items_count(det, pid) { return det.filter((x) => x.pedidoId === pid).length; }
+
+  // 'yyyy-mm-dd' para el input type=date (fecha programada al editar)
+  function fechaInput(ms) {
+    if (!ms) return '';
+    const d = new Date(ms);
+    const p = (x) => String(x).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
 
   function enviarPedidoWha(p, dets) {
     const pv = proveedoresCache.find((x) => JZAC.negocio.nombreNorm(x.nombre) === JZAC.negocio.nombreNorm(p.proveedor));
@@ -220,15 +232,42 @@
       </table></div>
       <div class="derecha negrita mt16" style="font-size:16px">TOTAL: ${JZAC.ui.dinero(dets.reduce((a, d) => a + d.precio * d.cantidad, 0))}</div>`,
       `<button class="btn btn-whatsapp" id="enviar-ped-wha">Enviar por WhatsApp</button>
-       <button class="btn" data-cerrar>Cerrar</button>`);
+       <button class="btn" data-cerrar>Cerrar</button>
+       ${p.estado === 'Pendiente' ? '<button class="btn btn-primario" id="edit-ped">Editar</button>' : ''}`);
     m.raiz.querySelector('#enviar-ped-wha').addEventListener('click', () => enviarPedidoWha(p, dets));
+    const be = m.raiz.querySelector('#edit-ped');
+    if (be) be.addEventListener('click', () => { m.cerrar(); JZAC.ir('proveedores/pedido/' + p.id); });
   }
 
-  // ---------- nuevo pedido ----------
-  async function vistaNuevoPedido(cont) {
+  // ---------- nuevo pedido / editar pedido ----------
+  async function vistaNuevoPedido(cont, pedidoId = 0) {
     const proveedores = (await JZAC.db.listar('proveedores')).sort((a, b) => a.nombre.localeCompare(b.nombre));
     const productos = (await JZAC.db.listar('productos')).sort((a, b) => a.nombre.localeCompare(b.nombre));
     let lineas = [{ producto: '', cantidad: 1, precio: 0 }];
+
+    // ---- edicion: carga el pedido existente con sus lineas ----
+    let pedidoEdit = null;
+    if (pedidoId) {
+      pedidoEdit = (await JZAC.db.listar('pedidos_proveedor')).find((x) => x.id === pedidoId) || null;
+      if (!pedidoEdit) {
+        JZAC.ui.toast('Pedido no encontrado.', 'mal');
+        JZAC.ir('proveedores/pedidos');
+        return;
+      }
+      if (pedidoEdit.estado !== 'Pendiente') {
+        JZAC.ui.toast('Solo se pueden editar pedidos pendientes.', 'mal');
+        JZAC.ir('proveedores/pedidos');
+        return;
+      }
+      const dets = (await JZAC.db.listar('detalle_pedido')).filter((d) => d.pedidoId === pedidoId);
+      if (dets.length) {
+        lineas = dets.map((d) => ({
+          producto: d.producto,
+          cantidad: Number(d.cantidad),
+          precio: Number(d.precio)
+        }));
+      }
+    }
 
     // ---- pedido sugerido automatico: stock minimo + ventas de los ultimos 30 dias ----
     const ventas = await JZAC.db.listar('ventas');
@@ -266,7 +305,9 @@
     cont.innerHTML = `
       <button class="btn btn-sm" id="volver-ped" style="margin-bottom:14px">← Volver a pedidos</button>
       <div class="card maxw600" style="margin:0 auto">
-        <div class="seccion-titulo" style="margin-top:0">Nuevo pedido a proveedor</div>
+        <div class="seccion-titulo" style="margin-top:0">${pedidoEdit
+          ? `Editar pedido #${String(pedidoEdit.id).padStart(3, '0')}`
+          : 'Nuevo pedido a proveedor'}</div>
         <div class="campo"><label>Proveedor</label>
           <select id="p-sup"><option value="">Selecciona...</option>${proveedores.map((pv) => `<option>${JZAC.ui.esc(pv.nombre)}</option>`).join('')}</select>
         </div>
@@ -292,16 +333,23 @@
             <button class="btn btn-primario mt8" id="cargar-sug">Añadir seleccionadas al pedido</button>
           </div>` : ''}
         <div id="lineas"></div>
-        <div class="mt16" style="display:flex;gap:8px">
+        <div class="mt16" style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" id="agregar-linea">+ Agregar producto</button>
+          <button class="btn btn-peligro" id="vaciar-ped">Vaciar todo</button>
           <div style="flex:1;text-align:right;align-self:center">Total: <b id="p-total">${JZAC.ui.dinero(0)}</b></div>
         </div>
-        <button class="btn btn-primario btn-bloco mt16" id="guardar-ped">Guardar pedido</button>
+        <button class="btn btn-primario btn-bloco mt16" id="guardar-ped">${pedidoEdit ? 'Guardar cambios' : 'Guardar pedido'}</button>
       </div>`;
 
     const caja = document.getElementById('lineas');
     const selSup = document.getElementById('p-sup');
     let provSel = '';
+
+    if (pedidoEdit) {
+      selSup.value = pedidoEdit.proveedor;
+      provSel = pedidoEdit.proveedor;
+      document.getElementById('p-fecha').value = fechaInput(pedidoEdit.fechaProgramada);
+    }
 
     function catSup() {
       if (!provSel) return [];
@@ -384,6 +432,15 @@
       pinta();
     });
 
+    // Borra todo lo armado para empezar de cero (pedido nuevo o edición).
+    document.getElementById('vaciar-ped').addEventListener('click', async () => {
+      if (!(await JZAC.ui.confirmar('¿Vaciar todas las líneas del pedido?<br>Se borrará lo que llevas armado.'))) return;
+      lineas = [{ producto: '', cantidad: 1, precio: 0 }];
+      pinta();
+      total();
+      JZAC.ui.toast('Pedido vacío. Vuelve a armarlo.', 'bien');
+    });
+
     document.getElementById('guardar-ped').addEventListener('click', async () => {
       const prov = document.getElementById('p-sup').value;
       const fechap = JZAC.ui.fechaDesdeInput(document.getElementById('p-fecha').value);
@@ -392,6 +449,34 @@
       if (validas.length === 0) { JZAC.ui.toast('Agrega al menos un producto con cantidad.', 'mal'); return; }
       const totalPed = validas.reduce((a, l) => a + l.cantidad * l.precio, 0);
       await JZAC.db.ready;
+
+      if (pedidoEdit) {
+        // ---- edición: actualiza la cabecera y reemplaza las líneas ----
+        const t = DB.db.transaction(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
+        const ps = t.objectStore('pedidos_proveedor');
+        const ds = t.objectStore('detalle_pedido');
+        const gp = ps.get(pedidoEdit.id);
+        gp.onsuccess = () => {
+          const ped = gp.result;
+          ped.proveedor = prov;
+          ped.fechaProgramada = fechap;
+          ped.total = Math.round(totalPed * 100) / 100;
+          ped.ultimaEdicion = Date.now();
+          ps.put(ped);
+          const q = ds.getAll();
+          q.onsuccess = () => {
+            q.result.filter((d) => d.pedidoId === pedidoEdit.id).forEach((d) => ds.delete(d.id));
+            validas.forEach((l) => ds.add({ pedidoId: pedidoEdit.id, producto: l.producto.trim(), cantidad: l.cantidad, precio: l.precio }));
+          };
+        };
+        t.oncomplete = () => {
+          JZAC.ui.toast('Pedido actualizado.', 'bien');
+          JZAC.ir('proveedores/pedidos');
+        };
+        t.onerror = () => JZAC.ui.toast('Error al guardar el pedido.', 'mal');
+        return;
+      }
+
       const t = DB.db.transaction(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
       const ps = t.objectStore('pedidos_proveedor');
       const ds = t.objectStore('detalle_pedido');
@@ -413,7 +498,11 @@
   function render(cont) {
     const seg = JZAC.rutaSeg();
     if (seg[1] === 'pedidos') vistaPedidos(cont).catch(() => JZAC.ui.toast('Error al cargar pedidos', 'mal'));
-    else if (seg[1] === 'pedido') vistaNuevoPedido(cont).catch(() => JZAC.ui.toast('Error al cargar pedido', 'mal'));
+    else if (seg[1] === 'pedido') {
+      const id = Number(seg[2]);
+      const pid = Number.isFinite(id) && id > 0 ? id : 0;
+      vistaNuevoPedido(cont, pid).catch(() => JZAC.ui.toast('Error al cargar pedido', 'mal'));
+    }
     else vistaProveedores(cont).catch(() => JZAC.ui.toast('Error al cargar proveedores', 'mal'));
   }
 
