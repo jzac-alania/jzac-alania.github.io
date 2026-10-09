@@ -16,7 +16,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -224,33 +224,48 @@
       </div>
     </section>
 
-    <!-- ===== PROCESO ===== -->
-    <section class="section" id="proceso">
+    <!-- ===== PROCESO (editorial estilo A24) ===== -->
+    <section class="section section-film" id="proceso">
+      <div class="film-edge film-edge-top" aria-hidden="true"></div>
       <div class="container">
         <p class="section-eyebrow">Metodología</p>
-        <h2 class="section-title">¿Cómo trabajamos?</h2>
-        <ol class="steps">
-          <li class="step reveal">
-            <span class="step-num">01</span>
-            <h3>Me cuentas tu idea</h3>
-            <p>Escuchamos tu idea y definimos juntos el alcance, la realidad de tu negocio y los objetivos.</p>
-          </li>
-          <li class="step reveal">
-            <span class="step-num">02</span>
-            <h3>Propuesta y precio claro</h3>
-            <p>Recibes una propuesta con presupuesto transparente, tiempos definidos y sin sorpresas.</p>
-          </li>
-          <li class="step reveal">
-            <span class="step-num">03</span>
-            <h3>Desarrollo tu sistema</h3>
-            <p>Construimos tu aplicación con avances constantes para que siempre sepas cómo va todo.</p>
-          </li>
-          <li class="step reveal">
-            <span class="step-num">04</span>
-            <h3>Entrega y acompañamiento</h3>
-            <p>Implementamos, probamos y te acompañamos después del lanzamiento con soporte directo.</p>
-          </li>
-        </ol>
+        <h2 class="section-title film-title">¿Cómo trabajamos?</h2>
+        <div class="steps-viewport">
+          <ol class="steps">
+            <li class="step">
+              <span class="step-rule"></span>
+              <span class="step-num">01</span>
+              <span class="step-phase">Descubrimiento</span>
+              <h3>Me cuentas tu idea</h3>
+              <p>Escuchamos tu idea y definimos juntos el alcance, la realidad de tu negocio y los objetivos.</p>
+              <div class="step-meta"><span>Entregable</span><b>Alcance definido</b></div>
+            </li>
+            <li class="step">
+              <span class="step-rule"></span>
+              <span class="step-num">02</span>
+              <span class="step-phase">Propuesta</span>
+              <h3>Propuesta y precio claro</h3>
+              <p>Recibes una propuesta con presupuesto transparente, tiempos definidos y sin sorpresas.</p>
+              <div class="step-meta"><span>Entregable</span><b>Presupuesto cerrado</b></div>
+            </li>
+            <li class="step">
+              <span class="step-rule"></span>
+              <span class="step-num">03</span>
+              <span class="step-phase">Producción</span>
+              <h3>Desarrollo tu sistema</h3>
+              <p>Construimos tu aplicación con avances constantes para que siempre sepas cómo va todo.</p>
+              <div class="step-meta"><span>Entregable</span><b>Avances semanales</b></div>
+            </li>
+            <li class="step">
+              <span class="step-rule"></span>
+              <span class="step-num">04</span>
+              <span class="step-phase">Estreno</span>
+              <h3>Entrega y acompañamiento</h3>
+              <p>Implementamos, probamos y te acompañamos después del lanzamiento con soporte directo.</p>
+              <div class="step-meta"><span>Entregable</span><b>Sistema en producción</b></div>
+            </li>
+          </ol>
+        </div>
         <div class="guarantees" aria-label="Garantías">
           <div class="guarantee">
             <span class="guarantee-icon">✓</span>
@@ -270,6 +285,7 @@
           </div>
         </div>
       </div>
+      <div class="film-edge film-edge-bottom" aria-hidden="true"></div>
     </section>
 
     <!-- ===== CONTACTO / CTA ===== -->
@@ -317,6 +333,11 @@
     </svg>
   </a>
 
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/ScrollTrigger.min.js"></script>
+  <script src="vendor/SplitText.min.js"></script>
+  <script src="vendor/lenis.min.js"></script>
   <script src="script.js"></script>
+  <script src="animaciones.js"></script>
 </body>
 </html>

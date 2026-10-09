@@ -518,6 +518,7 @@ a {
   border-block: 1px solid var(--border-soft);
   background: var(--bg-soft);
   padding: 1.1rem 0;
+  overflow: hidden;
 }
 
 .strip-inner {
@@ -1070,6 +1071,318 @@ a {
   transition-delay: 270ms;
 }
 
+/* ---------- Modo GSAP (animaciones.js) ---------- */
+
+.gsap-on .hero-in {
+  animation: none;
+}
+
+.gsap-on .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.navbar.scrolled {
+  box-shadow: 0 14px 34px rgba(2, 6, 16, 0.45);
+}
+
+.gsap-line-wrap {
+  display: block;
+  overflow: hidden;
+}
+
+/* ---------- Cursor personalizado ---------- */
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 50%;
+  mix-blend-mode: difference;
+}
+
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: #fff;
+}
+
+.cursor-ring {
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+}
+
+.cursor-ring.hovering {
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-color: rgba(255, 255, 255, 0.95);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot,
+  .cursor-ring {
+    display: none;
+  }
+}
+
+/* ---------- Marquee del strip ---------- */
+
+@media (min-width: 1021px) {
+  .strip-inner.marquee {
+    flex-wrap: nowrap;
+    width: max-content;
+    justify-content: flex-start;
+    will-change: transform;
+  }
+
+  .strip-inner.marquee .strip-item {
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Proceso horizontal (desktop) ---------- */
+
+.steps-viewport {
+  overflow: visible;
+}
+
+@media (min-width: 1021px) {
+  .steps-viewport {
+    overflow: hidden;
+    padding: 0.5rem 0 1rem;
+  }
+
+  .steps.h-track {
+    display: flex;
+    width: max-content;
+    gap: 1.6rem;
+  }
+
+  .steps.h-track .step {
+    width: 430px;
+    flex: 0 0 auto;
+  }
+}
+
+/* ---------- Tilt 3D de cards ---------- */
+
+.services-grid {
+  perspective: 1000px;
+}
+
+.card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* ---------- Canvas de partículas del hero ---------- */
+
+#particulas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- Metodología · editorial estilo A24 ---------- */
+
+.section.section-film {
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+  border-block: 1px solid var(--border-soft);
+  padding: 7rem 0 6rem;
+}
+
+.section-film::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.section-film .container {
+  position: relative;
+  z-index: 1;
+}
+
+.film-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 26px;
+  z-index: 2;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='26'%3E%3Crect x='10' y='8' width='26' height='10' rx='3.5' fill='%23000000'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+}
+
+.film-edge-top {
+  top: 0;
+}
+
+.film-edge-bottom {
+  bottom: 0;
+}
+
+.section-film .section-eyebrow {
+  text-align: left;
+  color: var(--dorado);
+  letter-spacing: 0.34em;
+  font-size: 0.72rem;
+}
+
+.section-film .section-title,
+.film-title {
+  text-align: left;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(2.6rem, 6vw, 5rem);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin-bottom: 3.4rem;
+}
+
+.section-film .step {
+  list-style: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 1.4rem 0 1.6rem;
+  transition: transform 0.35s ease;
+}
+
+.section-film .step:hover {
+  transform: translateX(8px);
+}
+
+.step-rule {
+  display: block;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.22);
+  transform-origin: left center;
+  margin-bottom: 1.4rem;
+  transition: background 0.35s ease;
+}
+
+.section-film .step:hover .step-rule {
+  background: var(--dorado);
+}
+
+.section-film .step-num {
+  display: block;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(3rem, 5vw, 4.4rem);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text);
+  background: none;
+  box-shadow: none;
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+
+.section-film .step-phase {
+  display: block;
+  margin-top: 0.9rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--dorado);
+}
+
+.section-film .step h3 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(1.5rem, 2.2vw, 1.9rem);
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0.5rem 0 0.7rem;
+}
+
+.section-film .step p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.step-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.step-meta span {
+  color: var(--muted-2);
+  font-weight: 600;
+}
+
+.step-meta b {
+  color: var(--text);
+  font-weight: 700;
+  text-align: right;
+}
+
+.section-film .guarantee {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.section-film .guarantee p {
+  color: var(--text-muted);
+}
+
+.section-film .guarantee p b {
+  color: var(--text);
+}
+
+.section-film .guarantee-icon {
+  background: rgba(34, 197, 94, 0.16);
+  color: var(--verde-bright);
+}
+
+@media (min-width: 1021px) {
+  .section-film .steps.h-track .step {
+    width: 470px;
+  }
+
+  .section-film .section-eyebrow {
+    position: sticky;
+    top: 92px;
+    z-index: 2;
+  }
+
+  .section-film .film-title {
+    position: sticky;
+    top: 122px;
+    z-index: 2;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -1153,7 +1466,7 @@ a {
     inset: 64px 0 auto 0;
     flex-direction: column;
     gap: 0;
-    background: rgba(9, 14, 26, 0.97);
+    background: #090e1a;
     border-bottom: 1px solid var(--border);
     padding: 0.6rem 1rem 1.2rem;
     align-items: stretch;
@@ -1202,6 +1515,19 @@ a {
 
   .featured {
     padding: 2.4rem 1.4rem;
+  }
+
+  .hero-actions,
+  .cta-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-actions .btn,
+  .cta-actions .btn {
+    width: 100%;
+    white-space: normal;
+    text-align: center;
   }
 
   .sell-points {

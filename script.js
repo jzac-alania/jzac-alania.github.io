@@ -42,7 +42,9 @@
 
   var revealEls = document.querySelectorAll(".reveal");
 
-  if ("IntersectionObserver" in window) {
+  if (window.gsap) {
+    /* GSAP toma el control de los reveals (animaciones.js) */
+  } else if ("IntersectionObserver" in window) {
     var io = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {
