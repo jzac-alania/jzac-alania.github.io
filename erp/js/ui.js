@@ -70,7 +70,14 @@ const ui = {
     el.className = 'toast-item ' + (tipo || '');
     el.textContent = msg;
     c.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 2600);
+    if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.fromTo(el, { opacity: 0, y: -12, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.28, ease: 'back.out(1.7)' });
+    }
+    setTimeout(() => {
+      if (window.gsap) gsap.to(el, { opacity: 0, duration: 0.28 });
+      else { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }
+    }, 2600);
     setTimeout(() => el.remove(), 3000);
   },
 
@@ -194,6 +201,11 @@ function cargarModulo() {
   window.scrollTo(0, 0);
   const mod = JZAC.modulos[nav.mod];
   mod.render(cont);
+  if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && cont.children.length) {
+    gsap.fromTo(cont.children,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.3, stagger: 0.04, ease: 'power2.out', clearProps: 'opacity,transform' });
+  }
 }
 
 window.JZAC = window.JZAC || {};
@@ -210,7 +222,7 @@ const tema = {
     const val = v || tema.actual();
     document.documentElement.dataset.tema = val === 'oscuro' ? 'oscuro' : '';
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', val === 'oscuro' ? '#0B1120' : '#0E8450');
+    if (meta) meta.setAttribute('content', val === 'oscuro' ? '#0A1020' : '#0D1526');
     const b = document.getElementById('btn-tema');
     if (b) b.textContent = val === 'oscuro' ? 'Claro' : 'Oscuro';
   },

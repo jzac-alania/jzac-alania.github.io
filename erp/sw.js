@@ -1,16 +1,21 @@
-const CACHE = 'jzac-erp-v1.7.12';
+const CACHE = 'jzac-erp-v1.8.0';
 const BASE = './';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/app.css',
+  './css/fonts/poppins-400.woff2',
+  './css/fonts/poppins-500.woff2',
+  './css/fonts/poppins-600.woff2',
+  './css/fonts/poppins-700.woff2',
   './js/db.js',
   './js/license.js',
   './js/auth.js',
   './js/ui.js',
   './js/scanner.js',
   './lib/jsqr.min.js',
+  './lib/gsap.min.js',
   './js/app.js',
   './js/modules/dashboard.js',
   './js/modules/ventas.js',

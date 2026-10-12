@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="JZAC ERP">
   <defs>
     <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1BA94E"/>
-      <stop offset="0.55" stop-color="#128240"/>
-      <stop offset="1" stop-color="#0A5226"/>
+      <stop offset="0" stop-color="#1E3054"/>
+      <stop offset="0.55" stop-color="#12203A"/>
+      <stop offset="1" stop-color="#0A1020"/>
     </linearGradient>
     <linearGradient id="oro" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#F2C44D"/>
@@ -28,16 +28,16 @@
 
   <!-- cuerpo de la tienda -->
   <rect x="122" y="238" width="268" height="170" rx="18" fill="#ffffff"/>
-  <rect x="122" y="238" width="268" height="170" rx="18" fill="#0A5226" opacity="0.04"/>
+  <rect x="122" y="238" width="268" height="170" rx="18" fill="#0A1020" opacity="0.04"/>
   <!-- escaparate izquierdo -->
-  <rect x="138" y="300" width="72" height="52" rx="12" fill="#DCF3E6" stroke="#B9E2CA" stroke-width="3"/>
+  <rect x="138" y="300" width="72" height="52" rx="12" fill="#DCE6F5" stroke="#B9C8E4" stroke-width="3"/>
   <!-- escaparate derecho -->
-  <rect x="302" y="300" width="72" height="52" rx="12" fill="#DCF3E6" stroke="#B9E2CA" stroke-width="3"/>
+  <rect x="302" y="300" width="72" height="52" rx="12" fill="#DCE6F5" stroke="#B9C8E4" stroke-width="3"/>
   <!-- puerta -->
-  <rect x="218" y="300" width="76" height="108" rx="12" fill="#0B5E2C"/>
+  <rect x="218" y="300" width="76" height="108" rx="12" fill="#0D1B36"/>
   <circle cx="280" cy="354" r="6" fill="#F2C44D"/>
   <!-- felpudo -->
-  <rect x="222" y="388" width="68" height="16" rx="6" fill="#0B5E2C" opacity="0.35"/>
+  <rect x="222" y="388" width="68" height="16" rx="6" fill="#0D1B36" opacity="0.35"/>
 
   <!-- moneda soles -->
   <circle cx="398" cy="430" r="62" fill="url(#oro)" stroke="#B87E14" stroke-width="5"/>
