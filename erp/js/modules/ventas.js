@@ -898,6 +898,8 @@
       if (p.ventaPeso) {
         pedirPeso(p, (kg) => {
           agregarItem(p, kg, Number(p.precioVenta));
+          JZAC.ui.beep();
+          JZAC.ui.vibra(25);
           JZAC.ui.toast(`${p.nombre}: ${JZAC.ui.n(kg)} kg.`, 'bien');
           muestraPreview(null);
           if (scanRapido) { scanRapido.value = ''; scanRapido.focus(); }
@@ -906,6 +908,8 @@
       }
       const ok = agregarItem(p, cant, Number(p.precioVenta));
       if (ok) {
+        JZAC.ui.beep();
+        JZAC.ui.vibra(25);
         JZAC.ui.toast(`${p.nombre} +${JZAC.ui.n(cant)}`, 'bien');
         if (scanRapido) { scanRapido.value = ''; }
       }
@@ -960,10 +964,22 @@
     }
 
     document.getElementById('escanear-venta').addEventListener('click', async () => {
-      const res = await JZAC.escanear({ titulo: 'Escanear producto' });
-      if (!res || !res.texto) return;
-      if (scanRapido) scanRapido.value = res.texto;
-      agregaEntrada(res.texto);
+      const res = await JZAC.escanear({
+        titulo: 'Escanear productos',
+        multiple: true,
+        onDeteccion: (texto) => {
+          const qty = extraeCantidad(texto);
+          const p = encuentraProducto(qty ? qty.resto : texto);
+          const ok = agregaEntrada(texto);
+          if (ok && p && p.ventaPeso) return 'cerrar';
+          return null;
+        }
+      });
+      if (res && res.texto) {
+        if (scanRapido) scanRapido.value = res.texto;
+        agregaEntrada(res.texto);
+      }
+      if (scanRapido) scanRapido.focus();
     });
 
     // ---------- más vendidos (un toque) ----------

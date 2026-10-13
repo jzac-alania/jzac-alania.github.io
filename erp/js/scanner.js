@@ -55,11 +55,15 @@
   }
 
   /**
-   * JZAC.escanear({titulo}) -> Promise<{texto, formato} | null>
+   * JZAC.escanear({titulo, multiple, onDeteccion}) -> Promise<{texto, formato} | null>
    * null = el usuario canceló.
+   * multiple + onDeteccion: la cámara queda abierta y cada código detectado
+   * llama a onDeteccion(texto). Si el callback devuelve 'cerrar', se cierra.
    */
   async function escanear(opciones) {
     const titulo = (opciones && opciones.titulo) || 'Escanear código';
+    const multiple = !!(opciones && opciones.multiple && opciones.onDeteccion);
+    const onDet = (opciones && opciones.onDeteccion) || null;
     const m = modalPropio(`
       <div class="modal-hdr"><h3>${titulo}</h3><button class="cierre" id="scan-cerrar">×</button></div>
       <div class="scan-caja">
@@ -70,17 +74,43 @@
       <input id="scan-manual" class="scan-manual" placeholder="O escribe el código a mano..." autocomplete="off">
       <div id="scan-detalle" class="texto-suave" style="font-size:12px;margin-top:6px"></div>`,
       `<button class="btn" id="scan-cancelar">Cancelar</button>
-       <button class="btn btn-primario" id="scan-conf">Usar este código</button>`);
+       <button class="btn btn-primario" id="scan-conf">${multiple ? 'Listo' : 'Usar este código'}</button>`);
 
     const video = m.raiz.querySelector('#scan-video');
     const aviso = m.raiz.querySelector('#scan-aviso');
     const detalle = m.raiz.querySelector('#scan-detalle');
     const manual = m.raiz.querySelector('#scan-manual');
+    const btnConf = m.raiz.querySelector('#scan-conf');
 
     let stream = null;
     let parado = false;
     let fin = false;
     let modo = 'nativo';
+    let agregados = 0;
+    let ultimoAdd = { cod: null, t: 0 };
+    let codFuera = true;
+
+    function procesaMulti(texto) {
+      const t = String(texto || '').trim();
+      if (!t) return false;
+      const ahora = Date.now();
+      if (t === ultimoAdd.cod) {
+        const rearmado = codFuera && ahora - ultimoAdd.t >= 700;
+        if (!rearmado) return false;
+      }
+      const r = onDet(t);
+      if (r === 'cerrar') { terminar(null); return false; }
+      ultimoAdd = { cod: t, t: ahora };
+      codFuera = false;
+      agregados++;
+      if (btnConf) btnConf.textContent = `Listo (${agregados})`;
+      if (aviso) aviso.textContent = `✓ ${agregados} agregado(s) · apunta el siguiente`;
+      return true;
+    }
+
+    function marcaAusencia() {
+      if (ultimoAdd.cod && !codFuera && Date.now() - ultimoAdd.t > 350) codFuera = true;
+    }
 
     function detener() {
       if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
@@ -108,9 +138,16 @@
       try {
         const res = await detectorNativo.detect(video);
         if (res && res.length) {
-          terminar({ texto: String(res[0].rawValue || ''), formato: res[0].format || 'desconocido' });
+          const texto = String(res[0].rawValue || '');
+          if (multiple) {
+            procesaMulti(texto);
+            setTimeout(bucleNativo, 220);
+            return;
+          }
+          terminar({ texto, formato: res[0].format || 'desconocido' });
           return;
         }
+        marcaAusencia();
       } catch (e) { /* frame no listo */ }
       setTimeout(bucleNativo, 220);
     }
@@ -129,9 +166,15 @@
       const img = ctx.getImageData(0, 0, w, h);
       const q = window.jsQR(img.data, w, h, { inversionAttempts: 'dontInvert' });
       if (q && q.data) {
+        if (multiple) {
+          procesaMulti(String(q.data));
+          setTimeout(bucleJsQR, 160);
+          return;
+        }
         terminar({ texto: String(q.data), formato: 'qr_code' });
         return;
       }
+      marcaAusencia();
       setTimeout(bucleJsQR, 160);
     }
 
@@ -162,11 +205,14 @@
     m.raiz.querySelector('#scan-cerrar').addEventListener('click', () => terminar(null));
     m.raiz.querySelector('#scan-cancelar').addEventListener('click', () => terminar(null));
     m.fondo.addEventListener('click', (e) => { if (e.target === m.fondo) terminar(null); });
-    m.raiz.querySelector('#scan-conf').addEventListener('click', () => {
+    const confimarManual = () => {
       const t = manual.value.trim();
-      if (!t) { JZAC.ui.toast('Escribe primero un código.', 'mal'); return; }
-      terminar({ texto: t, formato: 'manual' });
-    });
+      if (t) { terminar({ texto: t, formato: 'manual' }); return; }
+      if (multiple && agregados > 0) { terminar(null); return; }
+      JZAC.ui.toast('Escribe primero un código.', 'mal');
+    };
+    m.raiz.querySelector('#scan-conf').addEventListener('click', confimarManual);
+    manual.addEventListener('keydown', (e) => { if (e.key === 'Enter') confimarManual(); });
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       iniciarCamara();

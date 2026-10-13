@@ -115,7 +115,29 @@ const ui = {
   },
 
   vacio: (icono, msg, extra) =>
-    `<div class="vacio"><div class="big">${icono}</div><div>${msg}</div>${extra || ''}</div>`
+    `<div class="vacio"><div class="big">${icono}</div><div>${msg}</div>${extra || ''}</div>`,
+
+  beep: (ok) => {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = ui._beepCtx || (ui._beepCtx = new AC());
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'square';
+      o.frequency.value = ok === false ? 320 : 1650;
+      g.gain.setValueAtTime(0.06, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.09);
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime + 0.1);
+    } catch (e) { /* sin audio: seguir igual */ }
+  },
+
+  vibra: (ms) => {
+    try { if (navigator.vibrate) navigator.vibrate(ms || 25); } catch (e) { /* sin vibro */ }
+  }
 };
 
 // ---------- rutas ----------
