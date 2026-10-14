@@ -10,6 +10,76 @@
 
   function o(id) { return document.getElementById(id); }
 
+  // ---------- ayuda UX ----------
+  const RE_MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function anima(vista) {
+    if (!window.gsap || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    gsap.from('.auth-logo', { scale: 0.8, opacity: 0, duration: 0.5, ease: 'back.out(1.8)', clearProps: 'all' });
+    gsap.from('.auth-titulo, .auth-sub', { y: 10, opacity: 0, duration: 0.4, stagger: 0.07, delay: 0.08, clearProps: 'all' });
+    gsap.from('#auth-form', { y: 16, opacity: 0, duration: 0.4, delay: 0.18, clearProps: 'all' });
+    if (vista) gsap.from('.auth-caja', { y: 14, opacity: 0, duration: 0.45, ease: 'power2.out', clearProps: 'all' });
+  }
+
+  function errorCampo(input, msg) {
+    const campo = input.closest('.campo');
+    if (!campo) return;
+    let e = campo.querySelector('.campo-error');
+    if (!e) {
+      e = document.createElement('div');
+      e.className = 'campo-error';
+      campo.appendChild(e);
+    }
+    e.textContent = msg || '';
+    input.classList.toggle('input-mal', !!msg);
+    if (msg && window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.fromTo(input, { x: -5 }, { x: 0, duration: 0.3, ease: 'elastic.out(1, 0.4)' });
+    }
+  }
+
+  function vigilaCaps(input) {
+    const campo = input.closest('.campo');
+    const aviso = campo && campo.querySelector('.auth-caps');
+    if (!aviso) return;
+    const revisa = (e) => {
+      if (!e.getModifierState) return;
+      aviso.style.display = e.getModifierState('CapsLock') ? 'flex' : 'none';
+    };
+    input.addEventListener('keydown', revisa);
+    input.addEventListener('keyup', revisa);
+    input.addEventListener('blur', () => { aviso.style.display = 'none'; });
+  }
+
+  function vinculaOjos() {
+    document.querySelectorAll('[data-ver]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const inp = document.getElementById(b.dataset.ver);
+        if (!inp) return;
+        const ver = inp.type === 'password';
+        inp.type = ver ? 'text' : 'password';
+        b.classList.toggle('on', ver);
+        b.textContent = ver ? '🙈' : '👁';
+        inp.focus();
+      });
+    });
+  }
+
+  async function conCarga(btn, texto, fn) {
+    if (btn.dataset.cargando) return;
+    btn.dataset.cargando = '1';
+    const html = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spin"></span> ${texto}`;
+    try {
+      await fn();
+    } catch (err) {
+      btn.disabled = false;
+      delete btn.dataset.cargando;
+      btn.innerHTML = html;
+      throw err;
+    }
+  }
+
   // ---------- login / registro ----------
   function vistaAuth() {
     const splash = document.getElementById('splash');
@@ -23,47 +93,125 @@
           <div id="auth-form"></div>
         </div>
       </div>`);
+    anima(true);
 
     function formLogin() {
+      const ultimo = localStorage.getItem('jzac_ultimo_correo') || '';
       o('auth-form').innerHTML = `
-        <form id="frm">
-          <div class="campo"><label>Correo electrónico</label><input type="email" id="a-correo" autocomplete="username"></div>
-          <div class="campo"><label>Contraseña</label><input type="password" id="a-password" autocomplete="current-password"></div>
+        <form id="frm" novalidate>
+          <div class="campo">
+            <label>Correo electrónico</label>
+            <input type="email" id="a-correo" autocomplete="username" inputmode="email"
+              autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="tu@correo.com" value="${ultimo.replace(/"/g, '&quot;')}">
+          </div>
+          <div class="campo">
+            <label>Contraseña</label>
+            <div class="auth-input-wrap">
+              <input type="password" id="a-password" autocomplete="current-password" placeholder="Tu contraseña">
+              <button type="button" class="auth-eye" data-ver="a-password" aria-label="Mostrar u ocultar contraseña">👁</button>
+            </div>
+            <div class="auth-caps" style="display:none">⚠ Mayúsculas activadas (Caps Lock)</div>
+          </div>
           <button class="btn btn-primario btn-bloco" type="submit">Ingresar</button>
         </form>
         <div class="auth-enlace">¿No tienes cuenta? <a id="a-ir-reg">Regístrate gratis</a></div>
         <div class="auth-enlace"><a id="a-ir-wha" style="color:#128C7E">¿Problemas para entrar? Escríbenos</a></div>`;
+      vinculaOjos();
+      vigilaCaps(o('a-password'));
+      const correo = o('a-correo');
+      const pass = o('a-password');
+      if (ultimo) pass.focus(); else correo.focus();
+
       o('frm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        errorCampo(correo, '');
+        errorCampo(pass, '');
+        let malo = false;
+        if (!correo.value.trim()) { errorCampo(correo, 'Escribe tu correo.'); malo = true; }
+        else if (!RE_MAIL.test(correo.value.trim())) { errorCampo(correo, 'Ese correo no parece válido.'); malo = true; }
+        if (!pass.value) { errorCampo(pass, 'Escribe tu contraseña.'); malo = true; }
+        if (malo) return;
         try {
-          const u = await JZAC.auth.login(o('a-correo').value, o('a-password').value);
-          JZAC.auth.guardarSesion(u);
-          continuarLicencia(u);
+          const btn = e.submitter || o('frm').querySelector('button[type=submit]');
+          await conCarga(btn, 'Ingresando...', async () => {
+            const u = await JZAC.auth.login(correo.value, pass.value);
+            localStorage.setItem('jzac_ultimo_correo', correo.value.trim().toLowerCase());
+            JZAC.auth.guardarSesion(u);
+            return continuarLicencia(u);
+          });
         } catch (err) { JZAC.ui.toast(err.message, 'mal'); }
       });
-      o('a-ir-reg').addEventListener('click', formRegistro);
+      o('a-ir-reg').addEventListener('click', () => { formRegistro(); soloForm(); });
       o('a-ir-wha').addEventListener('click', () => JZAC.negocio.wha('Hola, tengo un problema para ingresar a JZAC ERP.'));
     }
 
     function formRegistro() {
       o('auth-form').innerHTML = `
-        <form id="frm">
-          <div class="campo"><label>Nombre del negocio</label><input id="r-negocio" placeholder="Ej. Mi Bodega"></div>
-          <div class="campo"><label>Tu nombre</label><input id="r-nombre"></div>
-          <div class="campo"><label>Correo electrónico</label><input type="email" id="r-correo"></div>
-          <div class="campo"><label>Contraseña (mínimo 4 caracteres)</label><input type="password" id="r-password"></div>
+        <form id="frm" novalidate>
+          <div class="campo">
+            <label>Nombre del negocio</label>
+            <input id="r-negocio" placeholder="Ej. Mi Bodega" autocomplete="organization">
+          </div>
+          <div class="campo">
+            <label>Tu nombre</label>
+            <input id="r-nombre" placeholder="Cómo te llamas" autocomplete="name">
+          </div>
+          <div class="campo">
+            <label>Correo electrónico</label>
+            <input type="email" id="r-correo" placeholder="tu@correo.com" inputmode="email"
+              autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="email">
+          </div>
+          <div class="campo">
+            <label>Contraseña</label>
+            <div class="auth-input-wrap">
+              <input type="password" id="r-password" autocomplete="new-password" placeholder="Mínimo 4 caracteres">
+              <button type="button" class="auth-eye" data-ver="r-password" aria-label="Mostrar u ocultar contraseña">👁</button>
+            </div>
+            <div class="auth-caps" style="display:none">⚠ Mayúsculas activadas (Caps Lock)</div>
+            <div class="auth-fuerza" id="r-fuerza">Mínimo 4 caracteres</div>
+          </div>
           <button class="btn btn-primario btn-bloco" type="submit">Crear mi cuenta</button>
         </form>
         <div class="auth-enlace">¿Ya tienes cuenta? <a id="a-ir-login">Inicia sesión</a></div>`;
+      vinculaOjos();
+      vigilaCaps(o('r-password'));
+      const fuerza = o('r-fuerza');
+      o('r-password').addEventListener('input', () => {
+        const n = o('r-password').value.length;
+        if (n === 0) { fuerza.textContent = 'Mínimo 4 caracteres'; fuerza.classList.remove('ok'); }
+        else if (n < 4) { fuerza.textContent = `${n}/4 · muy corta`; fuerza.classList.remove('ok'); }
+        else { fuerza.textContent = '✓ Contraseña lista'; fuerza.classList.add('ok'); }
+      });
+      errorCampo(o('r-correo'), '');
+
       o('frm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const negocio = o('r-negocio'), nombre = o('r-nombre'), mail = o('r-correo'), pass = o('r-password');
+        [negocio, nombre, mail, pass].forEach((i) => errorCampo(i, ''));
+        let malo = false;
+        if (!negocio.value.trim()) { errorCampo(negocio, 'Pon el nombre de tu negocio.'); malo = true; }
+        if (!nombre.value.trim()) { errorCampo(nombre, 'Pon tu nombre.'); malo = true; }
+        if (!mail.value.trim()) { errorCampo(mail, 'Escribe tu correo.'); malo = true; }
+        else if (!RE_MAIL.test(mail.value.trim())) { errorCampo(mail, 'Ese correo no parece válido.'); malo = true; }
+        if (pass.value.length < 4) { errorCampo(pass, 'La contraseña necesita 4 caracteres como mínimo.'); malo = true; }
+        if (malo) return;
         try {
-          const u = await JZAC.auth.registrar(o('r-nombre').value, o('r-negocio').value, o('r-correo').value, o('r-password').value);
-          JZAC.auth.guardarSesion(u);
-          continuarLicencia(u);
+          const btn = e.submitter || o('frm').querySelector('button[type=submit]');
+          await conCarga(btn, 'Creando tu cuenta...', async () => {
+            const u = await JZAC.auth.registrar(nombre.value, negocio.value, mail.value, pass.value);
+            localStorage.setItem('jzac_ultimo_correo', mail.value.trim().toLowerCase());
+            JZAC.auth.guardarSesion(u);
+            return continuarLicencia(u);
+          });
         } catch (err) { JZAC.ui.toast(err.message, 'mal'); }
       });
-      o('a-ir-login').addEventListener('click', formLogin);
+      o('a-ir-login').addEventListener('click', () => { formLogin(); soloForm(); });
+    }
+
+    function soloForm() {
+      if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        gsap.from('#auth-form', { y: 10, opacity: 0, duration: 0.28, ease: 'power2.out', clearProps: 'all' });
+      }
     }
 
     formLogin();

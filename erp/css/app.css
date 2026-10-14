@@ -302,6 +302,28 @@ tbody tr:hover { background: rgba(233, 161, 59, .05); }
 .auth-enlace { text-align: center; margin-top: 14px; font-size: 13px; }
 .auth-enlace a { color: var(--oro-osc); font-weight: 700; text-decoration: none; cursor: pointer; }
 [data-tema='oscuro'] .auth-enlace a { color: var(--oro); }
+.auth-input-wrap { position: relative; }
+.auth-input-wrap input { padding-right: 44px; }
+.auth-eye {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent;
+  font-size: 1rem; cursor: pointer; opacity: .55; transition: opacity .15s, background .15s;
+}
+.auth-eye:hover, .auth-eye.on { opacity: 1; background: var(--superficie-2); }
+.auth-caps {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px;
+  font-size: 12px; font-weight: 600; color: var(--naranja);
+}
+.auth-fuerza { margin-top: 6px; font-size: 12px; color: var(--texto-suave); }
+.auth-fuerza.ok { color: var(--verde-c); font-weight: 600; }
+.campo-error { margin-top: 5px; font-size: 12.5px; font-weight: 600; color: var(--rojo); }
+.input-mal { border-color: var(--rojo) !important; box-shadow: 0 0 0 3px rgba(229, 72, 77, .15) !important; }
+.btn .spin {
+  width: 14px; height: 14px; display: inline-block; vertical-align: -2px;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: gira .6s linear infinite;
+}
+@keyframes gira { to { transform: rotate(360deg); } }
 
 /* ---------- lock / licencia ---------- */
 .bloqueada { text-align: center; max-width: 460px; }
