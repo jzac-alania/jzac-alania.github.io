@@ -182,8 +182,9 @@ async function mostrarApp(usuario) {
     const b = document.getElementById('trial-banner');
     b.style.display = 'block';
     b.className = 'trial-bar';
+    const dia = Math.max(1, Math.min(JZAC.lic.DIAS_PRUEBA, JZAC.lic.DIAS_PRUEBA - est.diasRestantes + 1));
     b.innerHTML = `
-      <div>Prueba gratuita en curso: quedan <span class="rojo">${est.diasRestantes} día(s)</span></div>
+      <div>Prueba gratuita · Día ${dia} de ${JZAC.lic.DIAS_PRUEBA} · quedan <span class="rojo">${est.diasRestantes} día(s)</span></div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-sm" id="act-banner">Activar licencia</button>
       </div>`;

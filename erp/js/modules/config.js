@@ -7,6 +7,7 @@
   async function render(cont) {
     const u = await JZAC.auth.usuarioActual();
     const lic = JZAC.lic.estado();
+    const diaLic = Math.max(1, Math.min(JZAC.lic.DIAS_PRUEBA, JZAC.lic.DIAS_PRUEBA - (lic.diasRestantes || 0) + 1));
     const info = await JZAC.backup.informacion();
     const ultima = info.export.dias === 0 ? 'hoy' : info.export.dias === 1 ? 'ayer' : `hace ${info.export.dias} días`;
     const copia = info.snapshot
@@ -30,7 +31,7 @@
             ${lic.tipo === 'activada'
               ? '<span class="badge badge-verde">Licencia activa</span>'
               : lic.tipo === 'prueba'
-                ? `<span class="badge badge-dorado">Prueba · ${lic.diasRestantes} día(s)</span>`
+                ? `<span class="badge badge-dorado">Prueba · día ${diaLic} de ${JZAC.lic.DIAS_PRUEBA}</span>`
                 : '<span class="badge badge-rojo">Licencia vencida</span>'}
             <button class="btn btn-sm" id="cf-licencia">Ver / activar licencia</button>
           </div>
@@ -105,7 +106,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.14.0<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.14.1<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
