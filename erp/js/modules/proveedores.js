@@ -139,11 +139,14 @@
     }));
     cont.querySelectorAll('[data-recibir]').forEach((b) => b.addEventListener('click', async () => {
       const p = pedidos.find((x) => x.id === Number(b.dataset.recibir));
-      if (await JZAC.ui.confirmar(`Recibir el pedido <b>#${p.id}</b>?<br>Se sumará ${items_count(detp, p.id)} producto(s) al inventario y se actualizará el costo.`, 'Recibir pedido')) {
+      if (!(await JZAC.ui.confirmar(`Recibir el pedido <b>#${p.id}</b>?<br>Se sumará ${items_count(detp, p.id)} producto(s) al inventario y se actualizará el costo.`, 'Recibir pedido'))) return;
+      try {
         await recibirPedido(p);
         JZAC.ui.toast('Pedido recibido. Stock actualizado.', 'bien');
-        vistaPedidos(cont);
+      } catch (e) {
+        JZAC.ui.toast('Este pedido ya había sido recibido. Stock no modificado.', 'mal');
       }
+      vistaPedidos(cont);
     }));
     cont.querySelectorAll('[data-wha]').forEach((b) => b.addEventListener('click', () => {
       const p = pedidos.find((x) => x.id === Number(b.dataset.wha));
@@ -151,14 +154,19 @@
     }));
     cont.querySelectorAll('[data-borrar]').forEach((b) => b.addEventListener('click', async () => {
       const p = pedidos.find((x) => x.id === Number(b.dataset.borrar));
-      if (await JZAC.ui.confirmar(`¿Eliminar el pedido <b>#${p.id}</b>?`)) {
-        await JZAC.db.ready;
-        const t = DB.db.transaction(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
-        t.objectStore('pedidos_proveedor').delete(p.id);
-        const ds = t.objectStore('detalle_pedido');
-        (await JZAC.db.listar('detalle_pedido')).filter((d) => d.pedidoId === p.id).forEach((d) => ds.delete(d.id));
-        t.oncomplete = () => { JZAC.ui.toast('Pedido eliminado.', 'bien'); vistaPedidos(cont); };
-      }
+      if (!(await JZAC.ui.confirmar(`¿Eliminar el pedido <b>#${p.id}</b>?`))) return;
+      await JZAC.db.ready;
+      // Cargar los ids de detalle ANTES de abrir la transaccion: un await
+      // dentro de la transaccion la cierra (auto-commit) y deja huerfanos.
+      const idsDetalle = (await JZAC.db.listar('detalle_pedido'))
+        .filter((d) => d.pedidoId === p.id)
+        .map((d) => d.id);
+      const t = DB.db.transaction(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
+      t.objectStore('pedidos_proveedor').delete(p.id);
+      const ds = t.objectStore('detalle_pedido');
+      idsDetalle.forEach((id) => ds.delete(id));
+      t.oncomplete = () => { JZAC.ui.toast('Pedido eliminado.', 'bien'); vistaPedidos(cont); };
+      t.onerror = () => JZAC.ui.toast('Error al eliminar el pedido.', 'mal');
     }));
   }
 
@@ -199,25 +207,37 @@
     return new Promise((resolve, reject) => {
       const t = DB.db.transaction(['pedidos_proveedor', 'productos'], 'readwrite');
       const ps = t.objectStore('productos');
-      dets.forEach((d) => {
-        const norm = JZAC.negocio.nombreNorm(d.producto);
-        const pv = productos.find((x) => JZAC.negocio.nombreNorm(x.nombre) === norm);
-        if (pv) {
-          pv.stock = Number(pv.stock || 0) + Number(d.cantidad);
-          pv.precioCompra = Number(d.precio);
-          if (!pv.proveedor) pv.proveedor = p.proveedor;
-          ps.put(pv);
-        } else {
-          ps.put({ nombre: d.producto, precioCompra: Number(d.precio), precioVenta: Number(d.precio), stock: Number(d.cantidad), stockMin: 0, fechaVencimiento: null, proveedor: p.proveedor, creado: Date.now() });
-        }
-      });
+      let yaRecibido = false;
+      // El estado se re-verifica DENTRO de la transaccion: evita duplicar stock
+      // si se confirma dos veces antes del re-render.
       const gp = t.objectStore('pedidos_proveedor').get(p.id);
       gp.onsuccess = () => {
         const pp = gp.result;
-        if (pp) { pp.estado = 'Recibido'; pp.fechaRecibido = Date.now(); t.objectStore('pedidos_proveedor').put(pp); }
+        if (!pp || pp.estado !== 'Pendiente') {
+          yaRecibido = true;
+          try { t.abort(); } catch (e) { /* ya cerrada */ }
+          return;
+        }
+        dets.forEach((d) => {
+          const norm = JZAC.negocio.nombreNorm(d.producto);
+          const pv = productos.find((x) => JZAC.negocio.nombreNorm(x.nombre) === norm);
+          if (pv) {
+            pv.stock = Number(pv.stock || 0) + Number(d.cantidad);
+            pv.precioCompra = Number(d.precio);
+            if (!pv.proveedor) pv.proveedor = p.proveedor;
+            ps.put(pv);
+          } else {
+            ps.put({ nombre: d.producto, precioCompra: Number(d.precio), precioVenta: Number(d.precio), stock: Number(d.cantidad), stockMin: 0, fechaVencimiento: null, proveedor: p.proveedor, creado: Date.now() });
+          }
+        });
+        pp.estado = 'Recibido';
+        pp.fechaRecibido = Date.now();
+        t.objectStore('pedidos_proveedor').put(pp);
       };
       t.oncomplete = () => resolve();
       t.onerror = () => reject(t.error);
+      // abort() (pedido ya recibido) dispara onabort, no oncomplete/onerror
+      t.onabort = () => reject(yaRecibido ? new Error('ya-recibido') : (t.error || new Error('abortado')));
     });
   }
 

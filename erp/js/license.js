@@ -7,7 +7,9 @@ const LIC = {
   PIN: '7531',
   DIAS_PRUEBA: 7,
   PREFS: 'jzac_licencia',
-  TRIAL: 'jzac_trial_inicio'
+  TRIAL: 'jzac_trial_inicio',
+  // reloj maximo visto: si el usuario retrocede el reloj, el trial no se extiende
+  TRIAL_MAX: 'jzac_trial_max'
 };
 
 function licNormalizar(nombre) {
@@ -56,9 +58,13 @@ function licEstado() {
   if (act && act.codigo) return { tipo: 'activada', nombre: act.nombre, codigo: act.codigo };
   const inicio = licInicioPrueba();
   if (inicio) {
+    const ahora = Date.now();
+    const previo = Number(localStorage.getItem(LIC.TRIAL_MAX) || 0);
+    const maxVisto = Math.max(ahora, Number.isFinite(previo) ? previo : 0);
+    if (maxVisto > previo) localStorage.setItem(LIC.TRIAL_MAX, String(maxVisto));
     const fin = inicio + LIC.DIAS_PRUEBA * 86400000;
-    if (Date.now() <= fin) {
-      return { tipo: 'prueba', inicio, fin, diasRestantes: Math.max(0, Math.ceil((fin - Date.now()) / 86400000)) };
+    if (maxVisto <= fin) {
+      return { tipo: 'prueba', inicio, fin, diasRestantes: Math.max(0, Math.ceil((fin - maxVisto) / 86400000)) };
     }
     return { tipo: 'vencida', inicio, fin };
   }

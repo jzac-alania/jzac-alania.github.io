@@ -84,12 +84,26 @@
     if (!await JZAC.ui.confirmar(
       `Restaurar la copia automática del <b>${cuando}</b> reemplazará los datos actuales de este dispositivo (productos, ventas, clientes, fiados...). Tu cuenta y licencia no cambian. ¿Continuar?`,
       'Restaurar copia')) return false;
-    for (const t of NEGOCIO) {
-      await JZAC.db.limpiar(t);
-      for (const item of s.datos[t] || []) await JZAC.db.guardar(t, item);
+    await JZAC.db.ready;
+    try {
+      // Transaccion unica: o se restaura todo, o no se toca nada (evita datos a medias).
+      const t = DB.db.transaction(NEGOCIO, 'readwrite');
+      for (const nombre of NEGOCIO) {
+        const st = t.objectStore(nombre);
+        st.clear();
+        for (const item of s.datos[nombre] || []) st.put(item);
+      }
+      await new Promise((resolve, reject) => {
+        t.oncomplete = resolve;
+        t.onerror = () => reject(t.error);
+        t.onabort = () => reject(t.error || new Error('Restauración cancelada'));
+      });
+      if (Array.isArray(s.datos.cortes_caja) && window.JZAC.cortes) JZAC.cortes.escribir(s.datos.cortes_caja);
+      return true;
+    } catch (e) {
+      JZAC.ui.toast('No se pudo restaurar la copia. No se modificaron los datos.', 'mal');
+      return false;
     }
-    if (Array.isArray(s.datos.cortes_caja) && window.JZAC.cortes) JZAC.cortes.escribir(s.datos.cortes_caja);
-    return true;
   }
 
   function avisoHTML() {

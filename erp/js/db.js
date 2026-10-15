@@ -2,7 +2,7 @@
 // JZAC ERP - Capa de datos (IndexedDB) · esquema 16 tablas
 // ============================================================
 const DB_NAME = 'jzac_erp_web';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const DB = {
   db: null,
@@ -14,24 +14,40 @@ function open() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains('usuarios')) db.createObjectStore('usuarios', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('clientes')) db.createObjectStore('clientes', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('productos')) db.createObjectStore('productos', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('proveedores')) db.createObjectStore('proveedores', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('pedidos_proveedor')) db.createObjectStore('pedidos_proveedor', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('detalle_pedido')) db.createObjectStore('detalle_pedido', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('ventas')) db.createObjectStore('ventas', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('detalle_venta')) db.createObjectStore('detalle_venta', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('fiados')) db.createObjectStore('fiados', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('pagos_fiado')) db.createObjectStore('pagos_fiado', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('mermas')) db.createObjectStore('mermas', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('gastos')) db.createObjectStore('gastos', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('notas_credito')) db.createObjectStore('notas_credito', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('detalle_nota')) db.createObjectStore('detalle_nota', { keyPath: 'id', autoIncrement: true });
-      if (!db.objectStoreNames.contains('respaldos')) db.createObjectStore('respaldos', { keyPath: 'id' });
+      const txUp = e.target.transaction;
+      const ensure = (name, opts) => {
+        if (!db.objectStoreNames.contains(name)) return db.createObjectStore(name, opts);
+        return txUp.objectStore(name);
+      };
+      ensure('usuarios', { keyPath: 'id', autoIncrement: true });
+      ensure('clientes', { keyPath: 'id', autoIncrement: true });
+      ensure('productos', { keyPath: 'id', autoIncrement: true });
+      ensure('proveedores', { keyPath: 'id', autoIncrement: true });
+      ensure('pedidos_proveedor', { keyPath: 'id', autoIncrement: true });
+      const stDetPed = ensure('detalle_pedido', { keyPath: 'id', autoIncrement: true });
+      ensure('ventas', { keyPath: 'id', autoIncrement: true });
+      const stDetVen = ensure('detalle_venta', { keyPath: 'id', autoIncrement: true });
+      ensure('fiados', { keyPath: 'id', autoIncrement: true });
+      const stPagos = ensure('pagos_fiado', { keyPath: 'id', autoIncrement: true });
+      ensure('mermas', { keyPath: 'id', autoIncrement: true });
+      ensure('gastos', { keyPath: 'id', autoIncrement: true });
+      ensure('notas_credito', { keyPath: 'id', autoIncrement: true });
+      ensure('detalle_nota', { keyPath: 'id', autoIncrement: true });
+      ensure('respaldos', { keyPath: 'id' });
+      if (!stDetVen.indexNames.contains('ventaId')) stDetVen.createIndex('ventaId', 'ventaId');
+      if (!stDetPed.indexNames.contains('pedidoId')) stDetPed.createIndex('pedidoId', 'pedidoId');
+      if (!stPagos.indexNames.contains('fiadoId')) stPagos.createIndex('fiadoId', 'fiadoId');
     };
     // otras pestanas con la version vieja deben soltar la base o el upgrade queda bloqueado
-    req.onblocked = () => {};
+    req.onblocked = () => {
+      const avisa = () => {
+        if (window.JZAC && JZAC.ui && JZAC.ui.toast) {
+          JZAC.ui.toast('Cierra otras pestañas de JZAC ERP y recarga.', 'mal');
+        }
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avisa, { once: true });
+      else avisa();
+    };
     req.onsuccess = () => {
       const base = req.result;
       DB.db = base;

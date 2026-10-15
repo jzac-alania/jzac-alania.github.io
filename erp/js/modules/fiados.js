@@ -416,26 +416,41 @@
        <button class="btn btn-primario" id="guardar-pago">Registrar pago</button>`);
 
     m.raiz.querySelector('#guardar-pago').addEventListener('click', async () => {
-      const monto = Math.min(saldo, Math.max(0.01, Number(document.getElementById('p-monto').value || 0)));
+      const montoIngresado = Number(document.getElementById('p-monto').value || 0);
       const metodo = document.getElementById('p-metodo').value;
       await JZAC.db.ready;
       const t = DB.db.transaction(['fiados', 'pagos_fiado'], 'readwrite');
       const fs = t.objectStore('fiados');
       const ps = t.objectStore('pagos_fiado');
+      let monto = 0;
+      let fallo = null;
       const gf = fs.get(f.id);
       gf.onsuccess = () => {
         const f2 = gf.result;
+        if (!f2) { fallo = 'no-existe'; try { t.abort(); } catch (e) { } return; }
+        // El saldo se recalcula DENTRO de la transaccion (evita sobrepago por saldo viejo).
+        const saldo = Math.round((Number(f2.montoTotal || 0) - Number(f2.montoPagado || 0)) * 100) / 100;
+        if (saldo <= 0) { fallo = 'pagado'; try { t.abort(); } catch (e) { } return; }
+        monto = Math.min(saldo, Math.max(0.01, montoIngresado || saldo));
+        monto = Math.round(monto * 100) / 100;
         f2.montoPagado = Math.round((Number(f2.montoPagado || 0) + monto) * 100) / 100;
         if (Number(f2.montoPagado) >= Number(f2.montoTotal)) { f2.estado = 'Pagado'; f2.fechaPago = Date.now(); }
         fs.put(f2);
+        ps.add({ fiadoId: f.id, monto, metodo: metodo || 'Efectivo', fecha: Date.now() });
       };
-      ps.add({ fiadoId: f.id, monto, metodo: metodo || 'Efectivo', fecha: Date.now() });
-      t.oncomplete = () => {
+      const cierra = (ok) => {
+        if (!ok) {
+          if (fallo === 'pagado') JZAC.ui.toast('Esta cuenta ya está pagada.', 'mal');
+          else JZAC.ui.toast('Error al registrar el pago.', 'mal');
+          return;
+        }
         JZAC.ui.toast('Pago registrado.', 'bien');
         m.cerrar();
         refrescar();
       };
-      t.onerror = () => JZAC.ui.toast('Error al registrar el pago.', 'mal');
+      t.oncomplete = () => cierra(fallo == null);
+      t.onerror = () => cierra(false);
+      t.onabort = () => cierra(false);
     });
   }
 

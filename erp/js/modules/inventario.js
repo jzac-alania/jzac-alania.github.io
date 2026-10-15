@@ -267,10 +267,22 @@
       if (!p) { JZAC.ui.toast('Selecciona un producto.', 'mal'); return; }
       const cant = Math.max(1, Number(document.getElementById('mm-cant').value || 1));
       const motivo = document.getElementById('mm-motivo').value.trim();
-      JZAC.db.guardar('mermas', { producto: p.nombre, cantidad: cant, motivo, fecha: Date.now() });
       await JZAC.db.ready;
-      const nuevo = { ...p, stock: Math.max(0, Number(p.stock) - cant) };
-      await JZAC.db.guardar('productos', nuevo);
+      // Merma + stock en la misma transaccion: o se registran las dos o ninguna.
+      const t = DB.db.transaction(['mermas', 'productos'], 'readwrite');
+      t.objectStore('mermas').add({ producto: p.nombre, cantidad: cant, motivo, fecha: Date.now() });
+      const g = t.objectStore('productos').get(p.id);
+      g.onsuccess = () => {
+        const prod = g.result;
+        if (!prod) return;
+        prod.stock = Math.max(0, Number(prod.stock || 0) - cant);
+        t.objectStore('productos').put(prod);
+      };
+      await new Promise((resolve, reject) => {
+        t.oncomplete = resolve;
+        t.onerror = () => reject(t.error);
+        t.onabort = () => reject(t.error || new Error('Merma cancelada'));
+      }).catch(() => { throw new Error('No se pudo registrar la merma.'); });
       JZAC.ui.toast('Merma registrada y stock actualizado.', 'bien');
       m.cerrar();
       refrescar();

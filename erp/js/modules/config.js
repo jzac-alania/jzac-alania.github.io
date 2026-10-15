@@ -105,7 +105,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.10.0<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.11.0<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -149,10 +149,19 @@
         const data = JSON.parse(await file.text());
         if (typeof data !== 'object' || !Array.isArray(data.ventas)) throw new Error('Formato');
         if (!await JZAC.ui.confirmar('Restaurar este respaldo reemplazará TODOS los datos actuales de este dispositivo. ¿Continuar?', 'Restaurar respaldo')) return;
-        for (const t of TABLAS) {
-          await JZAC.db.limpiar(t);
-          for (const item of data[t] || []) await JZAC.db.guardar(t, item);
+        await JZAC.db.ready;
+        // Transaccion unica por tabla: o entra el respaldo completo, o no se toca nada.
+        const t = DB.db.transaction(TABLAS, 'readwrite');
+        for (const nombre of TABLAS) {
+          const st = t.objectStore(nombre);
+          st.clear();
+          for (const item of data[nombre] || []) st.put(item);
         }
+        await new Promise((resolve, reject) => {
+          t.oncomplete = resolve;
+          t.onerror = () => reject(t.error);
+          t.onabort = () => reject(t.error || new Error('Restauración cancelada'));
+        });
         if (Array.isArray(data.cortes_caja) && window.JZAC.cortes) JZAC.cortes.escribir(data.cortes_caja);
         JZAC.ui.toast('Respaldo restaurado.', 'bien');
         render(cont);
