@@ -113,9 +113,9 @@ async function licSincronizar() {
   }
 }
 
-async function licIniciarPrueba(nombre, correo) {
+async function licIniciarPrueba(nombre, correo, telefono) {
   try {
-    const est = await licApi('/trial', { deviceId: await licDeviceId(), nombre: nombre || '', correo: correo || '' });
+    const est = await licApi('/trial', { deviceId: await licDeviceId(), nombre: nombre || '', correo: correo || '', telefono: telefono || '' });
     licGuardarCache(est);
     return est;
   } catch (e) {

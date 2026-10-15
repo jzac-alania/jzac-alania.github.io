@@ -231,16 +231,29 @@
             <h3 class="center" style="margin:4px 0">Prueba gratis por 7 días</h3>
             <p class="texto-suave center" style="font-size:14px">Prueba el sistema completo. Cuando termine la prueba, activa tu licencia para seguir usando JZAC ERP de por vida.</p>
           </div>
+          <div class="campo mt16">
+            <label>Tu WhatsApp</label>
+            <input id="p-telefono" type="tel" inputmode="tel" placeholder="Ej: 999 888 777" autocomplete="off">
+            <div class="texto-suave" style="font-size:12px;margin-top:4px">Solo para tu prueba. Un número = una prueba.</div>
+          </div>
           <button class="btn btn-primario btn-bloco mt16" id="p-iniciar">Iniciar prueba de 7 días</button>
           <button class="btn btn-bloco mt16" id="p-codigo">Ya tengo un código de activación</button>
         </div>
       </div>`);
 
     o('p-iniciar').addEventListener('click', async () => {
+      const telField = o('p-telefono');
+      const tel = (window.__JZAC_TEL__ != null ? String(window.__JZAC_TEL__) : (telField ? telField.value : '')).trim();
+      const digits = tel.replace(/\D/g, '');
+      if (window.__JZAC_TEL__ == null && digits.length < 6) {
+        JZAC.ui.toast('Ingresa tu número de WhatsApp (con código de país).', 'mal');
+        if (telField) telField.focus();
+        return;
+      }
       const btn = o('p-iniciar');
       btn.disabled = true;
       btn.textContent = 'Iniciando…';
-      const est = await JZAC.lic.iniciarPrueba(u.nombreNegocio, u.correo);
+      const est = await JZAC.lic.iniciarPrueba(u.nombreNegocio, u.correo, digits);
       if (est && est.tipo === 'vencida') { vistaBloqueada(u); return; }
       JZAC.mostrarApp(u);
     });
