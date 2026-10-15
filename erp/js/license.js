@@ -113,9 +113,9 @@ async function licSincronizar() {
   }
 }
 
-async function licIniciarPrueba() {
+async function licIniciarPrueba(nombre, correo) {
   try {
-    const est = await licApi('/trial', { deviceId: await licDeviceId() });
+    const est = await licApi('/trial', { deviceId: await licDeviceId(), nombre: nombre || '', correo: correo || '' });
     licGuardarCache(est);
     return est;
   } catch (e) {
@@ -130,9 +130,9 @@ async function licIniciarPrueba() {
   }
 }
 
-async function licActivar(nombre, codigo) {
+async function licActivar(nombre, codigo, correo) {
   try {
-    const r = await licApi('/activate', { deviceId: await licDeviceId(), nombre, codigo });
+    const r = await licApi('/activate', { deviceId: await licDeviceId(), nombre, codigo, correo: correo || '' });
     if (r && r.ok) licGuardarCache({ tipo: 'activada', nombre, codigo, valido: true });
     return r;
   } catch (e) {

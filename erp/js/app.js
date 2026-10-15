@@ -240,7 +240,7 @@
       const btn = o('p-iniciar');
       btn.disabled = true;
       btn.textContent = 'Iniciando…';
-      const est = await JZAC.lic.iniciarPrueba();
+      const est = await JZAC.lic.iniciarPrueba(u.nombreNegocio, u.correo);
       if (est && est.tipo === 'vencida') { vistaBloqueada(u); return; }
       JZAC.mostrarApp(u);
     });
@@ -293,7 +293,7 @@
       if (!codigo) { JZAC.ui.toast('Ingresa tu código.', 'mal'); return; }
       const btn = o('lc-activar');
       btn.disabled = true;
-      const r = await JZAC.lic.activar(u.nombreNegocio, codigo);
+      const r = await JZAC.lic.activar(u.nombreNegocio, codigo, u.correo);
       if (!r || !r.ok) {
         btn.disabled = false;
         JZAC.ui.toast(r && r.error === 'sin-conexion' ? 'Sin conexión al activar. Intenta de nuevo.' : 'Código no válido para este negocio.', 'mal');
