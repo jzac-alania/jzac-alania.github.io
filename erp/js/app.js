@@ -236,8 +236,12 @@
         </div>
       </div>`);
 
-    o('p-iniciar').addEventListener('click', () => {
-      if (!localStorage.getItem('jzac_trial_inicio')) localStorage.setItem('jzac_trial_inicio', String(Date.now()));
+    o('p-iniciar').addEventListener('click', async () => {
+      const btn = o('p-iniciar');
+      btn.disabled = true;
+      btn.textContent = 'Iniciando…';
+      const est = await JZAC.lic.iniciarPrueba();
+      if (est && est.tipo === 'vencida') { vistaBloqueada(u); return; }
       JZAC.mostrarApp(u);
     });
     o('p-codigo').addEventListener('click', () => modalActivacion(u, true));
@@ -264,16 +268,14 @@
 
   async function continuarLicencia(u) {
     JZAC.backup.hacerSnapshot();
-    const lic = await JZAC.lic.validar();
     const splash = document.getElementById('splash');
     if (splash) splash.classList.add('hidden');
-    if (lic.tipo === 'activada' && lic.valido) { JZAC.mostrarApp(u); return; }
-    if (lic.tipo === 'prueba') {
-      if (!JZAC.lic.inicioPrueba()) { vistaIniciarPrueba(u); return; }
-      JZAC.mostrarApp(u);
-      return;
-    }
-    vistaBloqueada(u);
+    const est = JZAC.lic.estado();
+    JZAC.lic.sincronizar().catch(() => {});
+    if (est.tipo === 'activada') { JZAC.mostrarApp(u); return; }
+    if (est.tipo === 'prueba' && est.inicio) { JZAC.mostrarApp(u); return; }
+    if (est.tipo === 'vencida') { vistaBloqueada(u); return; }
+    vistaIniciarPrueba(u);
   }
 
   // ---------- modal activacion ----------
@@ -289,12 +291,14 @@
     m.raiz.querySelector('#lc-activar').addEventListener('click', async () => {
       const codigo = o('lc-codigo').value.trim().toUpperCase();
       if (!codigo) { JZAC.ui.toast('Ingresa tu código.', 'mal'); return; }
-      const valido = await JZAC.lic.esValido(u.nombreNegocio, codigo);
-      if (!valido) {
-        JZAC.ui.toast('Código no válido para este negocio.', 'mal');
+      const btn = o('lc-activar');
+      btn.disabled = true;
+      const r = await JZAC.lic.activar(u.nombreNegocio, codigo);
+      if (!r || !r.ok) {
+        btn.disabled = false;
+        JZAC.ui.toast(r && r.error === 'sin-conexion' ? 'Sin conexión al activar. Intenta de nuevo.' : 'Código no válido para este negocio.', 'mal');
         return;
       }
-      JZAC.lic.guardarActivacion(u.nombreNegocio, codigo);
       JZAC.ui.toast('Licencia activada. Gracias por confiar en JZAC.', 'bien');
       m.cerrar();
       continuarLicencia(u);
@@ -311,8 +315,15 @@
     m.raiz.querySelector('.modal-pie').appendChild(piso);
 
     m.raiz.querySelector('#lc-gen').addEventListener('click', async () => {
-      if (o('lc-pin').value !== JZAC.lic.PIN) { JZAC.ui.toast('PIN incorrecto.', 'mal'); return; }
-      const codigo = await JZAC.lic.codigo(u.nombreNegocio);
+      const btn = o('lc-gen');
+      btn.disabled = true;
+      const r = await JZAC.lic.generarCodigo(o('lc-pin').value.trim(), u.nombreNegocio);
+      btn.disabled = false;
+      if (!r || !r.ok) {
+        JZAC.ui.toast(r && r.error === 'pin-invalido' ? 'PIN incorrecto.' : 'No se pudo generar. Revisa la conexión.', 'mal');
+        return;
+      }
+      const codigo = r.codigo;
       o('lc-result').innerHTML = `
         <div class="card" style="background:var(--bg)">
           <div class="negrita center" style="letter-spacing:3px;font-size:18px">${codigo}</div>
