@@ -94,6 +94,17 @@
           </div>
 
           <div class="card mt16">
+            <div class="seccion-titulo" style="margin-top:0">Punto de venta (POS)</div>
+            <label class="pos-toggle" for="cf-camara">
+              <span>
+                <b>Escanear con la cámara siempre abierta</b>
+                <small>Pasa los productos frente a la cámara y se agregan solos al carrito, con un bip. Al escanear verás el <b>Ticket en vivo</b> con los productos y el total. Si lo desactivas, el botón "Escanear cámara" se oculta en la venta.</small>
+              </span>
+              <input type="checkbox" id="cf-camara" class="switch">
+            </label>
+          </div>
+
+          <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Cajón registrador (USB)</div>
             <div class="texto-suave" style="font-size:13px;margin-bottom:12px">Se abre automáticamente al cobrar en efectivo (pulso USB a la impresora térmica). Requiere Chrome o Edge.</div>
             <div class="texto-suave" style="font-size:13px;margin-bottom:12px" id="cf-cajon-estado">Esperando dispositivo...</div>
@@ -106,7 +117,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.16.0<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.17.0<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -204,6 +215,14 @@
         JZAC.ui.toast('Preferencia guardada.', 'bien');
       });
     }
+
+    // ---------- punto de venta (cámara) ----------
+    const elCamara = document.getElementById('cf-camara');
+    elCamara.checked = JZAC.ventaRapida.camaraActiva();
+    elCamara.addEventListener('change', () => {
+      localStorage.setItem('jzac_pos_camara', elCamara.checked ? '1' : '0');
+      JZAC.ui.toast(elCamara.checked ? 'Cámara activada.' : 'Cámara desactivada.', 'bien');
+    });
 
     // ---------- cajón registrador ----------
     if (window.JZAC.cajon) {

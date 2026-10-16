@@ -80,7 +80,8 @@ function licEstado() {
   const maxVisto = Math.max(ahora, Number.isFinite(previo) ? previo : 0);
   if (maxVisto > previo) { try { localStorage.setItem(LIC.TRIAL_MAX, String(maxVisto)); } catch (e) { /* sin storage */ } }
   if (maxVisto > c.fin) return { tipo: 'vencida', inicio: c.inicio, fin: c.fin };
-  return { tipo: 'prueba', inicio: c.inicio, fin: c.fin, diasRestantes: Math.max(0, Math.ceil((c.fin - maxVisto) / 86400000)) };
+  const dias = Math.max(0, Math.min(LIC.DIAS_PRUEBA, Math.ceil((c.fin - maxVisto) / 86400000)));
+  return { tipo: 'prueba', inicio: c.inicio, fin: c.fin, diasRestantes: dias };
 }
 
 async function licMigrar() {

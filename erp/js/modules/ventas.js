@@ -558,10 +558,7 @@
       <button class="btn btn-sm" id="volver" style="margin-bottom:14px">← Volver a ventas</button>
       <div class="grid pos-grid">
         <div class="card">
-          <div class="panel-hdr" style="margin-bottom:10px">
-            <div class="seccion-titulo" style="margin:0">1 · Productos</div>
-            <button class="btn btn-sm btn-suave" id="pos-config" title="Configuración del POS">⚙️ Configuración POS</button>
-          </div>
+          <div class="seccion-titulo" style="margin-top:0">1 · Productos</div>
           <div id="mas-vendidos" class="mas-vendidos" style="${topSell.length ? '' : 'display:none'}"></div>
           <button class="btn btn-sm" id="repetir-ultima" style="${detUltima.length ? '' : 'display:none'};margin-bottom:12px;border:1px dashed var(--dorado)" title="Vuelve a cargar los productos de la última venta">↻ Repetir última venta</button>
           <div class="scan-btn-fila" style="margin-bottom:13px">
@@ -573,7 +570,7 @@
             </div>
             <button class="btn" id="escanear-venta" title="Escanear con la cámara del celular"> Escanear cámara</button>
           </div>
-          <div id="camara-off" class="texto-suave" style="font-size:12px;margin:-4px 0 12px;display:none">📷 Cámara desactivada · actívala en <b>Configuración POS</b>.</div>
+          <div id="camara-off" class="texto-suave" style="font-size:12px;margin:-4px 0 12px;display:none">📷 Cámara desactivada · actívala en el módulo <b>Configuración</b>.</div>
           <div id="grilla-venta" style="margin-bottom:14px"></div>
           <div class="fila">
             <div class="campo">
@@ -993,7 +990,7 @@
       if (scanRapido) scanRapido.focus();
     });
 
-    // ---------- configuración del POS (engranaje) ----------
+    // ---------- cámara del POS (se activa/desactiva en el módulo Configuración) ----------
     function aplicarCamara() {
       const on = posCamaraActiva();
       const btn = document.getElementById('escanear-venta');
@@ -1001,45 +998,6 @@
       if (btn) btn.style.display = on ? '' : 'none';
       if (aviso) aviso.style.display = on ? 'none' : '';
     }
-
-    function modalConfigPos() {
-      const camara = posCamaraActiva();
-      const m = JZAC.ui.modal(`
-        <div class="modal-hdr"><h3>⚙️ Configuración POS</h3><button class="cierre" data-cerrar>×</button></div>
-        <div class="seccion-titulo" style="margin-top:0">Caja registradora</div>
-        <label class="pos-toggle" for="pos-camara">
-          <span>
-            <b>Escanear con la cámara siempre abierta</b>
-            <small>Pasa los productos frente a la cámara y se agregan solos al carrito, con un bip, como en el supermercado. Al escanear verás el <b>Ticket en vivo</b> con el total.</small>
-          </span>
-          <input type="checkbox" id="pos-camara" class="switch" ${camara ? 'checked' : ''}>
-        </label>
-        <div class="seccion-titulo">Mantenimiento</div>
-        <div class="pos-aviso">💡 ¿Te faltan productos o stock nuevo? Eso no se arregla aquí: agrégalos o actualízalos en el módulo <b>Inventario</b>.</div>
-        <div class="pos-peligro">
-          <button class="btn btn-sm btn-peligro" id="pos-reset">🔄 Reiniciar el POS</button>
-          <small>Borra el carrito y vuelve a cargar el POS.</small>
-        </div>`,
-        `<button class="btn" data-cerrar>Cancelar</button>
-         <button class="btn btn-primario" id="pos-guardar">Guardar cambios</button>`);
-
-      m.raiz.querySelector('#pos-reset').addEventListener('click', async () => {
-        if (items.length) {
-          const ok = await JZAC.ui.confirmar('Se borrará el carrito actual. ¿Reiniciar el POS?', 'Reiniciar el POS');
-          if (!ok) return;
-        }
-        m.cerrar();
-        JZAC.ir('ventas/nueva');
-      });
-      m.raiz.querySelector('#pos-guardar').addEventListener('click', () => {
-        const on = m.raiz.querySelector('#pos-camara').checked;
-        try { localStorage.setItem(POS_CAMARA_KEY, on ? '1' : '0'); } catch (e) { /* sin storage */ }
-        m.cerrar();
-        aplicarCamara();
-        JZAC.ui.toast(on ? 'Cámara activada.' : 'Cámara desactivada.', 'bien');
-      });
-    }
-    document.getElementById('pos-config').addEventListener('click', modalConfigPos);
     aplicarCamara();
 
     // ---------- más vendidos (un toque) ----------
@@ -1328,7 +1286,8 @@
   // Flujo rápido de caja (localStorage): '0' desactiva, cualquier otro valor activa.
   window.JZAC.ventaRapida = {
     modoRapido: () => localStorage.getItem('jzac_modo_rapido') !== '0',
-    autoImprime: () => localStorage.getItem('jzac_autoimp') !== '0'
+    autoImprime: () => localStorage.getItem('jzac_autoimp') !== '0',
+    camaraActiva: posCamaraActiva
   };
   window.JZAC.modulos.ventas = { render };
 })();
