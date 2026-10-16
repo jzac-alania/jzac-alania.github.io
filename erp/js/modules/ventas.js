@@ -743,6 +743,7 @@
       else { items.push({ productoId: p.id, nombre: p.nombre, cantidad: nuevo, precio, costo: Number(p.precioCompra || 0), esPeso: !!p.ventaPeso }); }
       pintaItems();
       destellaCarrito();
+      if (window.JZAC.refrescarTicketScan) JZAC.refrescarTicketScan();
       return true;
     }
 
@@ -967,6 +968,8 @@
       const res = await JZAC.escanear({
         titulo: 'Escanear productos',
         multiple: true,
+        ticket: () => ({ items, total: items.reduce((a, it) => a + it.precio * it.cantidad, 0) }),
+        onCobrar: () => registrarAhora(),
         onDeteccion: (texto) => {
           const qty = extraeCantidad(texto);
           const p = encuentraProducto(qty ? qty.resto : texto);

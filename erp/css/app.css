@@ -362,6 +362,23 @@ tbody tr:hover { background: rgba(233, 161, 59, .05); }
 }
 .scan-btn-fila { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
 .scan-btn-fila > div { flex: 1 1 220px; min-width: 0; }
+.scan-ticket { margin-top: 10px; border: 1px solid var(--borde); border-radius: 12px; background: var(--superficie); overflow: hidden; }
+.ticket-cab { padding: 9px 12px; font-size: 13px; font-weight: 600; color: var(--texto); border-bottom: 1px solid var(--borde); }
+.ticket-lista { max-height: 30dvh; overflow-y: auto; }
+.ticket-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--borde); }
+.ticket-item:last-child { border-bottom: 0; }
+.ticket-item.nuevo { animation: ticketIn .4s ease; }
+@keyframes ticketIn { from { background: rgba(24, 178, 104, .20); } to { background: transparent; } }
+.ticket-num { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11.5px; background: var(--superficie-2); color: var(--texto-suave); font-weight: 600; }
+.ticket-nom { flex: 1 1 auto; min-width: 0; font-size: 13.5px; color: var(--texto); line-height: 1.25; }
+.ticket-nom small { display: block; color: var(--texto-suave); font-size: 11.5px; margin-top: 1px; }
+.ticket-imp { flex: 0 0 auto; font-weight: 600; font-size: 13.5px; }
+.ticket-vacio { padding: 16px 12px; color: var(--texto-suave); font-size: 12.5px; text-align: center; }
+.ticket-total { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-top: 1px solid var(--borde); }
+.ticket-total span { font-size: 12px; letter-spacing: .06em; color: var(--texto-suave); font-weight: 600; }
+.ticket-total b { font-size: 20px; }
+.ticket-btns { display: flex; gap: 8px; padding: 0 12px 12px; }
+.ticket-btns .btn { flex: 1; }
 .pos-carrito { container-type: inline-size; }
 .pos-carrito .tabla-wrap table { width: 100%; min-width: 0; table-layout: fixed; }
 .pos-carrito .tabla-wrap th { padding: 7px 4px; font-size: 11.5px; white-space: nowrap; overflow: hidden; }

@@ -7,6 +7,7 @@
 
   let detectorNativo = null;
   let soporteNativo = null;
+  let repintarTicketActual = null;
 
   async function preparaNativo() {
     if (soporteNativo !== null) return soporteNativo;
@@ -64,6 +65,8 @@
     const titulo = (opciones && opciones.titulo) || 'Escanear código';
     const multiple = !!(opciones && opciones.multiple && opciones.onDeteccion);
     const onDet = (opciones && opciones.onDeteccion) || null;
+    const ticket = (multiple && opciones.ticket) ? opciones.ticket : null;
+    const onCobrar = (multiple && opciones.onCobrar) ? opciones.onCobrar : null;
     const m = modalPropio(`
       <div class="modal-hdr"><h3>${titulo}</h3><button class="cierre" id="scan-cerrar">×</button></div>
       <div class="scan-caja">
@@ -71,6 +74,7 @@
         <div class="scan-reticula"></div>
         <div class="scan-aviso" id="scan-aviso">Apunta la cámara al código...</div>
       </div>
+      <div id="scan-ticket" class="scan-ticket" style="display:none"></div>
       <input id="scan-manual" class="scan-manual" placeholder="O escribe el código a mano..." autocomplete="off">
       <div id="scan-detalle" class="texto-suave" style="font-size:12px;margin-top:6px"></div>`,
       `<button class="btn" id="scan-cancelar">Cancelar</button>
@@ -81,6 +85,39 @@
     const detalle = m.raiz.querySelector('#scan-detalle');
     const manual = m.raiz.querySelector('#scan-manual');
     const btnConf = m.raiz.querySelector('#scan-conf');
+    const cajaTicket = m.raiz.querySelector('#scan-ticket');
+
+    function pintaTicket() {
+      if (!ticket || !cajaTicket) return;
+      let data = null;
+      try { data = ticket(); } catch (e) { data = null; }
+      const its = (data && data.items) || [];
+      const total = Number((data && data.total) || 0);
+      cajaTicket.style.display = '';
+      cajaTicket.innerHTML =
+        `<div class="ticket-cab">Ticket en vivo · ${its.length} ${its.length === 1 ? 'producto' : 'productos'}</div>` +
+        (its.length
+          ? `<div class="ticket-lista">${its.map((it, i) => `
+              <div class="ticket-item${i === its.length - 1 ? ' nuevo' : ''}">
+                <span class="ticket-num">${i + 1}</span>
+                <span class="ticket-nom">${JZAC.ui.esc(it.nombre)}<small>${JZAC.ui.dinero(it.precio)} c/u · ${it.esPeso ? JZAC.ui.n(it.cantidad) + ' kg' : JZAC.ui.n(it.cantidad) + ' u'}</small></span>
+                <span class="ticket-imp">${JZAC.ui.dinero(it.precio * it.cantidad)}</span>
+              </div>`).join('')}</div>`
+          : '<div class="ticket-vacio">Apunta la cámara a un código: los productos van apareciendo aquí solos.</div>') +
+        `<div class="ticket-total"><span>TOTAL</span><b>${JZAC.ui.dinero(total)}</b></div>
+         <div class="ticket-btns">
+           <button class="btn" id="scan-ver">Ver carrito</button>
+           <button class="btn btn-primario" id="scan-cobrar">Cobrar</button>
+         </div>`;
+      const ver = cajaTicket.querySelector('#scan-ver');
+      if (ver) ver.addEventListener('click', () => terminar(null));
+      const cob = cajaTicket.querySelector('#scan-cobrar');
+      if (cob) cob.addEventListener('click', () => { const cb = onCobrar; terminar(null); if (cb) cb(); });
+      const lista = cajaTicket.querySelector('.ticket-lista');
+      if (lista) lista.scrollTop = lista.scrollHeight;
+    }
+    repintarTicketActual = ticket ? pintaTicket : null;
+    if (ticket) pintaTicket();
 
     let stream = null;
     let parado = false;
@@ -105,6 +142,7 @@
       agregados++;
       if (btnConf) btnConf.textContent = `Listo (${agregados})`;
       if (aviso) aviso.textContent = `✓ ${agregados} agregado(s) · apunta el siguiente`;
+      pintaTicket();
       return true;
     }
 
@@ -121,6 +159,7 @@
       if (fin) return;
       fin = true;
       parado = true;
+      repintarTicketActual = null;
       detener();
       m.cerrar();
       resolver(valor);
@@ -238,4 +277,5 @@
   window.JZAC = window.JZAC || {};
   window.JZAC.escanear = escanear;
   window.JZAC.productoPorCodigo = productoPorCodigo;
+  window.JZAC.refrescarTicketScan = () => { if (repintarTicketActual) repintarTicketActual(); };
 })();
