@@ -39,7 +39,9 @@
           pagoSaldo: extra.pagoSaldo != null ? Math.round(Number(extra.pagoSaldo) * 100) / 100 : null,
           metodo2: extra.metodo2 || null,
           ruc: extra.ruc || '',
+          dni: extra.dni || '',
           razonSocial: extra.razonSocial || '',
+          direccion: extra.direccion || '',
           subtotal: Math.round(sub * 100) / 100,
           descuento: Math.round(Number(descuento || 0) * 100) / 100,
           total: Math.round(total * 100) / 100,
@@ -125,7 +127,7 @@
     const filas = det.map((d) =>
       `<tr><td>${JZAC.ui.esc(d.producto)}${Number(d.cantidad) > 1 ? ` x${JZAC.ui.n(d.cantidad)}${d.esPeso ? ' kg' : ''}` : (d.esPeso ? ` x${JZAC.ui.n(d.cantidad)} kg` : '')}</td><td class="r">${JZAC.ui.dinero(d.precio)}</td><td class="r">${JZAC.ui.dinero(d.total)}</td></tr>`
     ).join('');
-    const tipo = v.esFactura ? 'FACTURA' : 'BOLETA';
+    const tipo = v.esFactura ? 'FACTURA' : 'NOTA DE VENTA';
     const pagos = [];
     if (v.metodoPago === 'Mixto' || (v.pagoEfectivo != null && v.pagoSaldo != null)) {
       pagos.push(`Efectivo: ${JZAC.ui.dinero(v.pagoEfectivo)}`);
@@ -142,7 +144,8 @@
         ${c(JZAC.ui.fh(v.fecha))}
         <div class="sep"></div>
         ${c(`<b>${tipo} ${JZAC.ui.esc(v.boleta)}</b>`)}
-        ${v.esFactura ? `${c('RUC: ' + JZAC.ui.esc(v.ruc || '—'))}${c('Razón social: ' + JZAC.ui.esc(v.razonSocial || v.cliente || '—'))}` : c('Cliente: ' + JZAC.ui.esc(v.cliente || '—'))}
+        ${v.esFactura ? `${c('RUC: ' + JZAC.ui.esc(v.ruc || '—'))}${c('Razón social: ' + JZAC.ui.esc(v.razonSocial || v.cliente || '—'))}${v.direccion ? c('Dirección: ' + JZAC.ui.esc(v.direccion)) : ''}` : `${c('Cliente: ' + JZAC.ui.esc(v.cliente || '—'))}${v.dni ? c('DNI: ' + JZAC.ui.esc(v.dni)) : ''}`}
+        ${v.sunat ? c(`Comprobante SUNAT: ${JZAC.ui.esc(v.sunat.serie)}-${JZAC.ui.esc(v.sunat.numero)}`) : ''}
         ${pagos.map((p) => c('Pago: ' + JZAC.ui.esc(p))).join('')}
         <div class="sep"></div>
         <table>
@@ -156,6 +159,7 @@
         <div class="sep"></div>
         ${c('¡Gracias por su compra!')}
         ${c('JZAC ERP · Software que trabaja por tu negocio')}
+        ${c(v.esFactura ? 'Representación impresa. La factura electrónica se emite y valida en SUNAT SOL.' : 'Documento interno de venta. No reemplaza comprobante electrónico SUNAT.')}
       </div>`;
   }
 
@@ -373,6 +377,10 @@
   async function vistaLista(cont, u) {
     const ventasAll = await JZAC.db.listar('ventas');
     const detAll = await JZAC.db.listar('detalle_venta');
+    const sunatAll = await JZAC.db.listar('comprobantes_sunat');
+    const sunatByVenta = {};
+    sunatAll.forEach((c) => { sunatByVenta[c.ventaId] = c; });
+    ventasAll.forEach((v) => { if (sunatByVenta[v.id]) v.sunat = sunatByVenta[v.id]; });
     ventasAll.sort((a, b) => b.fecha - a.fecha);
     const detvByVenta = {};
     detAll.forEach((d) => { (detvByVenta[d.ventaId] = detvByVenta[d.ventaId] || []).push(d); });
@@ -431,7 +439,7 @@
             <tr><th>Boleta</th><th>Fecha</th><th>Cliente</th><th>Pago</th><th>Items</th><th class="monto">Total</th><th></th></tr>
             ${ventas.map((v) => `
               <tr>
-                <td class="negrita">${JZAC.ui.esc(v.boleta)}</td>
+                <td class="negrita">${JZAC.ui.esc(v.boleta)}${v.sunat ? `<div class="badge badge-verde" style="margin-top:3px">SUNAT ${JZAC.ui.esc(v.sunat.serie)}-${JZAC.ui.esc(v.sunat.numero)}</div>` : ''}</td>
                 <td>${JZAC.ui.fh(v.fecha)}</td>
                 <td>${JZAC.ui.esc(v.esFactura ? (v.razonSocial || v.ruc || v.cliente || '—') : (v.cliente || '—'))}</td>
                 <td><span class="badge badge-gris">${JZAC.ui.esc(v.metodoPago || 'Efectivo')}</span></td>
@@ -441,6 +449,7 @@
                   <div class="acciones">
                     <button class="btn btn-sm" data-ver="${v.id}">Ver</button>
                     <button class="btn btn-sm btn-dorado" data-reimp="${v.id}" title="Reimprimir boleta/factura">Imprimir</button>
+                    <button class="btn btn-sm" data-sunat="${v.id}" title="Registrar el comprobante emitido en SUNAT SOL">${v.sunat ? 'SUNAT ✓' : 'SUNAT'}</button>
                     <button class="btn btn-sm btn-peligro" data-anular="${v.id}">Anular</button>
                   </div>
                 </td>
@@ -453,6 +462,10 @@
       cont.querySelectorAll('[data-reimp]').forEach((b) => b.addEventListener('click', () => {
         const v = ventas.find((x) => x.id === Number(b.dataset.reimp));
         imprimirBoleta(u, v, detvByVenta[v.id] || []);
+      }));
+      cont.querySelectorAll('[data-sunat]').forEach((b) => b.addEventListener('click', () => {
+        const v = ventas.find((x) => x.id === Number(b.dataset.sunat));
+        modalSunat(v, () => vistaLista(cont, u));
       }));
       cont.querySelectorAll('[data-anular]').forEach((b) => b.addEventListener('click', async () => {
         const v = ventas.find((x) => x.id === Number(b.dataset.anular));
@@ -479,6 +492,51 @@
     pintaTabla();
   }
 
+  async function modalSunat(v, refrescar) {
+    const todos = await JZAC.db.listar('comprobantes_sunat');
+    const actual = todos.find((c) => c.ventaId === v.id);
+    const hoy = new Date().toISOString().slice(0, 10);
+    const serie = actual ? actual.serie : (v.esFactura ? 'F001' : 'B001');
+    const m = JZAC.ui.modal(`
+      <div class="modal-hdr"><h3>Registrar comprobante SUNAT</h3><button class="cierre" data-cerrar>×</button></div>
+      <p class="texto-suave" style="margin:0 0 10px">Venta ${JZAC.ui.esc(v.boleta)} · ${JZAC.ui.dinero(v.total)} · ${v.esFactura ? 'Factura' : 'Nota de venta'}</p>
+      <div class="fila">
+        <div class="campo"><label>Serie</label><input id="su-serie" value="${JZAC.ui.esc(serie)}" maxlength="10"></div>
+        <div class="campo"><label>Número</label><input id="su-numero" value="${JZAC.ui.esc(actual ? actual.numero : '')}" placeholder="00000123"></div>
+      </div>
+      <div class="fila">
+        <div class="campo"><label>Fecha de emisión</label><input type="date" id="su-fecha" value="${JZAC.ui.esc(actual ? actual.fechaEmision : hoy)}"></div>
+        <div class="campo"><label>Estado</label><select id="su-estado">
+          ${['emitida', 'aceptada', 'observada', 'anulada'].map((e) => `<option value="${e}" ${actual && actual.estado === e ? 'selected' : ''}>${e[0].toUpperCase() + e.slice(1)}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="campo"><label>Notas (opcional)</label><input id="su-notas" value="${JZAC.ui.esc(actual ? (actual.notas || '') : '')}" placeholder="Código CDR u observaciones"></div>
+      <p class="texto-suave" style="font-size:12px">Registra aquí el comprobante que emitiste en SUNAT SOL. El sistema no envía documentos a SUNAT.</p>`,
+      `<button class="btn" data-cerrar>Cancelar</button><button class="btn btn-primario" id="su-guardar">Guardar</button>`);
+    m.raiz.querySelector('#su-guardar').addEventListener('click', async () => {
+      const serieV = m.raiz.querySelector('#su-serie').value.trim().toUpperCase();
+      const numeroV = m.raiz.querySelector('#su-numero').value.trim();
+      const fechaV = m.raiz.querySelector('#su-fecha').value;
+      if (!serieV || !numeroV) { JZAC.ui.toast('Ingresa serie y número.', 'mal'); return; }
+      if (!fechaV) { JZAC.ui.toast('Ingresa la fecha de emisión.', 'mal'); return; }
+      const obj = {
+        ventaId: v.id,
+        tipo: v.esFactura ? 'factura' : 'boleta',
+        serie: serieV,
+        numero: numeroV,
+        fechaEmision: fechaV,
+        estado: m.raiz.querySelector('#su-estado').value,
+        notas: m.raiz.querySelector('#su-notas').value.trim(),
+        creado: actual ? actual.creado : Date.now()
+      };
+      if (actual) obj.id = actual.id;
+      await JZAC.db.guardar('comprobantes_sunat', obj);
+      JZAC.ui.toast('Comprobante SUNAT registrado.', 'bien');
+      m.cerrar();
+      refrescar();
+    });
+  }
+
   function detalleModal(u, v, det) {
     const filas = det.map((d) => `
       <tr><td>${JZAC.ui.esc(d.producto)}</td><td class="center">${JZAC.ui.n(d.cantidad)}${d.esPeso ? ' kg' : ''}</td><td class="monto">${JZAC.ui.dinero(d.precio)}</td><td class="monto">${JZAC.ui.dinero(d.total)}</td></tr>`).join('');
@@ -487,6 +545,9 @@
       <div class="texto-suave" style="margin-bottom:10px">
         ${JZAC.ui.fh(v.fecha)} · ${v.esFactura ? JZAC.ui.esc((v.razonSocial || v.ruc || 'Sin cliente')) : JZAC.ui.esc(v.cliente || 'Sin cliente')} · <span class="badge badge-gris">${JZAC.ui.esc(v.metodoPago)}</span>
         ${v.esFactura && v.ruc ? `<div style="margin-top:4px">RUC: ${JZAC.ui.esc(v.ruc)}</div>` : ''}
+        ${v.esFactura && v.direccion ? `<div style="margin-top:4px">Dirección: ${JZAC.ui.esc(v.direccion)}</div>` : ''}
+        ${!v.esFactura && v.dni ? `<div style="margin-top:4px">DNI: ${JZAC.ui.esc(v.dni)}</div>` : ''}
+        ${v.sunat ? `<div style="margin-top:4px">Comprobante SUNAT: ${JZAC.ui.esc(v.sunat.serie)}-${JZAC.ui.esc(v.sunat.numero)}</div>` : ''}
       </div>
       <div class="tabla-wrap"><table>
         <tr><th>Producto</th><th class="center">Cant.</th><th class="monto">Precio</th><th class="monto">Total</th></tr>
@@ -609,16 +670,26 @@
             <label>Cliente</label>
             <select id="sel-cliente">
               <option value="">Sin cliente</option>
-              ${clientes.map((c) => `<option data-ruc="${JZAC.ui.esc(c.ruc || '')}" data-razon="${JZAC.ui.esc(c.razonSocial || '')}">${JZAC.ui.esc(c.nombre)}</option>`).join('')}
+              ${clientes.map((c) => `<option data-ruc="${JZAC.ui.esc(c.ruc || '')}" data-dni="${JZAC.ui.esc(c.dni || '')}" data-razon="${JZAC.ui.esc(c.razonSocial || '')}" data-direc="${JZAC.ui.esc(c.direccion || '')}">${JZAC.ui.esc(c.nombre)}</option>`).join('')}
             </select>
+          </div>
+          <div class="campo" id="panel-dni">
+            <label>DNI del cliente (opcional)</label>
+            <div style="display:flex;gap:6px">
+              <input id="in-dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos">
+              <button type="button" class="btn btn-sm" id="btn-dni">🔎 Consultar</button>
+            </div>
+            <div class="texto-suave" id="dni-aviso" style="font-size:12px;margin-top:4px"></div>
           </div>
           <div class="campo" style="display:flex;align-items:center;gap:8px;margin-top:-2px">
             <input type="checkbox" id="chk-factura" style="width:18px;height:18px">
             <label for="chk-factura" style="margin:0">Emitir factura (con RUC)</label>
           </div>
           <div class="fila" id="panel-factura" style="display:none">
-            <div class="campo"><label>RUC</label><input id="in-ruc" inputmode="numeric" maxlength="11" placeholder="Ej.: 20123456789"></div>
+            <div class="campo"><label>RUC</label><div style="display:flex;gap:6px"><input id="in-ruc" inputmode="numeric" maxlength="11" placeholder="Ej.: 20123456789"><button type="button" class="btn btn-sm" id="btn-ruc">🔎</button></div></div>
             <div class="campo"><label>Razón social</label><input id="in-razon" placeholder="Nombre o razón social"></div>
+            <div class="campo"><label>Dirección fiscal</label><input id="in-direc" placeholder="Dirección para la factura"></div>
+            <div class="texto-suave" id="ruc-aviso" style="font-size:12px"></div>
           </div>
           <div class="campo">
             <label>Método de pago</label>
@@ -1104,15 +1175,38 @@
     document.getElementById('in-efectivo').addEventListener('input', actualizaTot);
     document.getElementById('sel-metodo2').addEventListener('change', actualizaTot);
     document.getElementById('chk-factura').addEventListener('change', () => {
-      document.getElementById('panel-factura').style.display = document.getElementById('chk-factura').checked ? '' : 'none';
+      const fac = document.getElementById('chk-factura').checked;
+      document.getElementById('panel-factura').style.display = fac ? '' : 'none';
+      document.getElementById('panel-dni').style.display = fac ? 'none' : '';
     });
     document.getElementById('sel-cliente').addEventListener('change', () => {
       const op = document.getElementById('sel-cliente').selectedOptions[0];
-      if (op && op.dataset.ruc) {
-        document.getElementById('in-ruc').value = op.dataset.ruc;
-        document.getElementById('in-razon').value = op.dataset.razon;
-      }
+      if (!op) return;
+      document.getElementById('in-dni').value = op.dataset.dni || '';
+      document.getElementById('in-ruc').value = op.dataset.ruc || '';
+      document.getElementById('in-razon').value = op.dataset.razon || '';
+      document.getElementById('in-direc').value = op.dataset.direc || '';
+      document.getElementById('dni-aviso').textContent = '';
+      document.getElementById('ruc-aviso').textContent = '';
     });
+    async function consultaDoc(tipo) {
+      const input = document.getElementById(tipo === 'ruc' ? 'in-ruc' : 'in-dni');
+      const aviso = document.getElementById(tipo === 'ruc' ? 'ruc-aviso' : 'dni-aviso');
+      aviso.textContent = 'Consultando…';
+      try {
+        const d = await JZAC.padron.consultar(tipo, input.value);
+        input.value = d.numero;
+        if (tipo === 'ruc') {
+          document.getElementById('in-razon').value = d.razonSocial || '';
+          document.getElementById('in-direc').value = d.direccion || '';
+          aviso.textContent = `${d.razonSocial}${d.estado ? ' · ' + d.estado : ''}`;
+        } else {
+          aviso.textContent = 'DNI: ' + (d.nombre || '');
+        }
+      } catch (e) { aviso.textContent = e.message; }
+    }
+    document.getElementById('btn-ruc').addEventListener('click', () => consultaDoc('ruc'));
+    document.getElementById('btn-dni').addEventListener('click', () => consultaDoc('dni'));
 
     function leeDocFiscal(docFiscal, cli, m, dsc) {
       const extra = {};
@@ -1139,6 +1233,11 @@
         extra.factura = true;
         extra.ruc = ruc;
         extra.razonSocial = razon;
+        extra.direccion = document.getElementById('in-direc').value.trim();
+      } else {
+        const dni = document.getElementById('in-dni').value.replace(/\D/g, '');
+        if (dni && !/^\d{8}$/.test(dni)) { JZAC.ui.toast('DNI inválido: escribe 8 números.', 'mal'); return null; }
+        if (dni) extra.dni = dni;
       }
       return extra;
     }
@@ -1167,9 +1266,15 @@
       document.getElementById('in-efectivo').value = '0';
       document.getElementById('sel-cliente').value = '';
       const chk = document.getElementById('chk-factura');
-      if (chk.checked) { chk.checked = false; document.getElementById('panel-factura').style.display = 'none'; }
+      if (chk.checked) { chk.checked = false; }
+      document.getElementById('panel-factura').style.display = 'none';
+      document.getElementById('panel-dni').style.display = '';
       document.getElementById('in-ruc').value = '';
       document.getElementById('in-razon').value = '';
+      document.getElementById('in-dni').value = '';
+      document.getElementById('in-direc').value = '';
+      document.getElementById('dni-aviso').textContent = '';
+      document.getElementById('ruc-aviso').textContent = '';
       document.getElementById('sel-metodo').value = 'Efectivo';
       recibidoManual = false;
       sincPanelPago();
@@ -1198,7 +1303,9 @@
           boleta: res.boleta,
           esFactura: !!extra.factura,
           ruc: extra.ruc || '',
+          dni: extra.dni || '',
           razonSocial: extra.razonSocial || '',
+          direccion: extra.direccion || '',
           fecha: Date.now(),
           cliente: cli,
           metodoPago: extra.factura ? metodo : (metodo === 'Mixto' ? `Mixto (Efectivo+${extra.metodo2})` : metodo),

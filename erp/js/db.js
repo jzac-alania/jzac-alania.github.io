@@ -2,7 +2,7 @@
 // JZAC ERP - Capa de datos (IndexedDB) · esquema 16 tablas
 // ============================================================
 const DB_NAME = 'jzac_erp_web';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 const DB = {
   db: null,
@@ -34,6 +34,8 @@ function open() {
       ensure('notas_credito', { keyPath: 'id', autoIncrement: true });
       ensure('detalle_nota', { keyPath: 'id', autoIncrement: true });
       ensure('respaldos', { keyPath: 'id' });
+      const stSunat = ensure('comprobantes_sunat', { keyPath: 'id', autoIncrement: true });
+      if (!stSunat.indexNames.contains('ventaId')) stSunat.createIndex('ventaId', 'ventaId');
       if (!stDetVen.indexNames.contains('ventaId')) stDetVen.createIndex('ventaId', 'ventaId');
       if (!stDetPed.indexNames.contains('pedidoId')) stDetPed.createIndex('pedidoId', 'pedidoId');
       if (!stPagos.indexNames.contains('fiadoId')) stPagos.createIndex('fiadoId', 'fiadoId');

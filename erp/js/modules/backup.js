@@ -4,7 +4,7 @@
 (function () {
   const TABLAS = ['usuarios', 'clientes', 'productos', 'proveedores', 'pedidos_proveedor',
     'detalle_pedido', 'ventas', 'detalle_venta', 'fiados', 'pagos_fiado',
-    'mermas', 'gastos', 'notas_credito', 'detalle_nota'];
+    'mermas', 'gastos', 'notas_credito', 'detalle_nota', 'comprobantes_sunat'];
   const NEGOCIO = TABLAS.filter((t) => t !== 'usuarios');
   const CLAVE_EXPORT = 'jzac_ultima_export';
   const CLAVE_SNAPSHOT = 'jzac_ultimo_snapshot';

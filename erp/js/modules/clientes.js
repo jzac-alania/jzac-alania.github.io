@@ -25,7 +25,7 @@
             ${clientes.map((c) => {
               const deuda = deudas[c.nombre] || 0;
               return `<tr>
-                <td class="negrita">${JZAC.ui.esc(c.nombre)}</td>
+                <td class="negrita">${JZAC.ui.esc(c.nombre)}${c.dni || c.ruc ? `<div class="texto-suave" style="font-size:12px">${c.ruc ? 'RUC ' + JZAC.ui.esc(c.ruc) : 'DNI ' + JZAC.ui.esc(c.dni)}</div>` : ''}</td>
                 <td>${c.whatsapp ? `<a target="_blank" rel="noopener" href="https://wa.me/${String(c.whatsapp).replace(/[^0-9]/g, '')}">${JZAC.ui.esc(c.whatsapp)}</a>` : '—'}</td>
                 <td>${JZAC.ui.esc(c.telefono || '—')}</td>
                 <td class="monto">${deuda > 0 ? `<span class="badge badge-rojo">${JZAC.ui.dinero(deuda)}</span>` : JZAC.ui.dinero(0)}</td>
@@ -64,14 +64,39 @@
         <div class="campo"><label>WhatsApp (con código)</label><input id="c-wha" placeholder="51 999 000 000" value="${JZAC.ui.esc(c ? (c.whatsapp || '') : '')}"></div>
         <div class="campo"><label>Teléfono</label><input id="c-tel" value="${JZAC.ui.esc(c ? (c.telefono || '') : '')}"></div>
       </div>
-      <div class="campo"><label>Dirección</label><input id="c-direc" value="${JZAC.ui.esc(c ? (c.direccion || '') : '')}"></div>
       <div class="fila">
-        <div class="campo"><label>RUC (opcional, para facturas)</label><input id="c-ruc" inputmode="numeric" maxlength="11" placeholder="Ej.: 20123456789" value="${JZAC.ui.esc(c ? (c.ruc || '') : '')}"></div>
-        <div class="campo"><label>Razón social</label><input id="c-razon" value="${JZAC.ui.esc(c ? (c.razonSocial || '') : '')}"></div>
+        <div class="campo"><label>DNI (opcional)</label><div style="display:flex;gap:6px"><input id="c-dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos" value="${JZAC.ui.esc(c ? (c.dni || '') : '')}"><button type="button" class="btn btn-sm" data-doc="dni">🔎</button></div></div>
+        <div class="campo"><label>RUC (opcional, para facturas)</label><div style="display:flex;gap:6px"><input id="c-ruc" inputmode="numeric" maxlength="11" placeholder="Ej.: 20123456789" value="${JZAC.ui.esc(c ? (c.ruc || '') : '')}"><button type="button" class="btn btn-sm" data-doc="ruc">🔎</button></div></div>
       </div>
+      <div class="fila">
+        <div class="campo"><label>Razón social</label><input id="c-razon" value="${JZAC.ui.esc(c ? (c.razonSocial || '') : '')}"></div>
+        <div class="campo"><label>Dirección fiscal</label><input id="c-direc" value="${JZAC.ui.esc(c ? (c.direccion || '') : '')}"></div>
+      </div>
+      <div id="c-doc-aviso" class="texto-suave" style="font-size:12px;margin:-4px 0 10px"></div>
       <div class="campo"><label>Notas</label><textarea rows="2" id="c-notas">${JZAC.ui.esc(c ? (c.notas || '') : '')}</textarea></div>`,
       `<button class="btn" data-cerrar>Cancelar</button>
        <button class="btn btn-primario" id="guardar-cli">${edicion ? 'Guardar cambios' : 'Agregar cliente'}</button>`);
+
+    m.raiz.querySelectorAll('[data-doc]').forEach((b) => b.addEventListener('click', async () => {
+      const tipo = b.dataset.doc;
+      const input = document.getElementById(tipo === 'ruc' ? 'c-ruc' : 'c-dni');
+      const aviso = document.getElementById('c-doc-aviso');
+      aviso.textContent = 'Consultando…';
+      try {
+        const d = await JZAC.padron.consultar(tipo, input.value);
+        if (tipo === 'ruc') {
+          input.value = d.numero;
+          document.getElementById('c-razon').value = d.razonSocial || '';
+          document.getElementById('c-direc').value = d.direccion || '';
+          if (!document.getElementById('c-nombre').value.trim()) document.getElementById('c-nombre').value = d.razonSocial || '';
+          aviso.textContent = `${d.razonSocial}${d.estado ? ' · ' + d.estado : ''}${d.condicion ? ' · ' + d.condicion : ''}`;
+        } else {
+          input.value = d.numero;
+          if (!document.getElementById('c-nombre').value.trim()) document.getElementById('c-nombre').value = d.nombre || '';
+          aviso.textContent = 'DNI: ' + (d.nombre || '');
+        }
+      } catch (e) { aviso.textContent = e.message; }
+    }));
 
     m.raiz.querySelector('#guardar-cli').addEventListener('click', async () => {
       const nombre = document.getElementById('c-nombre').value.trim();
@@ -81,6 +106,7 @@
         whatsapp: document.getElementById('c-wha').value.trim(),
         telefono: document.getElementById('c-tel').value.trim(),
         direccion: document.getElementById('c-direc').value.trim(),
+        dni: document.getElementById('c-dni').value.replace(/\D/g, ''),
         ruc: document.getElementById('c-ruc').value.trim(),
         razonSocial: document.getElementById('c-razon').value.trim(),
         notas: document.getElementById('c-notas').value.trim(),
