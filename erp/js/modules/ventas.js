@@ -11,7 +11,7 @@
     const esFactura = !!extra.factura;
     await DB.ready;
     return new Promise((resolve, reject) => {
-      const t = DB.db.transaction(['usuarios', 'ventas', 'detalle_venta', 'productos'], 'readwrite');
+      const t = DB.transaccion(['usuarios', 'ventas', 'detalle_venta', 'productos'], 'readwrite');
       const us = t.objectStore('usuarios');
       const vs = t.objectStore('ventas');
       const ds = t.objectStore('detalle_venta');
@@ -24,8 +24,10 @@
         user[esFactura ? 'correlativoFactura' : 'correlativoBoleta'] = numero + 1;
         us.put(user);
         const serie = esFactura ? (user.serieFactura || 'F001') : (user.serieBoleta || 'B001');
-        const sub = items.reduce((a, it) => a + Number(it.precio) * Number(it.cantidad), 0);
-        const total = Math.max(0, sub - Number(descuento || 0));
+        const fcfg = JZAC.fiscal.config(user);
+        const fiscal = JZAC.fiscal.calcular(items, descuento, fcfg);
+        const sub = fiscal.bruto;
+        const total = fiscal.total;
         const venta = {
           serie,
           numero,
@@ -44,6 +46,9 @@
           direccion: extra.direccion || '',
           subtotal: Math.round(sub * 100) / 100,
           descuento: Math.round(Number(descuento || 0) * 100) / 100,
+          valorVenta: fiscal.valorVenta,
+          igv: fiscal.igv,
+          igvTasa: fcfg.igv,
           total: Math.round(total * 100) / 100,
           fecha: Date.now()
         };
@@ -69,7 +74,7 @@
             ventaId,
             boleta: venta.boleta,
             total: venta.total,
-            venta
+            venta: { ...venta, id: ventaId }
           };
         };
       };
@@ -84,7 +89,7 @@
     const dets = (await JZAC.db.listar('detalle_venta')).filter((d) => d.ventaId === venta.id);
     await DB.ready;
     return new Promise((resolve, reject) => {
-      const t = DB.db.transaction(['ventas', 'detalle_venta', 'productos'], 'readwrite');
+      const t = DB.transaccion(['ventas', 'detalle_venta', 'productos'], 'readwrite');
       const vs = t.objectStore('ventas');
       const ds = t.objectStore('detalle_venta');
       const ps = t.objectStore('productos');
@@ -127,7 +132,7 @@
     const filas = det.map((d) =>
       `<tr><td>${JZAC.ui.esc(d.producto)}${Number(d.cantidad) > 1 ? ` x${JZAC.ui.n(d.cantidad)}${d.esPeso ? ' kg' : ''}` : (d.esPeso ? ` x${JZAC.ui.n(d.cantidad)} kg` : '')}</td><td class="r">${JZAC.ui.dinero(d.precio)}</td><td class="r">${JZAC.ui.dinero(d.total)}</td></tr>`
     ).join('');
-    const tipo = v.esFactura ? 'FACTURA' : 'NOTA DE VENTA';
+    const tipo = v.esFactura ? 'FACTURA' : ((v.sunat || v.fiscal) ? 'BOLETA' : 'NOTA DE VENTA');
     const pagos = [];
     if (v.metodoPago === 'Mixto' || (v.pagoEfectivo != null && v.pagoSaldo != null)) {
       pagos.push(`Efectivo: ${JZAC.ui.dinero(v.pagoEfectivo)}`);
@@ -145,7 +150,7 @@
         <div class="sep"></div>
         ${c(`<b>${tipo} ${JZAC.ui.esc(v.boleta)}</b>`)}
         ${v.esFactura ? `${c('RUC: ' + JZAC.ui.esc(v.ruc || '—'))}${c('Razón social: ' + JZAC.ui.esc(v.razonSocial || v.cliente || '—'))}${v.direccion ? c('Dirección: ' + JZAC.ui.esc(v.direccion)) : ''}` : `${c('Cliente: ' + JZAC.ui.esc(v.cliente || '—'))}${v.dni ? c('DNI: ' + JZAC.ui.esc(v.dni)) : ''}`}
-        ${v.sunat ? c(`Comprobante SUNAT: ${JZAC.ui.esc(v.sunat.serie)}-${JZAC.ui.esc(v.sunat.numero)}`) : ''}
+        ${(v.sunat || v.fiscal) ? c(`Comprobante: ${JZAC.ui.esc(JZAC.fiscal.etiqueta(v.sunat || v.fiscal))}`) : ''}
         ${pagos.map((p) => c('Pago: ' + JZAC.ui.esc(p))).join('')}
         <div class="sep"></div>
         <table>
@@ -153,13 +158,18 @@
           ${filas}
         </table>
         <div class="sep"></div>
-        <div class="sum"><span>Subtotal</span><span>${JZAC.ui.dinero(v.subtotal)}</span></div>
+        ${v.valorVenta != null
+          ? `<div class="sum"><span>Op. gravada</span><span>${JZAC.ui.dinero(v.valorVenta)}</span></div>
+             <div class="sum"><span>IGV (${JZAC.ui.n(v.igvTasa || 18)}%)</span><span>${JZAC.ui.dinero(v.igv || 0)}</span></div>`
+          : `<div class="sum"><span>Subtotal</span><span>${JZAC.ui.dinero(v.subtotal)}</span></div>`}
         ${v.descuento ? `<div class="sum"><span>Descuento</span><span>-${JZAC.ui.dinero(v.descuento)}</span></div>` : ''}
         <div class="sum total"><span>TOTAL</span><span>${JZAC.ui.dinero(v.total)}</span></div>
         <div class="sep"></div>
         ${c('¡Gracias por su compra!')}
         ${c('JZAC ERP · Software que trabaja por tu negocio')}
-        ${c(v.esFactura ? 'Representación impresa. La factura electrónica se emite y valida en SUNAT SOL.' : 'Documento interno de venta. No reemplaza comprobante electrónico SUNAT.')}
+        ${c((v.sunat || v.fiscal)
+          ? 'Representación impresa del comprobante electrónico.'
+          : (v.esFactura ? 'Representación impresa. La factura electrónica se emite y valida en SUNAT SOL.' : 'Documento interno de venta. No reemplaza comprobante electrónico SUNAT.'))}
       </div>`;
   }
 
@@ -204,7 +214,7 @@
     const productos = await JZAC.db.listar('productos');
     await DB.ready;
     return new Promise((resolve, reject) => {
-      const t = DB.db.transaction(['usuarios', 'notas_credito', 'detalle_nota', 'productos'], 'readwrite');
+      const t = DB.transaccion(['usuarios', 'notas_credito', 'detalle_nota', 'productos'], 'readwrite');
       const us = t.objectStore('usuarios');
       const ns = t.objectStore('notas_credito');
       const nds = t.objectStore('detalle_nota');
@@ -439,7 +449,7 @@
             <tr><th>Boleta</th><th>Fecha</th><th>Cliente</th><th>Pago</th><th>Items</th><th class="monto">Total</th><th></th></tr>
             ${ventas.map((v) => `
               <tr>
-                <td class="negrita">${JZAC.ui.esc(v.boleta)}${v.sunat ? `<div class="badge badge-verde" style="margin-top:3px">SUNAT ${JZAC.ui.esc(v.sunat.serie)}-${JZAC.ui.esc(v.sunat.numero)}</div>` : ''}</td>
+                <td class="negrita">${JZAC.ui.esc(v.boleta)}${v.sunat ? `<div class="badge ${v.sunat.modo === 'simulado' ? 'badge-gris' : 'badge-verde'}" style="margin-top:3px">${JZAC.ui.esc(v.sunat.modo ? JZAC.fiscal.etiqueta(v.sunat) : 'SUNAT ' + v.sunat.serie + '-' + v.sunat.numero)}</div>` : ''}</td>
                 <td>${JZAC.ui.fh(v.fecha)}</td>
                 <td>${JZAC.ui.esc(v.esFactura ? (v.razonSocial || v.ruc || v.cliente || '—') : (v.cliente || '—'))}</td>
                 <td><span class="badge badge-gris">${JZAC.ui.esc(v.metodoPago || 'Efectivo')}</span></td>
@@ -547,14 +557,17 @@
         ${v.esFactura && v.ruc ? `<div style="margin-top:4px">RUC: ${JZAC.ui.esc(v.ruc)}</div>` : ''}
         ${v.esFactura && v.direccion ? `<div style="margin-top:4px">Dirección: ${JZAC.ui.esc(v.direccion)}</div>` : ''}
         ${!v.esFactura && v.dni ? `<div style="margin-top:4px">DNI: ${JZAC.ui.esc(v.dni)}</div>` : ''}
-        ${v.sunat ? `<div style="margin-top:4px">Comprobante SUNAT: ${JZAC.ui.esc(v.sunat.serie)}-${JZAC.ui.esc(v.sunat.numero)}</div>` : ''}
+        ${v.sunat ? `<div style="margin-top:4px">Comprobante: ${JZAC.ui.esc(v.sunat.modo ? JZAC.fiscal.etiqueta(v.sunat) : 'SUNAT ' + v.sunat.serie + '-' + v.sunat.numero)}</div>` : ''}
       </div>
       <div class="tabla-wrap"><table>
         <tr><th>Producto</th><th class="center">Cant.</th><th class="monto">Precio</th><th class="monto">Total</th></tr>
         ${filas}
       </table></div>
       <div style="margin-top:12px">
-        <div class="derecha">Subtotal: <b>${JZAC.ui.dinero(v.subtotal)}</b></div>
+        ${v.valorVenta != null
+          ? `<div class="derecha">Op. gravada: <b>${JZAC.ui.dinero(v.valorVenta)}</b></div>
+             <div class="derecha">IGV (${JZAC.ui.n(v.igvTasa || 18)}%): <b>${JZAC.ui.dinero(v.igv || 0)}</b></div>`
+          : `<div class="derecha">Subtotal: <b>${JZAC.ui.dinero(v.subtotal)}</b></div>`}
         ${v.descuento ? `<div class="derecha">Descuento: <b>−${JZAC.ui.dinero(v.descuento)}</b></div>` : ''}
         ${v.pagoEfectivo != null && v.pagoSaldo != null ? `<div class="derecha">Efectivo: <b>${JZAC.ui.dinero(v.pagoEfectivo)}</b> · ${JZAC.ui.esc(v.metodo2 || '')}: <b>${JZAC.ui.dinero(v.pagoSaldo)}</b></div>` : ''}
         ${v.recibido != null ? `<div class="derecha">Recibido: <b>${JZAC.ui.dinero(v.recibido)}</b> · Vuelto: <b>${JZAC.ui.dinero(v.vuelto)}</b></div>` : ''}
@@ -773,9 +786,9 @@
     }
 
     function totalVenta() {
-      const sub = items.reduce((a, it) => a + it.precio * it.cantidad, 0);
       const dsc = Math.max(0, Number(document.getElementById('in-descuento').value || 0));
-      return { sub, dsc, tot: Math.max(0, sub - dsc) };
+      const f = JZAC.fiscal.calcular(items, dsc, JZAC.fiscal.config(u));
+      return { sub: f.bruto, dsc, tot: f.total, valorVenta: f.valorVenta, igv: f.igv };
     }
 
     function actualizaTot() {
@@ -1189,24 +1202,66 @@
       document.getElementById('dni-aviso').textContent = '';
       document.getElementById('ruc-aviso').textContent = '';
     });
-    async function consultaDoc(tipo) {
+    const inputRuc = document.getElementById('in-ruc');
+    let ultimoRucConsultado = '';
+    let timerRuc = null;
+    let consultandoRuc = false;
+
+    async function consultaDoc(tipo, auto) {
       const input = document.getElementById(tipo === 'ruc' ? 'in-ruc' : 'in-dni');
       const aviso = document.getElementById(tipo === 'ruc' ? 'ruc-aviso' : 'dni-aviso');
+      const numero = input.value.replace(/\D/g, '');
+      input.value = numero;
+      if (auto && tipo === 'ruc' && 'ruc:' + numero === ultimoRucConsultado) return;
       aviso.textContent = 'Consultando…';
       try {
-        const d = await JZAC.padron.consultar(tipo, input.value);
+        const d = await JZAC.padron.consultar(tipo, numero);
         input.value = d.numero;
         if (tipo === 'ruc') {
+          ultimoRucConsultado = 'ruc:' + d.numero;
           document.getElementById('in-razon').value = d.razonSocial || '';
           document.getElementById('in-direc').value = d.direccion || '';
           aviso.textContent = `${d.razonSocial}${d.estado ? ' · ' + d.estado : ''}`;
         } else {
           aviso.textContent = 'DNI: ' + (d.nombre || '');
         }
-      } catch (e) { aviso.textContent = e.message; }
+      } catch (e) {
+        aviso.textContent = auto ? 'No se pudo consultar. Escribe la razón social manualmente.' : e.message;
+      }
     }
-    document.getElementById('btn-ruc').addEventListener('click', () => consultaDoc('ruc'));
-    document.getElementById('btn-dni').addEventListener('click', () => consultaDoc('dni'));
+
+    async function autoRuc() {
+      if (consultandoRuc) return;
+      const ruc = inputRuc.value.replace(/\D/g, '');
+      if (ruc.length !== 11) return;
+      if (!JZAC.padron.validaRuc(ruc)) {
+        document.getElementById('ruc-aviso').textContent = 'RUC inválido.';
+        return;
+      }
+      consultandoRuc = true;
+      try { await consultaDoc('ruc', true); } finally { consultandoRuc = false; }
+    }
+
+    inputRuc.addEventListener('input', () => {
+      inputRuc.value = inputRuc.value.replace(/\D/g, '').slice(0, 11);
+      clearTimeout(timerRuc);
+      if (inputRuc.value.length === 11) timerRuc = setTimeout(autoRuc, 450);
+    });
+    inputRuc.addEventListener('blur', () => {
+      clearTimeout(timerRuc);
+      if (inputRuc.value.length === 11) autoRuc();
+    });
+    inputRuc.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      clearTimeout(timerRuc);
+      autoRuc();
+    });
+    document.getElementById('btn-ruc').addEventListener('click', () => {
+      clearTimeout(timerRuc);
+      autoRuc();
+    });
+    document.getElementById('btn-dni').addEventListener('click', () => consultaDoc('dni', false));
 
     function leeDocFiscal(docFiscal, cli, m, dsc) {
       const extra = {};
@@ -1314,11 +1369,19 @@
           pagoEfectivo: extra.pagoEfectivo,
           pagoSaldo: extra.pagoSaldo,
           metodo2: extra.metodo2,
-          subtotal: Math.round(dsc.sub * 100) / 100,
-          descuento: Math.round(dsc.dsc * 100) / 100,
+          subtotal: res.venta.subtotal,
+          descuento: res.venta.descuento,
+          valorVenta: res.venta.valorVenta,
+          igv: res.venta.igv,
+          igvTasa: res.venta.igvTasa,
           total: res.total
         };
         const detP = items.map((it) => ({ producto: it.nombre, cantidad: it.cantidad, precio: it.precio, total: Math.round(it.precio * it.cantidad * 100) / 100, esPeso: it.esPeso }));
+        let comp = null;
+        try {
+          comp = await JZAC.fiscal.emitirVenta(u, res.venta, detP);
+          if (comp) vv.fiscal = comp;
+        } catch (e) { console.warn('No se pudo emitir el comprobante fiscal.', e); }
         if (JZAC.ventaRapida.modoRapido()) {
           // Modo rápido: imprime (si está activado), avisa y atiende al siguiente.
           if (JZAC.ventaRapida.autoImprime()) { imprimirBoleta(u, vv, detP); }

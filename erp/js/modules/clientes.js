@@ -77,26 +77,86 @@
       `<button class="btn" data-cerrar>Cancelar</button>
        <button class="btn btn-primario" id="guardar-cli">${edicion ? 'Guardar cambios' : 'Agregar cliente'}</button>`);
 
-    m.raiz.querySelectorAll('[data-doc]').forEach((b) => b.addEventListener('click', async () => {
-      const tipo = b.dataset.doc;
-      const input = document.getElementById(tipo === 'ruc' ? 'c-ruc' : 'c-dni');
-      const aviso = document.getElementById('c-doc-aviso');
+    const inputRuc = document.getElementById('c-ruc');
+    const inputDni = document.getElementById('c-dni');
+    const aviso = document.getElementById('c-doc-aviso');
+    let ultimoRucConsultado = '';
+    let razonAuto = '';
+    let direcAuto = '';
+    let timerRuc = null;
+    let consultandoRuc = false;
+
+    async function consultaDoc(tipo, auto) {
+      const input = tipo === 'ruc' ? inputRuc : inputDni;
+      const numero = input.value.replace(/\D/g, '');
+      input.value = numero;
+      if (auto && tipo === 'ruc' && 'ruc:' + numero === ultimoRucConsultado) return;
       aviso.textContent = 'Consultando…';
       try {
-        const d = await JZAC.padron.consultar(tipo, input.value);
+        const d = await JZAC.padron.consultar(tipo, numero);
         if (tipo === 'ruc') {
+          ultimoRucConsultado = 'ruc:' + d.numero;
           input.value = d.numero;
-          document.getElementById('c-razon').value = d.razonSocial || '';
-          document.getElementById('c-direc').value = d.direccion || '';
-          if (!document.getElementById('c-nombre').value.trim()) document.getElementById('c-nombre').value = d.razonSocial || '';
+          const campoRazon = document.getElementById('c-razon');
+          const campoDirec = document.getElementById('c-direc');
+          const campoNombre = document.getElementById('c-nombre');
+          const actualRazon = campoRazon.value.trim();
+          const actualDirec = campoDirec.value.trim();
+          const actualNombre = campoNombre.value.trim();
+          const nuevaRazon = d.razonSocial || '';
+          const nuevaDirec = d.direccion || '';
+          if (!actualRazon || actualRazon === razonAuto) campoRazon.value = nuevaRazon;
+          if (!actualDirec || actualDirec === direcAuto) campoDirec.value = nuevaDirec;
+          if (!actualNombre || actualNombre === razonAuto) campoNombre.value = nuevaRazon;
+          razonAuto = nuevaRazon;
+          direcAuto = nuevaDirec;
           aviso.textContent = `${d.razonSocial}${d.estado ? ' · ' + d.estado : ''}${d.condicion ? ' · ' + d.condicion : ''}`;
         } else {
           input.value = d.numero;
           if (!document.getElementById('c-nombre').value.trim()) document.getElementById('c-nombre').value = d.nombre || '';
           aviso.textContent = 'DNI: ' + (d.nombre || '');
         }
-      } catch (e) { aviso.textContent = e.message; }
+      } catch (e) {
+        aviso.textContent = auto ? 'No se pudo consultar. Escribe los datos manualmente.' : e.message;
+      }
+    }
+
+    async function autoRuc() {
+      if (consultandoRuc) return;
+      const ruc = inputRuc.value.replace(/\D/g, '');
+      if (ruc.length !== 11) return;
+      if (!JZAC.padron.validaRuc(ruc)) {
+        aviso.textContent = 'RUC inválido.';
+        return;
+      }
+      consultandoRuc = true;
+      try { await consultaDoc('ruc', true); } finally { consultandoRuc = false; }
+    }
+
+    m.raiz.querySelectorAll('[data-doc]').forEach((b) => b.addEventListener('click', () => {
+      if (b.dataset.doc === 'ruc') {
+        clearTimeout(timerRuc);
+        autoRuc();
+      } else {
+        consultaDoc('dni', false);
+      }
     }));
+
+    inputRuc.addEventListener('input', () => {
+      inputRuc.value = inputRuc.value.replace(/\D/g, '').slice(0, 11);
+      clearTimeout(timerRuc);
+      if (inputRuc.value.length === 11) timerRuc = setTimeout(autoRuc, 450);
+    });
+    inputRuc.addEventListener('blur', () => {
+      clearTimeout(timerRuc);
+      if (inputRuc.value.length === 11) autoRuc();
+    });
+    inputRuc.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      clearTimeout(timerRuc);
+      autoRuc();
+    });
 
     m.raiz.querySelector('#guardar-cli').addEventListener('click', async () => {
       const nombre = document.getElementById('c-nombre').value.trim();

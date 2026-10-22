@@ -161,7 +161,7 @@
       const idsDetalle = (await JZAC.db.listar('detalle_pedido'))
         .filter((d) => d.pedidoId === p.id)
         .map((d) => d.id);
-      const t = DB.db.transaction(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
+      const t = DB.transaccion(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
       t.objectStore('pedidos_proveedor').delete(p.id);
       const ds = t.objectStore('detalle_pedido');
       idsDetalle.forEach((id) => ds.delete(id));
@@ -205,7 +205,7 @@
     const productos = await JZAC.db.listar('productos');
     await DB.ready;
     return new Promise((resolve, reject) => {
-      const t = DB.db.transaction(['pedidos_proveedor', 'productos'], 'readwrite');
+      const t = DB.transaccion(['pedidos_proveedor', 'productos'], 'readwrite');
       const ps = t.objectStore('productos');
       let yaRecibido = false;
       // El estado se re-verifica DENTRO de la transaccion: evita duplicar stock
@@ -472,7 +472,7 @@
 
       if (pedidoEdit) {
         // ---- edición: actualiza la cabecera y reemplaza las líneas ----
-        const t = DB.db.transaction(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
+        const t = DB.transaccion(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
         const ps = t.objectStore('pedidos_proveedor');
         const ds = t.objectStore('detalle_pedido');
         const gp = ps.get(pedidoEdit.id);
@@ -497,7 +497,7 @@
         return;
       }
 
-      const t = DB.db.transaction(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
+      const t = DB.transaccion(['pedidos_proveedor', 'detalle_pedido'], 'readwrite');
       const ps = t.objectStore('pedidos_proveedor');
       const ds = t.objectStore('detalle_pedido');
       ps.add({ proveedor: prov, estado: 'Pendiente', fecha: Date.now(), fechaProgramada: fechap, total: Math.round(totalPed * 100) / 100 }).onsuccess = (e) => {

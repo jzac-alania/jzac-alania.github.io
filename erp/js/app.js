@@ -3,6 +3,9 @@
 // ============================================================
 (function () {
   const app = document.getElementById('app');
+  let _timerLic = null;
+  let _licUser = null;
+  let _licListeners = false;
 
   function dibujar(html) {
     app.innerHTML = html;
@@ -254,22 +257,38 @@
       btn.disabled = true;
       btn.textContent = 'Iniciando…';
       const est = await JZAC.lic.iniciarPrueba(u.nombreNegocio, u.correo, digits);
-      if (est && est.tipo === 'vencida') { vistaBloqueada(u); return; }
+      if (est && est.tipo === 'error') {
+        btn.disabled = false;
+        btn.textContent = 'Iniciar prueba de 7 días';
+        JZAC.ui.toast(est.error === 'sin-conexion' ? 'Necesitas conexión a internet para iniciar la prueba.' : 'No se pudo iniciar la prueba. Intenta de nuevo.', 'mal');
+        return;
+      }
+      if (est && (est.tipo === 'vencida' || est.tipo === 'bloqueada')) { vistaBloqueada(u, est); return; }
       JZAC.mostrarApp(u);
+      vigilarLicencia(u);
     });
     o('p-codigo').addEventListener('click', () => modalActivacion(u, true));
     if (splash) splash.classList.add('hidden');
   }
 
-  function vistaBloqueada(u) {
+  function vistaBloqueada(u, est) {
+    if (_timerLic) { clearInterval(_timerLic); _timerLic = null; }
     const splash = document.getElementById('splash');
+    const equipo = est && est.motivo === 'equipo-licenciado';
+    const noAuto = est && est.motivo === 'equipo-no-autorizado';
+    const titulo = equipo ? 'Este equipo ya tiene una licencia' : noAuto ? 'Equipo no autorizado' : 'Tu prueba ha terminado';
+    const texto = equipo
+      ? 'Inicia sesión con la cuenta que compró la licencia o pide a tu vendedor que libere este equipo.'
+      : noAuto
+        ? 'Esta licencia está activa en otro equipo. Pide a tu vendedor que libere este equipo para poder activarlo.'
+        : 'Activa tu licencia con el código que te entregó tu vendedor para seguir usando JZAC ERP. Es un pago único, de por vida.';
     dibujar(`
       <div class="auth">
         <div class="auth-caja bloqueada">
           <div class="auth-logo"><img src="./icons/icono.svg" alt="JZAC ERP"></div>
           <div class="gran">!</div>
-          <h2>Tu prueba ha terminado</h2>
-          <p>Activa tu licencia con el código que te entregó tu vendedor para seguir usando JZAC ERP. Es un pago único, de por vida.</p>
+          <h2>${titulo}</h2>
+          <p>${texto}</p>
           <button class="btn btn-primario btn-bloco mt16" id="b-activar">Activar licencia</button>
           <button class="btn btn-whatsapp btn-bloco mt16" id="b-wha">Hablar con el vendedor</button>
         </div>
@@ -279,15 +298,43 @@
     if (splash) splash.classList.add('hidden');
   }
 
+  function aplicarLicencia(u, est) {
+    if (!est) return;
+    if (est.tipo === 'activada' || (est.tipo === 'prueba' && est.inicio)) {
+      if (!document.getElementById('titulo-mod')) {
+        JZAC.mostrarApp(u);
+        vigilarLicencia(u);
+      }
+      return;
+    }
+    if (est.tipo === 'vencida' || est.tipo === 'bloqueada') vistaBloqueada(u, est);
+  }
+
+  function vigilarLicencia(u) {
+    _licUser = u;
+    if (_timerLic) clearInterval(_timerLic);
+    const revisar = () => {
+      const actual = _licUser;
+      if (!actual) return;
+      JZAC.lic.sincronizar(actual).then((est) => aplicarLicencia(actual, est)).catch(() => {});
+    };
+    _timerLic = setInterval(revisar, 6 * 3600000);
+    if (_licListeners) return;
+    _licListeners = true;
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) revisar(); });
+    window.addEventListener('online', revisar);
+  }
+
   async function continuarLicencia(u) {
+    await JZAC.lic.inicializar(u);
     JZAC.backup.hacerSnapshot();
     const splash = document.getElementById('splash');
     if (splash) splash.classList.add('hidden');
-    const est = JZAC.lic.estado();
-    JZAC.lic.sincronizar().catch(() => {});
-    if (est.tipo === 'activada') { JZAC.mostrarApp(u); return; }
-    if (est.tipo === 'prueba' && est.inicio) { JZAC.mostrarApp(u); return; }
-    if (est.tipo === 'vencida') { vistaBloqueada(u); return; }
+    const est = JZAC.lic.estado(u);
+    JZAC.lic.sincronizar(u).then((e) => aplicarLicencia(u, e)).catch(() => {});
+    if (est.tipo === 'activada') { JZAC.mostrarApp(u); vigilarLicencia(u); return; }
+    if (est.tipo === 'prueba' && est.inicio) { JZAC.mostrarApp(u); vigilarLicencia(u); return; }
+    if (est.tipo === 'vencida' || est.tipo === 'bloqueada') { vistaBloqueada(u, est); return; }
     vistaIniciarPrueba(u);
   }
 
@@ -309,46 +356,68 @@
       const r = await JZAC.lic.activar(u.nombreNegocio, codigo, u.correo);
       if (!r || !r.ok) {
         btn.disabled = false;
-        JZAC.ui.toast(r && r.error === 'sin-conexion' ? 'Sin conexión al activar. Intenta de nuevo.' : 'Código no válido para este negocio.', 'mal');
+        const msg = r && r.error === 'sin-conexion' ? 'Sin conexión al activar. Intenta de nuevo.'
+          : r && r.error === 'limite-equipos' ? 'Esta licencia ya está activa en otro equipo. Pide al vendedor que libere este equipo.'
+          : r && r.error === 'demasiados-intentos' ? 'Demasiados intentos. Espera unos minutos.'
+          : 'Código no válido para este negocio.';
+        JZAC.ui.toast(msg, 'mal');
         return;
       }
       JZAC.ui.toast('Licencia activada. Gracias por confiar en JZAC.', 'bien');
       m.cerrar();
       continuarLicencia(u);
     });
-    // PIN de vendedor para generar codigo
-    const piso = document.createElement('div');
-    piso.innerHTML = `<hr style="margin:14px 0;border:none;border-top:1px solid var(--borde)">
-      <div class="texto-suave" style="font-size:12px;margin-bottom:6px">Solo el vendedor: genera el código con el PIN.</div>
-      <div style="display:flex;gap:8px">
-        <input type="password" id="lc-pin" placeholder="PIN (4 dígitos)" maxlength="4" style="flex:1;padding:8px;border:1px solid var(--borde);border-radius:8px">
-        <button class="btn btn-sm" id="lc-gen">Generar</button>
-      </div>
-      <div id="lc-result" style="margin-top:10px"></div>`;
-    m.raiz.querySelector('.modal-pie').appendChild(piso);
+  }
 
-    m.raiz.querySelector('#lc-gen').addEventListener('click', async () => {
-      const btn = o('lc-gen');
+  async function mostrarVendedor() {
+    const u = await JZAC.auth.usuarioActual();
+    const m = JZAC.ui.modal(`
+      <div class="modal-hdr"><h3>Herramientas de vendedor</h3><button class="cierre" data-cerrar>×</button></div>
+      <div class="texto-suave" style="font-size:13px;margin-bottom:10px">Solo para el dueño del sistema. El PIN no se guarda en el equipo.</div>
+      <div class="campo"><label>PIN del vendedor</label><input type="password" id="sv-pin" placeholder="PIN" autocomplete="off"></div>
+      <div class="campo"><label>Negocio del cliente</label><input id="sv-negocio" value="${u ? JZAC.ui.esc(u.nombreNegocio) : ''}"></div>
+      <div class="campo"><label>Correo del cliente</label><input type="email" id="sv-correo" value="${u ? JZAC.ui.esc(u.correo) : ''}" autocomplete="off"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primario" id="sv-gen">Generar código</button>
+        <button class="btn" id="sv-lib">Liberar equipo</button>
+      </div>
+      <div id="sv-res" style="margin-top:12px"></div>`,
+      `<button class="btn" data-cerrar>Cerrar</button>`, true);
+
+    const pin = () => o('sv-pin').value.trim();
+    const negocio = () => o('sv-negocio').value.trim();
+    const correo = () => o('sv-correo').value.trim();
+
+    o('sv-gen').addEventListener('click', async () => {
+      if (!pin() || !negocio()) { JZAC.ui.toast('Completa PIN y negocio.', 'mal'); return; }
+      const btn = o('sv-gen');
       btn.disabled = true;
-      const r = await JZAC.lic.generarCodigo(o('lc-pin').value.trim(), u.nombreNegocio);
+      const r = await JZAC.lic.generarCodigo(pin(), negocio());
       btn.disabled = false;
       if (!r || !r.ok) {
-        JZAC.ui.toast(r && r.error === 'pin-invalido' ? 'PIN incorrecto.' : 'No se pudo generar. Revisa la conexión.', 'mal');
+        JZAC.ui.toast(r && r.error === 'pin-invalido' ? 'PIN incorrecto.' : r && r.error === 'demasiados-intentos' ? 'Demasiados intentos. Espera.' : 'No se pudo generar. Revisa la conexión.', 'mal');
         return;
       }
-      const codigo = r.codigo;
-      o('lc-result').innerHTML = `
-        <div class="card" style="background:var(--bg)">
-          <div class="negrita center" style="letter-spacing:3px;font-size:18px">${codigo}</div>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-sm btn-bloco" id="lc-copiar">Copiar</button>
-            <button class="btn btn-sm btn-whatsapp btn-bloco" id="lc-enviar">Enviar al cliente</button>
-          </div>
-        </div>`;
-      o('lc-copiar').addEventListener('click', () => {
-        navigator.clipboard.writeText(codigo).then(() => JZAC.ui.toast('Código copiado.'));
-      });
-      o('lc-enviar').addEventListener('click', () => JZAC.negocio.wha(`Hola, tu código de activación de JZAC ERP es: ${codigo}`));
+      o('sv-res').innerHTML = `<div class="card" style="background:var(--bg)">
+        <div class="texto-suave" style="font-size:12px">Código para ${JZAC.ui.esc(r.nombre)}</div>
+        <div class="negrita center" style="letter-spacing:3px;font-size:18px">${JZAC.ui.esc(r.codigo)}</div>
+        <button class="btn btn-sm btn-bloco mt16" id="sv-copiar">Copiar código</button>
+      </div>`;
+      o('sv-copiar').addEventListener('click', () => navigator.clipboard.writeText(r.codigo).then(() => JZAC.ui.toast('Código copiado.')));
+    });
+
+    o('sv-lib').addEventListener('click', async () => {
+      if (!pin() || !negocio() || !correo()) { JZAC.ui.toast('Completa PIN, negocio y correo.', 'mal'); return; }
+      if (!await JZAC.ui.confirmar('¿Liberar este equipo para que la licencia se pueda activar en otro?', 'Liberar equipo')) return;
+      const btn = o('sv-lib');
+      btn.disabled = true;
+      const r = await JZAC.lic.liberar(pin(), negocio(), correo());
+      btn.disabled = false;
+      if (!r || !r.ok) {
+        JZAC.ui.toast(r && r.error === 'pin-invalido' ? 'PIN incorrecto.' : r && r.error === 'licencia-no-encontrada' ? 'No encontré esa licencia.' : 'No se pudo liberar. Revisa la conexión.', 'mal');
+        return;
+      }
+      JZAC.ui.toast('Equipo liberado. Ya puedes activar en otro.', 'bien');
     });
   }
 
@@ -356,14 +425,20 @@
   window.JZAC.mostrarEstadoLicencia = async function () {
     const u = await JZAC.auth.usuarioActual();
     if (!u) return;
-    const est = JZAC.lic.estado();
+    const est = JZAC.lic.estado(u);
     if (est.tipo === 'activada') {
       JZAC.ui.toast('Tu licencia está activa.', 'bien');
       return;
     }
-    if (!est.inicio) { vistaIniciarPrueba(u); return; }
-    modalActivacion(u, false);
+    if (est.tipo === 'prueba' && est.inicio) {
+      JZAC.ui.toast(`Prueba activa: quedan ${est.diasRestantes} día(s).`, 'bien');
+      return;
+    }
+    if (est.tipo === 'vencida' || est.tipo === 'bloqueada') { vistaBloqueada(u, est); return; }
+    vistaIniciarPrueba(u);
   };
+
+  window.JZAC.mostrarVendedor = mostrarVendedor;
 
   async function boot() {
     await DB.ready;
@@ -373,7 +448,7 @@
     }
     const u = await JZAC.auth.usuarioActual();
     if (!u) { vistaAuth(); return; }
-    continuarLicencia(u);
+    await continuarLicencia(u);
   }
 
   boot();

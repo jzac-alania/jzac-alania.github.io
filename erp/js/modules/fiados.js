@@ -96,7 +96,7 @@
       const f = fiados.find((x) => x.id === Number(b.dataset.borrar));
       if (!(await JZAC.ui.confirmar(`¿Eliminar el fiado de <b>${JZAC.ui.esc(f.cliente)}</b>?<br>Se borrará su historial y sus pagos.`))) return;
       await JZAC.db.ready;
-      const t = DB.db.transaction(['fiados', 'pagos_fiado'], 'readwrite');
+      const t = DB.transaccion(['fiados', 'pagos_fiado'], 'readwrite');
       t.objectStore('fiados').delete(f.id);
       const ps = t.objectStore('pagos_fiado').openCursor();
       ps.onsuccess = (e) => {
@@ -243,7 +243,7 @@
       if (abierto && !nueva) {
         await JZAC.db.ready;
         await new Promise((res, rej) => {
-          const t = DB.db.transaction(['fiados'], 'readwrite');
+          const t = DB.transaccion(['fiados'], 'readwrite');
           const st = t.objectStore('fiados');
           const g = st.get(abierto.id);
           g.onsuccess = () => {
@@ -303,7 +303,7 @@
       const monto = Math.round((picker.sub() + montoExtra) * 100) / 100;
       await JZAC.db.ready;
       await new Promise((res, rej) => {
-        const t = DB.db.transaction(['fiados'], 'readwrite');
+        const t = DB.transaccion(['fiados'], 'readwrite');
         const st = t.objectStore('fiados');
         const g = st.get(f.id);
         g.onsuccess = () => {
@@ -379,7 +379,7 @@
       }
       await JZAC.db.ready;
       await new Promise((res, rej) => {
-        const t = DB.db.transaction(['fiados'], 'readwrite');
+        const t = DB.transaccion(['fiados'], 'readwrite');
         const st = t.objectStore('fiados');
         const g = st.get(f.id);
         g.onsuccess = () => {
@@ -419,7 +419,7 @@
       const montoIngresado = Number(document.getElementById('p-monto').value || 0);
       const metodo = document.getElementById('p-metodo').value;
       await JZAC.db.ready;
-      const t = DB.db.transaction(['fiados', 'pagos_fiado'], 'readwrite');
+      const t = DB.transaccion(['fiados', 'pagos_fiado'], 'readwrite');
       const fs = t.objectStore('fiados');
       const ps = t.objectStore('pagos_fiado');
       let monto = 0;

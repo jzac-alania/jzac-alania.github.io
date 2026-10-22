@@ -30,6 +30,7 @@
   }
 
   async function datosExport() {
+    if (!JZAC.lic.puedeEscribir()) return null;
     const data = {};
     for (const t of TABLAS) data[t] = await JZAC.db.listar(t);
     data.cortes_caja = window.JZAC.cortes ? JZAC.cortes.leer() : [];
@@ -38,6 +39,10 @@
 
   async function exportar() {
     const data = await datosExport();
+    if (!data) {
+      JZAC.ui.toast('Tu prueba terminó. Activa tu licencia para descargar respaldos.', 'mal');
+      return false;
+    }
     marcarExport();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
@@ -87,7 +92,7 @@
     await JZAC.db.ready;
     try {
       // Transaccion unica: o se restaura todo, o no se toca nada (evita datos a medias).
-      const t = DB.db.transaction(NEGOCIO, 'readwrite');
+      const t = DB.transaccion(NEGOCIO, 'readwrite');
       for (const nombre of NEGOCIO) {
         const st = t.objectStore(nombre);
         st.clear();

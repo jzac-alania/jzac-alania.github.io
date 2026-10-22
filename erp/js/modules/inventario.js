@@ -269,7 +269,7 @@
       const motivo = document.getElementById('mm-motivo').value.trim();
       await JZAC.db.ready;
       // Merma + stock en la misma transaccion: o se registran las dos o ninguna.
-      const t = DB.db.transaction(['mermas', 'productos'], 'readwrite');
+      const t = DB.transaccion(['mermas', 'productos'], 'readwrite');
       t.objectStore('mermas').add({ producto: p.nombre, cantidad: cant, motivo, fecha: Date.now() });
       const g = t.objectStore('productos').get(p.id);
       g.onsuccess = () => {

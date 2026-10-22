@@ -63,8 +63,24 @@ function open() {
   });
 }
 
+const TABLAS_LIBRES = ['usuarios', 'respaldos'];
+
+function licenciaPermitida(tabla, modo) {
+  if (modo !== 'readwrite') return true;
+  if (TABLAS_LIBRES.indexOf(tabla) >= 0) return true;
+  return !!(window.JZAC && window.JZAC.lic && typeof window.JZAC.lic.puedeEscribir === 'function' && window.JZAC.lic.puedeEscribir());
+}
+
+function abrirTransaccion(nombres, modo) {
+  const lista = Array.isArray(nombres) ? nombres : [nombres];
+  if (modo === 'readwrite' && !lista.every((t) => licenciaPermitida(t, modo))) {
+    throw new Error('licencia-vencida');
+  }
+  return DB.db.transaction(nombres, modo);
+}
+
 function tx(store, mode) {
-  return DB.db.transaction(store, mode).objectStore(store);
+  return abrirTransaccion(store, mode).objectStore(store);
 }
 
 function pedir(req) {
@@ -98,10 +114,12 @@ const db = {
     await DB.ready;
     return pedir(tx(tabla, 'readwrite').clear());
   },
+  transaccion: abrirTransaccion,
+  permitida: licenciaPermitida,
   // ejecuta una funcion con una transaccion de varias tablas
   async transaccional(fn) {
     await DB.ready;
-    const t = DB.db.transaction(
+    const t = abrirTransaccion(
       ['ventas', 'detalle_venta', 'productos', 'fiados', 'pagos_fiado',
        'pedidos_proveedor', 'detalle_pedido', 'clientes', 'mermas', 'gastos',
        'notas_credito', 'detalle_nota'],
@@ -116,6 +134,10 @@ const db = {
     });
   }
 };
+
+DB.transaccion = abrirTransaccion;
+DB.permitida = licenciaPermitida;
+DB.transaccional = db.transaccional;
 
 window.JZAC = window.JZAC || {};
 window.JZAC.db = db;

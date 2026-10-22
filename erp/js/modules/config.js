@@ -6,7 +6,7 @@
 
   async function render(cont) {
     const u = await JZAC.auth.usuarioActual();
-    const lic = JZAC.lic.estado();
+    const lic = JZAC.lic.estado(u);
     const diaLic = Math.max(1, Math.min(JZAC.lic.DIAS_PRUEBA, JZAC.lic.DIAS_PRUEBA - (lic.diasRestantes || 0) + 1));
     const info = await JZAC.backup.informacion();
     const ultima = info.export.dias === 0 ? 'hoy' : info.export.dias === 1 ? 'ayer' : `hace ${info.export.dias} días`;
@@ -34,6 +34,44 @@
             <button class="btn btn-sm" id="cf-dni-limpiar">Borrar caché DNI/RUC</button>
           </div>
 
+          <div class="seccion-titulo">Facturación electrónica</div>
+          <div class="texto-suave" style="font-size:13px;margin-bottom:8px">Completa los datos fiscales del negocio. En modo <b>simulado</b> el comprobante se registra solo en este dispositivo y no se envía a SUNAT.</div>
+          <label class="campo-check" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+            <input type="checkbox" id="cf-fiscal-activo" style="width:18px;height:18px;margin-top:2px">
+            <span><b>Emitir comprobante al registrar cada venta</b><br><small class="texto-suave">Si está desactivado, la venta se guarda como documento interno.</small></span>
+          </label>
+          <div class="fila">
+            <div class="campo"><label>RUC del negocio</label><input id="cf-ruc" inputmode="numeric" maxlength="11" value="${JZAC.ui.esc(u.ruc || '')}" placeholder="11 dígitos"><div class="texto-suave" style="font-size:12px;margin-top:3px">En simulación puedes usar un documento de prueba. Para SUNAT el RUC debe tener 11 dígitos.</div></div>
+            <div class="campo"><label>Régimen tributario</label><select id="cf-regimen">
+              ${['RUS', 'RER', 'MYPE', 'General'].map((r) => `<option value="${r}" ${(u.regimen || 'MYPE') === r ? 'selected' : ''}>${r === 'MYPE' ? 'MYPE Tributario' : r}</option>`).join('')}
+            </select></div>
+          </div>
+          <div class="campo"><label>Razón social</label><input id="cf-razon" value="${JZAC.ui.esc(u.razonSocial || u.nombreNegocio || '')}"></div>
+          <div class="campo"><label>Dirección fiscal</label><input id="cf-direc-fiscal" value="${JZAC.ui.esc(u.direccionFiscal || '')}" placeholder="Dirección del establecimiento"></div>
+          <div class="fila">
+            <div class="campo"><label>Serie de factura</label><input id="cf-serie-factura" value="${JZAC.ui.esc(u.serieFactura || 'F001')}" maxlength="4"></div>
+            <div class="campo"><label>Correlativo factura</label><input type="number" id="cf-correl-factura" value="${Number(u.correlativoFactura || 1000)}"></div>
+          </div>
+          <div class="fila">
+            <div class="campo"><label>IGV (%)</label><input type="number" id="cf-igv" step="0.01" min="0" max="18" value="${Number(u.igvPorcentaje != null ? u.igvPorcentaje : 18)}"></div>
+            <div class="campo"><label>Modo de emisión</label><select id="cf-modo-fiscal">
+              <option value="simulado" ${(u.modoFiscal || 'simulado') === 'simulado' ? 'selected' : ''}>Simulado (local)</option>
+              <option value="lucode" ${u.modoFiscal === 'lucode' ? 'selected' : ''}>Lucode / PSE</option>
+            </select></div>
+          </div>
+          <label class="campo-check" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <input type="checkbox" id="cf-precio-igv" style="width:18px;height:18px">
+            <span>Los precios de venta ya incluyen IGV</span>
+          </label>
+          <div class="campo"><label>URL del proxy PSE (recomendado)</label><input id="cf-pse-proxy" value="${JZAC.ui.esc(u.pseProxyUrl || '')}" placeholder="https://tu-worker.workers.dev/emitir"></div>
+          <div class="campo"><label>URL de la API Lucode</label><input id="cf-pse-url" value="${JZAC.ui.esc(u.pseUrl || JZAC.fiscal.PSE_URL)}"></div>
+          <div class="campo"><label>Token Lucode sandbox (solo este dispositivo)</label><input id="cf-pse-token" type="password" value="${JZAC.ui.esc(JZAC.fiscal.token())}" placeholder="Bearer token"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            <button class="btn btn-sm" id="cf-pse-token-guardar">Guardar token PSE</button>
+            <button class="btn btn-sm" id="cf-pse-token-limpiar">Borrar token PSE</button>
+          </div>
+          <div class="texto-suave" style="font-size:12px;margin-bottom:4px">El token no se incluye en el respaldo. Para producción usa un proxy que guarde el token en el servidor.</div>
+
           <div class="seccion-titulo">Licencia</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             ${lic.tipo === 'activada'
@@ -42,6 +80,7 @@
                 ? `<span class="badge badge-dorado">Prueba · día ${diaLic} de ${JZAC.lic.DIAS_PRUEBA}</span>`
                 : '<span class="badge badge-rojo">Licencia vencida</span>'}
             <button class="btn btn-sm" id="cf-licencia">Ver / activar licencia</button>
+            <button class="btn btn-sm" id="cf-vendedor">Herramientas de vendedor</button>
           </div>
         </div>
 
@@ -125,7 +164,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.18.1<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.20.1<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -136,13 +175,50 @@
         </div>
       </div>`;
 
+    document.getElementById('cf-fiscal-activo').checked = !!u.fiscalActivo;
+    document.getElementById('cf-precio-igv').checked = u.precioIncluyeIgv !== false;
+    document.getElementById('cf-pse-token-guardar').addEventListener('click', () => {
+      JZAC.fiscal.guardarToken(document.getElementById('cf-pse-token').value);
+      JZAC.ui.toast('Token PSE guardado en este dispositivo.', 'bien');
+    });
+    document.getElementById('cf-pse-token-limpiar').addEventListener('click', () => {
+      JZAC.fiscal.guardarToken('');
+      document.getElementById('cf-pse-token').value = '';
+      JZAC.ui.toast('Token PSE borrado.', 'bien');
+    });
+
     document.getElementById('cf-guardar').addEventListener('click', async () => {
       const negocio = document.getElementById('cf-negocio').value.trim();
       const nombre = document.getElementById('cf-nombre').value.trim();
       const serie = document.getElementById('cf-serie').value.trim().toUpperCase();
       const correl = Math.max(1000, Number(document.getElementById('cf-correl').value || 1000));
+      const ruc = document.getElementById('cf-ruc').value.replace(/\D/g, '');
+      const serieFactura = document.getElementById('cf-serie-factura').value.trim().toUpperCase();
+      const modoFiscal = document.getElementById('cf-modo-fiscal').value;
       if (!negocio || !nombre) { JZAC.ui.toast('Completa el nombre del negocio y tu nombre.', 'mal'); return; }
-      const nuevo = { ...u, nombreNegocio: negocio, nombre, serieBoleta: serie || 'B001', correlativoBoleta: correl };
+      if (modoFiscal === 'lucode' && ruc.length !== 11) {
+        JZAC.ui.toast('Para emitir con Lucode el RUC del negocio debe tener 11 dígitos.', 'mal');
+        return;
+      }
+      const nuevo = {
+        ...u,
+        nombreNegocio: negocio,
+        nombre,
+        serieBoleta: serie || 'B001',
+        correlativoBoleta: correl,
+        ruc,
+        razonSocial: document.getElementById('cf-razon').value.trim(),
+        direccionFiscal: document.getElementById('cf-direc-fiscal').value.trim(),
+        regimen: document.getElementById('cf-regimen').value,
+        serieFactura: serieFactura || 'F001',
+        correlativoFactura: Math.max(1000, Number(document.getElementById('cf-correl-factura').value || 1000)),
+        igvPorcentaje: Math.max(0, Math.min(18, Number(document.getElementById('cf-igv').value || 18))),
+        precioIncluyeIgv: document.getElementById('cf-precio-igv').checked,
+        fiscalActivo: document.getElementById('cf-fiscal-activo').checked,
+        modoFiscal,
+        pseProxyUrl: document.getElementById('cf-pse-proxy').value.trim(),
+        pseUrl: document.getElementById('cf-pse-url').value.trim() || JZAC.fiscal.PSE_URL
+      };
       await JZAC.db.guardar('usuarios', nuevo);
       JZAC.ui.toast('Cambios guardados.', 'bien');
       render(cont);
@@ -158,6 +234,7 @@
     });
 
     document.getElementById('cf-licencia').addEventListener('click', () => JZAC.mostrarEstadoLicencia());
+    document.getElementById('cf-vendedor').addEventListener('click', () => JZAC.mostrarVendedor());
 
     document.getElementById('cf-exportar').addEventListener('click', () => JZAC.backup.exportar());
 
@@ -180,7 +257,7 @@
         if (!await JZAC.ui.confirmar('Restaurar este respaldo reemplazará TODOS los datos actuales de este dispositivo. ¿Continuar?', 'Restaurar respaldo')) return;
         await JZAC.db.ready;
         // Transaccion unica por tabla: o entra el respaldo completo, o no se toca nada.
-        const t = DB.db.transaction(TABLAS, 'readwrite');
+        const t = DB.transaccion(TABLAS, 'readwrite');
         for (const nombre of TABLAS) {
           const st = t.objectStore(nombre);
           st.clear();

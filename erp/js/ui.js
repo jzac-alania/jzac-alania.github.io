@@ -177,7 +177,7 @@ async function mostrarApp(usuario) {
       </div>
     </div>`;
 
-  const est = JZAC.lic.estado();
+  const est = JZAC.lic.estado(usuario);
   if (est.tipo === 'prueba') {
     const b = document.getElementById('trial-banner');
     b.style.display = 'block';
