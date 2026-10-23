@@ -256,16 +256,24 @@
       const btn = o('p-iniciar');
       btn.disabled = true;
       btn.textContent = 'Iniciando…';
-      const est = await JZAC.lic.iniciarPrueba(u.nombreNegocio, u.correo, digits);
-      if (est && est.tipo === 'error') {
+      try {
+        const est = await JZAC.lic.iniciarPrueba(u.nombreNegocio, u.correo, digits);
+        if (est && est.tipo === 'error') {
+          btn.disabled = false;
+          btn.textContent = 'Iniciar prueba de 7 días';
+          const msg = est.error === 'sin-conexion' ? 'Necesitas conexión a internet para iniciar la prueba.'
+            : est.error ? `Error: ${est.error}` : 'No se pudo iniciar la prueba. Intenta de nuevo.';
+          JZAC.ui.toast(msg, 'mal');
+          return;
+        }
+        if (est && (est.tipo === 'vencida' || est.tipo === 'bloqueada')) { vistaBloqueada(u, est); return; }
+        JZAC.mostrarApp(u);
+        vigilarLicencia(u);
+      } catch (e) {
         btn.disabled = false;
         btn.textContent = 'Iniciar prueba de 7 días';
-        JZAC.ui.toast(est.error === 'sin-conexion' ? 'Necesitas conexión a internet para iniciar la prueba.' : 'No se pudo iniciar la prueba. Intenta de nuevo.', 'mal');
-        return;
+        JZAC.ui.toast('Error inesperado al iniciar la prueba: ' + (e.message || e), 'mal');
       }
-      if (est && (est.tipo === 'vencida' || est.tipo === 'bloqueada')) { vistaBloqueada(u, est); return; }
-      JZAC.mostrarApp(u);
-      vigilarLicencia(u);
     });
     o('p-codigo').addEventListener('click', () => modalActivacion(u, true));
     if (splash) splash.classList.add('hidden');
