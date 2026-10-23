@@ -204,7 +204,7 @@
             const u = await JZAC.auth.registrar(nombre.value, negocio.value, mail.value, pass.value);
             localStorage.setItem('jzac_ultimo_correo', mail.value.trim().toLowerCase());
             JZAC.auth.guardarSesion(u);
-            return continuarLicencia(u);
+            vistaIniciarPrueba(u);
           });
         } catch (err) { JZAC.ui.toast(err.message, 'mal'); }
       });
@@ -246,9 +246,9 @@
 
     o('p-iniciar').addEventListener('click', async () => {
       const telField = o('p-telefono');
-      const tel = (window.__JZAC_TEL__ != null ? String(window.__JZAC_TEL__) : (telField ? telField.value : '')).trim();
+      const tel = telField ? telField.value.trim() : '';
       const digits = tel.replace(/\D/g, '');
-      if (window.__JZAC_TEL__ == null && digits.length < 6) {
+      if (telField && digits.length < 6) {
         JZAC.ui.toast('Ingresa tu número de WhatsApp (con código de país).', 'mal');
         if (telField) telField.focus();
         return;
@@ -432,6 +432,7 @@
     }
     if (est.tipo === 'prueba' && est.inicio) {
       JZAC.ui.toast(`Prueba activa: quedan ${est.diasRestantes} día(s).`, 'bien');
+      modalActivacion(u, false);
       return;
     }
     if (est.tipo === 'vencida' || est.tipo === 'bloqueada') { vistaBloqueada(u, est); return; }

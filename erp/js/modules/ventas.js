@@ -459,12 +459,16 @@
                   <div class="acciones">
                     <button class="btn btn-sm" data-ver="${v.id}">Ver</button>
                     <button class="btn btn-sm btn-dorado" data-reimp="${v.id}" title="Reimprimir boleta/factura">Imprimir</button>
-                    <button class="btn btn-sm" data-sunat="${v.id}" title="Registrar el comprobante emitido en SUNAT SOL">${v.sunat ? 'SUNAT ✓' : 'SUNAT'}</button>
+                    ${u.fiscalActivo || u.modoFiscal !== 'simulado' ? `<button class="btn btn-sm" data-sunat="${v.id}" title="Registrar el comprobante emitido en SUNAT SOL">${v.sunat ? 'SUNAT ✓' : 'SUNAT'}</button>` : ''}
                     <button class="btn btn-sm btn-peligro" data-anular="${v.id}">Anular</button>
                   </div>
                 </td>
               </tr>`).join('')}
           </table></div>`;
+      const user = JZAC.auth.usuarioActual();
+      if (!user || (!user.fiscalActivo && user.modoFiscal === 'simulado')) {
+        document.querySelectorAll('[data-sunat]').forEach(b => b.style.display = 'none');
+      }
       cont.querySelectorAll('[data-ver]').forEach((b) => b.addEventListener('click', () => {
         const v = ventas.find((x) => x.id === Number(b.dataset.ver));
         detalleModal(u, v, detvByVenta[v.id] || []);
