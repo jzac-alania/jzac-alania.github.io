@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Mantenimiento y soporte">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A1220"/><stop offset="1" stop-color="#14243F"/>
+    </linearGradient>
+    <linearGradient id="gr" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#FFD27D"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.2" cy="0.8" r="0.9">
+      <stop offset="0" stop-color="#7FB2FF" stop-opacity="0.14"/><stop offset="1" stop-color="#7FB2FF" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#7FB2FF" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <rect width="800" height="450" fill="url(#grid)"/>
+  <rect width="800" height="450" fill="url(#glow)"/>
+  <text x="56" y="66" fill="#8AA0C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="3">SOPORTE</text>
+  <text x="56" y="128" fill="#FFFFFF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="40" font-weight="800">No estás</text>
+  <text x="56" y="176" fill="url(#gr)" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="40" font-weight="800">solo</text>
+  <text x="56" y="222" fill="#93A4C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18">Actualizaciones, mejoras y</text>
+  <text x="56" y="248" fill="#93A4C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18">ayuda directa por WhatsApp.</text>
+  <rect x="56" y="288" width="176" height="44" rx="22" fill="#FFD27D"/>
+  <text x="144" y="316" text-anchor="middle" fill="#241B06" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">Desde S/ 120/mes</text>
+
+  <rect x="430" y="80" width="270" height="84" rx="18" fill="#15233B" stroke="#2A3B58" stroke-width="1"/>
+  <text x="452" y="112" fill="#8AA0C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">Hola Jimy, no me sale</text>
+  <text x="452" y="132" fill="#8AA0C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">el cierre de caja.</text>
+  <text x="452" y="152" fill="#6C7D99" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10">10:24</text>
+
+  <rect x="560" y="190" width="200" height="92" rx="18" fill="#22C55E"/>
+  <text x="580" y="222" fill="#062012" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12" font-weight="700">Ya lo reviso. Es la</text>
+  <text x="580" y="242" fill="#062012" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12" font-weight="700">caja del turno anterior.</text>
+  <text x="580" y="262" fill="#062012" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10">10:26</text>
+
+  <rect x="430" y="310" width="220" height="60" rx="16" fill="#15233B" stroke="#2A3B58" stroke-width="1"/>
+  <text x="452" y="336" fill="#8AA0C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">¡Listo, gracias!</text>
+  <text x="452" y="356" fill="#6C7D99" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10">10:31</text>
+
+  <circle cx="704" cy="340" r="42" fill="#22C55E" fill-opacity="0.14" stroke="#22C55E" stroke-width="2"/>
+  <path d="M704 322l5 12 13 1-10 9 3 13-11-7-11 7 3-13-10-9 13-1z" fill="#22C55E"/>
+</svg>

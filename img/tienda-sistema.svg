@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Sistema de ventas a medida">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A1220"/><stop offset="1" stop-color="#14243F"/>
+    </linearGradient>
+    <linearGradient id="gr" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#FFD27D"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#22C55E" stop-opacity="0.2"/><stop offset="1" stop-color="#22C55E" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#22C55E" stroke-opacity="0.07" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <rect width="800" height="450" fill="url(#grid)"/>
+  <rect width="800" height="450" fill="url(#glow)"/>
+  <text x="56" y="66" fill="#8AA0C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="3">SISTEMA A MEDIDA</text>
+  <text x="56" y="128" fill="#FFFFFF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="40" font-weight="800">Hecho para</text>
+  <text x="56" y="176" fill="url(#gr)" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="40" font-weight="800">tu proceso</text>
+  <text x="56" y="222" fill="#93A4C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18">Un sistema que se adapta a</text>
+  <text x="56" y="248" fill="#93A4C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18">cómo trabajas, no al revés.</text>
+  <rect x="56" y="288" width="168" height="44" rx="22" fill="#FFD27D"/>
+  <text x="140" y="316" text-anchor="middle" fill="#241B06" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">Desde S/ 1,200</text>
+
+  <rect x="430" y="52" width="322" height="346" rx="14" fill="#0E1A2E" stroke="#2A3B58" stroke-width="2"/>
+  <rect x="430" y="52" width="92" height="346" rx="14" fill="#0B1526"/>
+  <rect x="430" y="52" width="92" height="346" fill="#0B1526"/>
+  <rect x="522" y="52" width="16" height="346" fill="#0B1526"/>
+  <circle cx="452" cy="78" r="10" fill="#22C55E"/>
+  <rect x="444" y="104" width="64" height="8" rx="4" fill="#2B3D5C"/>
+  <rect x="444" y="128" width="64" height="8" rx="4" fill="#22C55E" fill-opacity="0.7"/>
+  <rect x="444" y="152" width="64" height="8" rx="4" fill="#2B3D5C"/>
+  <rect x="444" y="176" width="64" height="8" rx="4" fill="#2B3D5C"/>
+  <rect x="540" y="72" width="190" height="16" rx="8" fill="#E7EDF8"/>
+  <rect x="540" y="106" width="86" height="58" rx="9" fill="#15233B"/>
+  <rect x="636" y="106" width="94" height="58" rx="9" fill="#15233B"/>
+  <rect x="552" y="120" width="42" height="8" rx="4" fill="#8AA0C0"/>
+  <rect x="552" y="138" width="56" height="14" rx="6" fill="#22C55E"/>
+  <rect x="648" y="120" width="42" height="8" rx="4" fill="#8AA0C0"/>
+  <rect x="648" y="138" width="48" height="14" rx="6" fill="#FFD27D"/>
+  <rect x="540" y="182" width="190" height="112" rx="10" fill="#101D32"/>
+  <text x="552" y="204" fill="#8AA0C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10">VENTAS DE LA SEMANA</text>
+  <rect x="552" y="248" width="18" height="34" rx="4" fill="#22C55E" fill-opacity="0.4"/>
+  <rect x="578" y="232" width="18" height="50" rx="4" fill="#22C55E" fill-opacity="0.55"/>
+  <rect x="604" y="220" width="18" height="62" rx="4" fill="#22C55E" fill-opacity="0.7"/>
+  <rect x="630" y="240" width="18" height="42" rx="4" fill="#22C55E" fill-opacity="0.5"/>
+  <rect x="656" y="210" width="18" height="72" rx="4" fill="#22C55E"/>
+  <rect x="682" y="226" width="18" height="56" rx="4" fill="#FFD27D" fill-opacity="0.7"/>
+  <rect x="540" y="310" width="190" height="64" rx="10" fill="#15233B"/>
+  <rect x="552" y="324" width="80" height="8" rx="4" fill="#8AA0C0"/>
+  <rect x="552" y="342" width="140" height="10" rx="5" fill="#22C55E" fill-opacity="0.8"/>
+</svg>
