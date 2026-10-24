@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libro de reclamaciones | JZAC ERP</title>
+  <meta name="description" content="Libro de reclamaciones virtual de JZAC ERP conforme al Código de Protección y Defensa del Consumidor.">
+  <link rel="icon" type="image/png" href="icono_jzac_erp.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .legal { padding: 3.5rem 0 5rem; }
+    .legal h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.6rem; }
+    .legal .updated { color: var(--muted-2); font-size: 0.82rem; margin-bottom: 1.6rem; }
+    .legal p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 0.8rem; }
+    .legal a { color: var(--dorado-bright); text-decoration: underline; }
+    .legal .back { display: inline-block; margin-bottom: 1.6rem; color: var(--verde-bright); font-weight: 600; font-size: 0.9rem; }
+    .lr-aviso {
+      border: 1px solid rgba(240, 176, 82, 0.35); background: rgba(240, 176, 82, 0.08);
+      border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.8rem;
+    }
+    .lr-aviso p { margin: 0; color: var(--text); font-size: 0.88rem; }
+    .lr-tipos { display: flex; gap: 1.4rem; flex-wrap: wrap; margin: 0.2rem 0 1rem; font-size: 0.86rem; color: var(--text-muted); }
+    .lr-tipos label { display: flex; align-items: center; gap: 0.4rem; }
+    .lr-tipos input { accent-color: var(--verde); }
+    .lr-tipos small { color: var(--muted-2); }
+    .constancia {
+      display: none; margin-top: 2rem; padding: 1.6rem 1.5rem; border-radius: var(--radius);
+      border: 1px solid rgba(34, 197, 94, 0.45); background: rgba(34, 197, 94, 0.07);
+    }
+    .constancia.show { display: block; }
+    .constancia h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.4rem; color: var(--verde-bright); }
+    .constancia .codigo { font-family: ui-monospace, monospace; font-size: 0.95rem; color: var(--text); background: rgba(8, 13, 24, 0.6); border: 1px solid var(--border-soft); border-radius: 8px; padding: 0.4rem 0.7rem; display: inline-block; margin: 0.4rem 0 1rem; }
+    .constancia dl { display: grid; grid-template-columns: 170px 1fr; gap: 0.45rem 0.8rem; font-size: 0.86rem; }
+    .constancia dt { color: var(--muted-2); }
+    .constancia dd { color: var(--text); margin: 0; white-space: pre-wrap; }
+    .constancia .acciones { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 1.3rem; }
+    .constancia .nota { font-size: 0.78rem; color: var(--muted-2); margin-top: 0.9rem; }
+    @media (max-width: 560px) {
+      .constancia dl { grid-template-columns: 1fr; gap: 0.15rem; }
+      .constancia dd { margin-bottom: 0.6rem; }
+    }
+    @media print {
+      .navbar, .footer, .legal .back, form, .lr-aviso, .legal > .container > h1, .legal .updated, .legal > .container > p, .constancia .acciones, .constancia .nota { display: none !important; }
+      body { background: #fff; }
+      .constancia { display: block !important; border: 1px solid #999; background: #fff; color: #111; margin: 0; }
+      .constancia h2, .constancia dd, .constancia .codigo { color: #111; }
+      .constancia dt { color: #555; }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="brand">
+        <span class="logo-mark">JA</span>
+        <span class="brand-text"><b>JZAC ERP</b><small>por Jimy Alania</small></span>
+      </a>
+      <nav class="nav-links" aria-label="Principal">
+        <a href="index.html#sistema">El sistema</a>
+        <a href="index.html#precio">Precio</a>
+        <a href="index.html#contacto" class="btn btn-gold btn-small">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal">
+    <div class="container container-narrow">
+      <a class="back" href="index.html">← Volver al inicio</a>
+      <h1>Libro de reclamaciones</h1>
+      <p class="updated">Conforme al Código de Protección y Defensa del Consumidor (Ley N° 29571)</p>
+
+      <div class="lr-aviso">
+        <p><b>Importante:</b> este libro es virtual y está integrado en la web. Al enviar tu hoja recibirás una constancia con un código de registro. También puedes solicitar una copia por WhatsApp.</p>
+      </div>
+
+      <p><b>JZAC ERP</b> · Jimy Alania · RUC 10766139596 · Oxapampa, Pasco, Perú · WhatsApp +51 929 068 219</p>
+
+      <form class="contact-form" id="form-reclamo" novalidate style="margin-top:1.6rem">
+        <h3>Hoja de reclamación</h3>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="r-nombre">Nombre completo *</label>
+            <input id="r-nombre" type="text" required autocomplete="name" placeholder="Nombres y apellidos">
+          </div>
+          <div class="field">
+            <label for="r-documento">DNI / CE *</label>
+            <input id="r-documento" type="text" required placeholder="Número de documento">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="r-domicilio">Domicilio *</label>
+          <input id="r-domicilio" type="text" required autocomplete="street-address" placeholder="Dirección completa">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="r-telefono">Teléfono *</label>
+            <input id="r-telefono" type="tel" required placeholder="Ej. 929 068 219">
+          </div>
+          <div class="field">
+            <label for="r-correo">Correo electrónico *</label>
+            <input id="r-correo" type="email" required autocomplete="email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Tipo de solicitud *</label>
+          <div class="lr-tipos">
+            <label><input type="radio" name="tipo" value="Reclamo" checked> Reclamo <small>(disconformidad con el producto o servicio)</small></label>
+            <label><input type="radio" name="tipo" value="Queja"> Queja <small>(malestar con la atención)</small></label>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="r-bien">Bien contratado *</label>
+            <input id="r-bien" type="text" required placeholder="Ej. Licencia JZAC ERP / servicio de desarrollo">
+          </div>
+          <div class="field">
+            <label for="r-monto">Monto reclamado <em>(opcional)</em></label>
+            <input id="r-monto" type="text" placeholder="Ej. S/ 390">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="r-pedido">Número de pedido u operación <em>(opcional)</em></label>
+          <input id="r-pedido" type="text" placeholder="Código o número de operación">
+        </div>
+
+        <div class="field">
+          <label for="r-detalle">Detalle del reclamo o queja *</label>
+          <textarea id="r-detalle" rows="4" required placeholder="Cuéntanos qué ocurrió con el mayor detalle posible"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="r-pedido-consumidor">¿Qué solicitas? *</label>
+          <textarea id="r-pedido-consumidor" rows="3" required placeholder="Ej. devolución, cambio, corrección del servicio"></textarea>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" id="r-acepto" required>
+          <span>Declaro que la información es verdadera y acepto la <a href="privacidad.html">política de privacidad</a>.</span>
+        </label>
+
+        <button class="btn btn-green btn-lg btn-block" type="submit" id="r-enviar">Registrar reclamo</button>
+        <p class="form-note" id="r-nota">Recibirás una constancia con tu código de registro.</p>
+      </form>
+
+      <section class="constancia" id="constancia" aria-live="polite">
+        <h2>Constancia de registro</h2>
+        <p>Tu hoja fue registrada correctamente.</p>
+        <div class="codigo" id="c-codigo">—</div>
+        <dl id="c-datos"></dl>
+        <div class="acciones">
+          <button class="btn btn-green" type="button" id="c-imprimir">Imprimir / Guardar PDF</button>
+          <button class="btn btn-ghost" type="button" id="c-whatsapp">Enviar copia por WhatsApp</button>
+        </div>
+        <p class="nota">El proveedor responderá en un plazo máximo de 15 días hábiles. La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para denunciar ante INDECOPI.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="brand">
+          <span class="logo-mark">JA</span>
+          <span class="brand-text"><b>JZAC ERP</b><small>por Jimy Alania</small></span>
+        </a>
+      </div>
+      <div class="footer-legal">
+        <a href="terminos.html">Términos</a>
+        <a href="privacidad.html">Privacidad</a>
+        <a href="devoluciones.html">Devoluciones</a>
+        <a href="libro-reclamaciones.html">Libro de reclamaciones</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Jimy Alania · RUC 10766139596 · Oxapampa, Pasco, Perú</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+      var y = document.getElementById("year");
+      if (y) y.textContent = new Date().getFullYear();
+
+      var form = document.getElementById("form-reclamo");
+      var nota = document.getElementById("r-nota");
+      var caja = document.getElementById("constancia");
+      var codigoEl = document.getElementById("c-codigo");
+      var datosEl = document.getElementById("c-datos");
+      var actual = null;
+
+      function val(id) {
+        var el = document.getElementById(id);
+        return el ? el.value.trim() : "";
+      }
+      function setNota(txt, tipo) {
+        nota.textContent = txt;
+        nota.classList.remove("ok", "bad");
+        if (tipo) nota.classList.add(tipo);
+      }
+      function generarCodigo() {
+        var d = new Date();
+        var f = String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+        var n = Math.floor(1000 + Math.random() * 9000);
+        return "JZAC-" + f + "-" + n;
+      }
+      function textoWa(r) {
+        return "LIBRO DE RECLAMACIONES JZAC ERP\n\n" +
+          "Código: " + r.codigo + "\n" +
+          "Tipo: " + r.tipo + "\n" +
+          "Nombre: " + r.nombre + "\n" +
+          "DNI/CE: " + r.documento + "\n" +
+          "Domicilio: " + r.domicilio + "\n" +
+          "Teléfono: " + r.telefono + "\n" +
+          "Correo: " + r.correo + "\n" +
+          "Bien: " + r.bien + "\n" +
+          "Monto: " + (r.monto || "-") + "\n" +
+          "Pedido/operación: " + (r.pedido || "-") + "\n\n" +
+          "Detalle: " + r.detalle + "\n\n" +
+          "Pedido: " + r.peticion;
+      }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var nombre = val("r-nombre"), documento = val("r-documento"), domicilio = val("r-domicilio");
+        var telefono = val("r-telefono"), correo = val("r-correo");
+        var bien = val("r-bien"), detalle = val("r-detalle"), peticion = val("r-pedido-consumidor");
+        var acepto = document.getElementById("r-acepto").checked;
+
+        if (!nombre || !documento || !domicilio || !telefono || !correo || !bien || !detalle || !peticion) {
+          setNota("Completa todos los campos obligatorios (*).", "bad");
+          return;
+        }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
+          setNota("Revisa el correo electrónico.", "bad");
+          return;
+        }
+        if (!acepto) {
+          setNota("Debes aceptar la declaración para registrar el reclamo.", "bad");
+          return;
+        }
+
+        var tipoEl = form.querySelector('input[name="tipo"]:checked');
+        actual = {
+          codigo: generarCodigo(),
+          tipo: tipoEl ? tipoEl.value : "Reclamo",
+          nombre: nombre, documento: documento, domicilio: domicilio,
+          telefono: telefono, correo: correo, bien: bien,
+          monto: val("r-monto"), pedido: val("r-pedido"),
+          detalle: detalle, peticion: peticion,
+          fecha: new Date().toLocaleString("es-PE")
+        };
+
+        try {
+          var prev = JSON.parse(localStorage.getItem("jzac_reclamos") || "[]");
+          prev.push(actual);
+          localStorage.setItem("jzac_reclamos", JSON.stringify(prev));
+        } catch (err) { /* sin almacenamiento local */ }
+
+        codigoEl.textContent = actual.codigo;
+        datosEl.innerHTML = "";
+        [
+          ["Fecha", actual.fecha],
+          ["Tipo", actual.tipo],
+          ["Nombre", actual.nombre],
+          ["DNI / CE", actual.documento],
+          ["Domicilio", actual.domicilio],
+          ["Teléfono", actual.telefono],
+          ["Correo", actual.correo],
+          ["Bien contratado", actual.bien],
+          ["Monto", actual.monto || "-"],
+          ["Pedido / operación", actual.pedido || "-"],
+          ["Detalle", actual.detalle],
+          ["Pedido del consumidor", actual.peticion]
+        ].forEach(function (par) {
+          var dt = document.createElement("dt");
+          dt.textContent = par[0];
+          var dd = document.createElement("dd");
+          dd.textContent = par[1];
+          datosEl.appendChild(dt);
+          datosEl.appendChild(dd);
+        });
+
+        caja.classList.add("show");
+        setNota("Reclamo registrado. Guarda tu código " + actual.codigo + ".", "ok");
+        form.reset();
+        caja.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      document.getElementById("c-imprimir").addEventListener("click", function () {
+        window.print();
+      });
+
+      document.getElementById("c-whatsapp").addEventListener("click", function () {
+        if (!actual) return;
+        window.open("https://wa.me/51929068219?text=" + encodeURIComponent(textoWa(actual)), "_blank", "noopener");
+      });
+    })();
+  </script>
+</body>
+</html>
