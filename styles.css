@@ -983,3 +983,40 @@ button { font-family: inherit; }
   .pago-datos { gap: 1.2rem; }
   .pago-top-inner { padding: 0.8rem 0; }
 }
+
+/* ---------- Pago directo con Yape ---------- */
+
+.pago-divisor {
+  display: flex; align-items: center; gap: 0.7rem;
+  margin: 0.95rem 0 0.6rem;
+  color: var(--muted-2); font-size: 0.76rem; text-align: center;
+}
+.pago-divisor::before, .pago-divisor::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}
+.btn-yape {
+  background: #6f2a8e; color: #fff;
+  box-shadow: 0 10px 28px rgba(111, 42, 142, 0.28);
+}
+.btn-yape:hover {
+  background: #8234a6; color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 16px 38px rgba(111, 42, 142, 0.42);
+}
+.yape-micro {
+  margin-top: 0.45rem;
+  font-size: 0.74rem; color: var(--muted-2); text-align: center;
+}
+.yape-box {
+  margin-top: 1rem; padding: 1rem;
+  border: 1px solid rgba(111, 42, 142, 0.3);
+  border-radius: 16px;
+  background: #fff; color: #2a1630;
+}
+.yape-box[hidden] { display: none; }
+.yape-box img {
+  display: block; width: 100%; max-width: 250px; height: auto;
+  margin: 0 auto 0.8rem; border-radius: 12px;
+}
+.yape-box p { margin: 0.35rem 0; font-size: 0.86rem; text-align: left; color: #3b2342; }
+.yape-box .btn { margin-top: 0.8rem; }

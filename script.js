@@ -290,38 +290,59 @@
     instancia.open();
   }
 
+  function leerDatosCompra() {
+    var negocio = limpiar($("#m-negocio").value);
+    var nombre = limpiar($("#m-nombre").value);
+    var correo = limpiar($("#m-correo").value);
+    var telefono = limpiar($("#m-telefono").value);
+    var acepto = $("#m-acepto").checked;
+
+    if (!negocio || !nombre || !correo || !telefono) {
+      setNota(notaCompra, "Completa todos los campos para continuar.", "bad");
+      return null;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
+      setNota(notaCompra, "Revisa el correo electrónico.", "bad");
+      return null;
+    }
+    if (!acepto) {
+      setNota(notaCompra, "Acepta los términos y la política de privacidad.", "bad");
+      return null;
+    }
+    return { negocio: negocio, nombre: nombre, correo: correo, telefono: telefono, precio: CONFIG.precio };
+  }
+
   if (formCompra) {
+    var cajaYape = $("#m-yape-box");
+
     formCompra.addEventListener("input", function () {
+      if (cajaYape) cajaYape.hidden = true;
       if (!pagoEnProceso) {
         ordenActual = null;
         ordenPromesa = null;
       }
     });
 
+    var btnYape = $("#m-yape");
+    if (btnYape) {
+      btnYape.addEventListener("click", function () {
+        if (pagoEnProceso) return;
+        var datos = leerDatosCompra();
+        if (!datos) return;
+        if (cajaYape) cajaYape.hidden = false;
+        var wa = $("#m-yape-wa");
+        if (wa) wa.href = "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(mensajeYape(datos));
+        setNota(notaCompra, "Escanea el QR, paga S/ 390 y envíanos el comprobante por WhatsApp.", "ok");
+        if (cajaYape) cajaYape.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    }
+
     formCompra.addEventListener("submit", async function (e) {
       e.preventDefault();
       if (pagoEnProceso) return;
-
-      var negocio = limpiar($("#m-negocio").value);
-      var nombre = limpiar($("#m-nombre").value);
-      var correo = limpiar($("#m-correo").value);
-      var telefono = limpiar($("#m-telefono").value);
-      var acepto = $("#m-acepto").checked;
-
-      if (!negocio || !nombre || !correo || !telefono) {
-        setNota(notaCompra, "Completa todos los campos para continuar.", "bad");
-        return;
-      }
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
-        setNota(notaCompra, "Revisa el correo electrónico.", "bad");
-        return;
-      }
-      if (!acepto) {
-        setNota(notaCompra, "Acepta los términos y la política de privacidad.", "bad");
-        return;
-      }
-
-      var datos = { negocio: negocio, nombre: nombre, correo: correo, telefono: telefono, precio: CONFIG.precio };
+      var datos = leerDatosCompra();
+      if (!datos) return;
+      if (cajaYape) cajaYape.hidden = true;
 
       if (!CONFIG.culqiListo) {
         setNota(notaCompra, "Abriendo WhatsApp para coordinar tu compra...", "ok");
@@ -360,6 +381,15 @@
       "Correo: " + d.correo + "\n" +
       "WhatsApp: " + d.telefono + "\n\n" +
       "Quiero pagar con (Yape / tarjeta / transferencia): ";
+  }
+
+  function mensajeYape(d) {
+    return "¡Hola Jimy! Quiero comprar JZAC ERP (S/ " + CONFIG.precio + ") y pagar por Yape.\n\n" +
+      "Negocio: " + d.negocio + "\n" +
+      "Nombre: " + d.nombre + "\n" +
+      "Correo: " + d.correo + "\n" +
+      "WhatsApp: " + d.telefono + "\n\n" +
+      "Adjunto mi comprobante de Yape.\nCódigo de operación: ";
   }
 
   /* ---------- Formulario de contacto ---------- */
