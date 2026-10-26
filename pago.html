@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estado de tu pago | JZAC ERP</title>
+  <meta name="description" content="Consulta el estado de tu pago y obtén el código de activación de JZAC ERP.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0B1120">
+  <link rel="icon" type="image/png" href="icono_jzac_erp.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="pago-page">
+
+  <header class="pago-top">
+    <div class="container pago-top-inner">
+      <a href="index.html" class="brand" aria-label="JZAC ERP, inicio">
+        <span class="logo-mark">JA</span>
+        <span class="brand-text">
+          <b>JZAC ERP</b>
+          <small>por Jimy Alania</small>
+        </span>
+      </a>
+      <a href="index.html" class="pago-back">Volver al inicio</a>
+    </div>
+  </header>
+
+  <main class="pago-main">
+    <div class="container">
+      <section class="pago-card" id="pago-card" aria-live="polite">
+        <div class="pago-spinner" id="pago-spinner" aria-hidden="true"><span></span></div>
+        <p class="pago-eyebrow" id="pago-eyebrow">Confirmando pago</p>
+        <h1 id="pago-titulo">Estamos verificando tu pago...</h1>
+        <p class="pago-texto" id="pago-texto">No cierres esta página. Esto toma solo unos segundos.</p>
+
+        <div class="pago-code-box" id="pago-code-box" hidden>
+          <span>Tu código de activación</span>
+          <strong id="pago-codigo">----</strong>
+          <button class="btn btn-green btn-small" type="button" id="pago-copiar">Copiar código</button>
+        </div>
+
+        <div class="pago-datos" id="pago-datos" hidden>
+          <div><span>Negocio</span><b id="pago-negocio">—</b></div>
+          <div><span>Monto pagado</span><b id="pago-monto">—</b></div>
+        </div>
+
+        <div class="pago-pasos" id="pago-pasos" hidden>
+          <h2>Cómo activar tu licencia</h2>
+          <ol>
+            <li>Abre <a href="https://jzac-alania.github.io/erp/" target="_blank" rel="noopener">JZAC ERP</a> en este u otro equipo.</li>
+            <li>Pulsa <b>Activar licencia</b>.</li>
+            <li>Escribe el nombre del negocio, tu correo y el código de arriba.</li>
+          </ol>
+          <p class="pago-nota">La licencia no vence y permite hasta 2 equipos.</p>
+        </div>
+
+        <div class="pago-acciones">
+          <a id="pago-erp" class="btn btn-green" href="https://jzac-alania.github.io/erp/" target="_blank" rel="noopener" hidden>Abrir JZAC ERP</a>
+          <button id="pago-reintentar" class="btn btn-ghost" type="button" hidden>Reintentar</button>
+          <a id="pago-wa" class="btn btn-ghost" href="https://wa.me/51929068219" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+          <a id="pago-inicio" class="btn btn-ghost" href="index.html">Volver al inicio</a>
+        </div>
+
+        <p class="pago-nota" id="pago-nota-final"></p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="pago-footer">
+    <div class="container">
+      <p>JZAC ERP · Jimy Alania · RUC 10766139596 · Oxapampa, Pasco, Perú</p>
+      <p><a href="terminos.html">Términos</a> · <a href="privacidad.html">Privacidad</a> · <a href="devoluciones.html">Devoluciones</a> · <a href="libro-reclamaciones.html">Libro de reclamaciones</a></p>
+    </div>
+  </footer>
+
+  <script src="pago.js"></script>
+</body>
+</html>
