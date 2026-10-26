@@ -88,15 +88,77 @@
     const splash = document.getElementById('splash');
     if (splash) splash.classList.add('hidden');
     dibujar(`
-      <div class="auth">
-        <div class="auth-caja">
-          <div class="auth-logo"><img src="./icons/icono.svg" alt="JZAC ERP"></div>
-          <div class="auth-titulo">JZAC ERP</div>
-          <div class="auth-sub">Software que trabaja por tu negocio</div>
-          <div id="auth-form"></div>
+      <div class="auth auth-login">
+        <div class="auth-escena">
+          <aside class="auth-visual">
+            <div class="av-top">
+              <span class="av-marca"><img src="./icons/icono.svg" alt=""> JZAC ERP</span>
+              <span class="av-estado"><i></i> En línea</span>
+            </div>
+            <div class="av-copy">
+              <h2>Tu negocio,<br><em>en orden.</em></h2>
+              <p>Ventas, inventario, boletas y caja desde un solo lugar.</p>
+            </div>
+            <div class="av-paneles">
+              <button type="button" class="av-card av-ventas on" data-av="ventas">
+                <span>Ventas de hoy</span>
+                <b>S/ 1,280.50</b>
+                <small>+18% vs. ayer</small>
+                <span class="av-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              </button>
+              <button type="button" class="av-card av-boleta" data-av="boletas">
+                <span>Boleta B001-1042</span>
+                <b>S/ 35.90</b>
+                <small>Emitida hace un momento</small>
+              </button>
+              <button type="button" class="av-card av-stock" data-av="stock">
+                <span>Stock bajo</span>
+                <b>3 productos</b>
+                <small>Revisar inventario</small>
+              </button>
+            </div>
+            <div class="av-puntos" role="group" aria-label="Vista previa del sistema">
+              <button type="button" class="av-punto on" data-av="ventas">Ventas</button>
+              <button type="button" class="av-punto" data-av="boletas">Boletas</button>
+              <button type="button" class="av-punto" data-av="stock">Inventario</button>
+            </div>
+          </aside>
+          <div class="auth-caja">
+            <div class="auth-logo"><img src="./icons/icono.svg" alt="JZAC ERP"></div>
+            <div class="auth-titulo">JZAC ERP</div>
+            <div class="auth-sub">Software que trabaja por tu negocio</div>
+            <div id="auth-form"></div>
+          </div>
         </div>
       </div>`);
     anima(true);
+
+    const escena = document.querySelector('.auth-escena');
+    if (escena && window.matchMedia('(hover: hover)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      escena.addEventListener('pointermove', (e) => {
+        const r = escena.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        escena.style.setProperty('--ry', (x * 3).toFixed(2) + 'deg');
+        escena.style.setProperty('--rx', (-y * 3).toFixed(2) + 'deg');
+        escena.style.setProperty('--mx', ((x + 0.5) * 100).toFixed(1) + '%');
+        escena.style.setProperty('--my', ((y + 0.5) * 100).toFixed(1) + '%');
+      });
+      escena.addEventListener('pointerleave', () => {
+        escena.style.setProperty('--ry', '0deg');
+        escena.style.setProperty('--rx', '0deg');
+      });
+    }
+
+    const puntos = document.querySelectorAll('.av-punto');
+    if (puntos.length) {
+      const enfocar = (clave) => {
+        puntos.forEach((p) => p.classList.toggle('on', p.dataset.av === clave));
+        document.querySelectorAll('.av-card').forEach((c) => c.classList.toggle('on', c.dataset.av === clave));
+      };
+      puntos.forEach((p) => p.addEventListener('click', () => enfocar(p.dataset.av)));
+      document.querySelectorAll('.av-card').forEach((c) => c.addEventListener('click', () => enfocar(c.dataset.av)));
+    }
 
     function formLogin() {
       const ultimo = localStorage.getItem('jzac_ultimo_correo') || '';
@@ -243,6 +305,9 @@
           <button class="btn btn-bloco mt16" id="p-codigo">Ya tengo un código de activación</button>
         </div>
       </div>`);
+
+    const telPrueba = o('p-telefono');
+    if (telPrueba && window.__JZAC_TEL__) telPrueba.value = String(window.__JZAC_TEL__).replace(/\D/g, '');
 
     o('p-iniciar').addEventListener('click', async () => {
       const telField = o('p-telefono');
