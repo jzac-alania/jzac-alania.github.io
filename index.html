@@ -21,12 +21,21 @@
 </head>
 <body>
 
-  <!-- ===== PRELOADER ===== -->
-  <div class="preloader" id="preloader" aria-hidden="true">
-    <div class="preloader-inner">
-      <span class="logo-mark">JA</span>
-      <div class="spinner" aria-hidden="true"></div>
-      <p>JZAC ERP</p>
+  <!-- ===== INTRO CINEMATOGRÁFICA ===== -->
+  <div class="preloader" id="preloader" role="status" aria-label="Cargando JZAC ERP">
+    <span class="intro-curtain intro-curtain-left" aria-hidden="true"></span>
+    <span class="intro-curtain intro-curtain-right" aria-hidden="true"></span>
+    <div class="intro-core">
+      <div class="intro-logo">
+        <span class="intro-logo-ring" aria-hidden="true"></span>
+        <span class="logo-mark">JA</span>
+      </div>
+      <div class="intro-word" aria-label="JZAC ERP">
+        <span>J</span><span>Z</span><span>A</span><span>C</span><em>ERP</em>
+      </div>
+      <p class="intro-tag">Software que trabaja por tu negocio</p>
+      <div class="intro-progress" aria-hidden="true"><i></i></div>
+      <button class="intro-skip" type="button" id="intro-skip">Saltar intro</button>
     </div>
   </div>
   <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
@@ -104,28 +113,37 @@
         </div>
 
         <div class="hero-visual">
-          <div class="phone-3d" data-tilt>
-            <div class="phone hero-in" style="--d:6">
-              <div class="phone-notch" aria-hidden="true"></div>
-              <div class="phone-screen">
-                <img src="banner_estado_whatsapp.png" alt="Vista de JZAC ERP desde el celular" loading="eager">
+          <div class="hero-stage hero-in" style="--d:6" data-tilt>
+            <div class="hero-app-glow" aria-hidden="true"></div>
+            <div class="app-window hero-app">
+              <div class="app-bar">
+                <span class="app-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="app-url">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                  jzac-erp.app/inicio
+                </span>
+                <span class="app-live"><i></i> EN VIVO</span>
               </div>
+              <button class="app-screen app-screen-hero" type="button" data-zoom="assets/app/panel-oscuro.png" data-caption="Panel principal de JZAC ERP en modo oscuro" aria-label="Ampliar captura del panel de JZAC ERP">
+                <img src="assets/app/panel-oscuro.png" alt="Panel principal de JZAC ERP con ventas, ganancia, gastos y fiados del día" width="1901" height="942" loading="eager">
+                <span class="app-zoom-hint" aria-hidden="true">Ver captura</span>
+              </button>
             </div>
             <div class="float-card float-a">
               <span class="float-ico green">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64"/><path d="M12 2v10"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               </span>
-              <span><b>Funciona sin internet</b><small>en cualquier lugar</small></span>
+              <span><b>Venta registrada</b><small>S/ 24.50 · en 3 segundos</small></span>
             </div>
             <div class="float-card float-b">
               <span class="float-ico gold">✓</span>
-              <span><b>Pago único</b><small>sin mensualidades</small></span>
+              <span><b>Caja cuadrada</b><small>sin diferencias hoy</small></span>
             </div>
             <div class="float-card float-c">
               <span class="float-ico green">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64"/><path d="M12 2v10"/></svg>
               </span>
-              <span><b>Se abre en tu celular</b><small>sin instalar nada</small></span>
+              <span><b>Sin internet</b><small>vendiendo igual</small></span>
             </div>
           </div>
         </div>
@@ -296,50 +314,100 @@
       </div>
     </section>
 
-    <!-- ===== SHOWCASE ===== -->
-    <section class="section showcase" id="sistema">
-      <div class="container showcase-grid">
-        <div class="showcase-copy">
+    <!-- ===== RECORRIDO POR LA APP ===== -->
+    <section class="section showcase showcase-app" id="sistema">
+      <div class="container">
+        <div class="showcase-head">
           <p class="section-eyebrow reveal">El sistema</p>
-          <h2 class="section-title section-title-left reveal">Así se ve tu mostrador</h2>
-          <p class="section-lead section-lead-left reveal">
-            Una interfaz pensada para vender rápido, no para complicarte.
-            Grandes botones, lectura clara y todo a la mano.
+          <h2 class="section-title reveal">Mira JZAC ERP <span class="grad-text">por dentro</span></h2>
+          <p class="section-lead reveal">
+            Pantallas reales de la app, no maquetas. Desliza y descubre cómo se siente
+            vender, revisar tu caja y entrar al sistema todos los días.
           </p>
-          <ul class="check-list reveal">
-            <li>Ventas rápidas con teclado y lector de códigos</li>
-            <li>Dashboard con ventas del día y ganancia</li>
-            <li>Caja, gastos y fiados en el mismo lugar</li>
-            <li>Funciona en cualquier celular, tablet o PC</li>
-          </ul>
-          <div class="showcase-actions reveal">
-            <a class="btn btn-green btn-lg" href="erp/" target="_blank" rel="noopener">Probar en vivo</a>
-            <a class="btn btn-ghost btn-lg" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20ver%20una%20demo%20de%20JZAC%20ERP" target="_blank" rel="noopener">Pedir una demo</a>
-          </div>
         </div>
 
-        <div class="showcase-visual">
-          <div class="phone-3d showcase-phone" data-tilt>
-            <div class="phone">
-              <div class="phone-notch" aria-hidden="true"></div>
-              <div class="phone-screen">
-                <img src="banner_estado_whatsapp.png" alt="Interfaz de JZAC ERP en el celular" loading="lazy">
+        <div class="app-story" id="app-story">
+          <div class="app-story-stage">
+            <div class="app-window app-window-lg" data-tilt>
+              <div class="app-bar">
+                <span class="app-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="app-url" id="app-url">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                  jzac-erp.app/inicio
+                </span>
+                <span class="app-live"><i></i> DEMO</span>
               </div>
+              <div class="app-shots" id="app-shots">
+                <figure class="app-shot on" data-app="claro">
+                  <img src="assets/app/panel-claro.png" alt="Panel claro de JZAC ERP con ventas del día, ganancia, gastos y fiados" width="1897" height="940" loading="lazy" data-zoom="assets/app/panel-claro.png" data-caption="Panel claro · Todo tu día en una pantalla">
+                  <button class="app-hot" type="button" style="--x:25%;--y:24%" data-tip="Ventas y ganancia neta del día"><i></i><span>Ventas del día</span></button>
+                  <button class="app-hot" type="button" style="--x:84%;--y:24%" data-tip="Fiados por cobrar, siempre a la vista"><i></i><span>Fiados</span></button>
+                  <button class="app-hot" type="button" style="--x:23%;--y:82%" data-tip="Alertas de stock para pedir a tiempo"><i></i><span>Stock bajo</span></button>
+                </figure>
+                <figure class="app-shot" data-app="oscuro">
+                  <img src="assets/app/panel-oscuro.png" alt="Panel de JZAC ERP en modo oscuro con las mismas métricas del negocio" width="1901" height="942" loading="lazy" data-zoom="assets/app/panel-oscuro.png" data-caption="Modo oscuro · La misma claridad, con menos brillo">
+                  <button class="app-hot" type="button" style="--x:25%;--y:24%" data-tip="Métricas legibles también de noche"><i></i><span>Ventas del día</span></button>
+                  <button class="app-hot" type="button" style="--x:84%;--y:24%" data-tip="Cobra sin perder de vista quién te debe"><i></i><span>Fiados</span></button>
+                  <button class="app-hot" type="button" style="--x:23%;--y:82%" data-tip="Avisos que te ayudan a reponer stock"><i></i><span>Stock bajo</span></button>
+                </figure>
+                <figure class="app-shot" data-app="acceso">
+                  <img src="assets/app/acceso.png" alt="Pantalla de acceso de JZAC ERP con panel visual interactivo" width="1916" height="940" loading="lazy" data-zoom="assets/app/acceso.png" data-caption="Acceso · Tu negocio, en orden desde el primer clic">
+                </figure>
+              </div>
+              <span class="app-sheen" aria-hidden="true"></span>
             </div>
-            <div class="glass-card glass-a">
-              <small>Ventas de hoy</small>
-              <b data-contador="1248" data-prefijo="S/ ">S/ 1,248</b>
-              <span class="glass-up">+18% vs ayer</span>
+
+            <div class="app-stage-bar">
+              <span class="app-stage-tag" id="app-stage-tag">Panel claro · Vista general</span>
+              <div class="app-dots-nav" id="app-dots-nav" role="tablist" aria-label="Pantallas de JZAC ERP">
+                <button class="on" type="button" role="tab" aria-selected="true" data-app-step="claro"><b>01</b><span>Panel</span></button>
+                <button type="button" role="tab" aria-selected="false" data-app-step="oscuro"><b>02</b><span>Oscuro</span></button>
+                <button type="button" role="tab" aria-selected="false" data-app-step="acceso"><b>03</b><span>Acceso</span></button>
+              </div>
+              <button class="app-expand" type="button" id="app-expand">
+                Ver en grande
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              </button>
             </div>
-            <div class="glass-card glass-b">
-              <small>Stock bajo</small>
-              <b>3 <em>productos</em></b>
-              <span class="glass-warn">Revisar inventario</span>
+          </div>
+
+          <div class="app-story-copy">
+            <div class="app-chapters" id="app-chapters">
+              <article class="app-chapter on" data-app-step="claro">
+                <span class="app-chapter-kicker">01 · Vista general</span>
+                <h3>Todo tu día en una pantalla</h3>
+                <p>Ventas, ganancia neta, gastos, fiados y stock crítico. Lo que necesitas saber al abrir el sistema, sin buscar en menús.</p>
+                <ul class="check-list">
+                  <li>Métricas que se actualizan con cada venta</li>
+                  <li>Alertas de stock y productos por vencer</li>
+                  <li>Accesos rápidos para vender, cobrar y pedir</li>
+                </ul>
+              </article>
+              <article class="app-chapter" data-app-step="oscuro">
+                <span class="app-chapter-kicker">02 · Modo oscuro</span>
+                <h3>La misma claridad, con menos brillo</h3>
+                <p>Para cerrar caja de noche o trabajar en ambientes con poca luz. Todos los datos siguen ahí, con un contraste cómodo para la vista.</p>
+                <ul class="check-list">
+                  <li>Cambia de tema cuando quieras</li>
+                  <li>Colores pensados para leer rápido</li>
+                  <li>Se ve bien en celular, tablet y PC</li>
+                </ul>
+              </article>
+              <article class="app-chapter" data-app-step="acceso">
+                <span class="app-chapter-kicker">03 · Acceso</span>
+                <h3>Entra en segundos, con tu equipo protegido</h3>
+                <p>Un acceso moderno, claro y rápido. Tu cuenta y tu licencia quedan ligadas al equipo para que nadie más use tu sistema.</p>
+                <ul class="check-list">
+                  <li>Inicio de sesión simple y seguro</li>
+                  <li>Licencia por equipo, sin mensualidades</li>
+                  <li>Recuperación y soporte por WhatsApp</li>
+                </ul>
+              </article>
             </div>
-            <div class="glass-card glass-c">
-              <small>Caja del día</small>
-              <b class="ok">Cuadra ✓</b>
-              <span class="glass-up">Sin diferencias</span>
+
+            <div class="showcase-actions reveal">
+              <a class="btn btn-green btn-lg" href="erp/" target="_blank" rel="noopener">Probar en vivo</a>
+              <a class="btn btn-ghost btn-lg" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20ver%20una%20demo%20de%20JZAC%20ERP" target="_blank" rel="noopener">Pedir una demo</a>
             </div>
           </div>
         </div>
@@ -349,25 +417,35 @@
     <!-- ===== CÓMO FUNCIONA ===== -->
     <section class="section section-alt" id="como">
       <div class="container">
-        <p class="section-eyebrow reveal">Empezar es fácil</p>
-        <h2 class="section-title reveal">De la prueba a tu negocio en 3 pasos</h2>
-
-        <div class="steps">
-          <article class="step reveal">
-            <span class="step-num">01</span>
-            <h3>Ábrelo desde tu celular</h3>
-            <p>Entra desde el navegador, sin descargar ni instalar nada. Guárdalo en tu pantalla de inicio.</p>
-          </article>
-          <article class="step reveal">
-            <span class="step-num">02</span>
-            <h3>Prueba 7 días gratis</h3>
-            <p>Usa todas las funciones sin pagar nada. Registra tus productos y prueba una venta real.</p>
-          </article>
-          <article class="step reveal">
-            <span class="step-num">03</span>
-            <h3>Activa tu licencia</h3>
-            <p>Paga una sola vez con Yape o tarjeta, recibe tu código y sigue trabajando de por vida.</p>
-          </article>
+        <div class="steps-viewport" id="steps-viewport">
+          <div class="steps-head">
+            <p class="section-eyebrow reveal">Empezar es fácil</p>
+            <h2 class="section-title reveal">De la prueba a tu negocio en 3 pasos</h2>
+          </div>
+          <div class="steps" id="steps-track">
+            <article class="step reveal">
+              <span class="step-num">01</span>
+              <h3>Ábrelo desde tu celular</h3>
+              <p>Entra desde el navegador, sin descargar ni instalar nada. Guárdalo en tu pantalla de inicio.</p>
+            </article>
+            <article class="step reveal">
+              <span class="step-num">02</span>
+              <h3>Prueba 7 días gratis</h3>
+              <p>Usa todas las funciones sin pagar nada. Registra tus productos y prueba una venta real.</p>
+            </article>
+            <article class="step reveal">
+              <span class="step-num">03</span>
+              <h3>Activa tu licencia</h3>
+              <p>Paga una sola vez con Yape o tarjeta, recibe tu código y sigue trabajando de por vida.</p>
+            </article>
+            <article class="step step-final reveal">
+              <span class="step-num">04</span>
+              <h3>Empieza hoy mismo</h3>
+              <p>Haz tu primera venta en minutos. Si tienes dudas, te acompaño en la configuración inicial.</p>
+              <a class="btn btn-green btn-small" href="erp/" target="_blank" rel="noopener">Abrir el sistema</a>
+            </article>
+          </div>
+          <p class="steps-scroll-hint" aria-hidden="true">Desliza para avanzar <span>→</span></p>
         </div>
       </div>
     </section>
@@ -622,15 +700,16 @@
         <p class="section-eyebrow reveal">¿Para quién es?</p>
         <h2 class="section-title reveal">Hecho para negocios que venden todos los días</h2>
         <div class="chips reveal">
-          <span class="chip">Bodegas</span>
-          <span class="chip">Minimarkets</span>
-          <span class="chip">Ferreterías</span>
-          <span class="chip">Restaurantes</span>
-          <span class="chip">Librerías</span>
-          <span class="chip">Farmacias</span>
-          <span class="chip">Tiendas de ropa</span>
-          <span class="chip">Distribuidoras</span>
+          <button class="chip" type="button" data-sector="una bodega">Bodegas</button>
+          <button class="chip" type="button" data-sector="un minimarket">Minimarkets</button>
+          <button class="chip" type="button" data-sector="una ferretería">Ferreterías</button>
+          <button class="chip" type="button" data-sector="un restaurante">Restaurantes</button>
+          <button class="chip" type="button" data-sector="una librería">Librerías</button>
+          <button class="chip" type="button" data-sector="una farmacia">Farmacias</button>
+          <button class="chip" type="button" data-sector="una tienda de ropa">Tiendas de ropa</button>
+          <button class="chip" type="button" data-sector="una distribuidora">Distribuidoras</button>
         </div>
+        <p class="chips-hint reveal">Toca tu rubro y te preparo el mensaje de contacto.</p>
       </div>
     </section>
 
@@ -825,8 +904,26 @@
     </div>
   </div>
 
+  <!-- ===== LIGHTBOX DE CAPTURAS ===== -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Vista ampliada de la app" aria-hidden="true">
+    <div class="lightbox-backdrop" data-lightbox-close></div>
+    <div class="lightbox-shell">
+      <div class="lightbox-top">
+        <span id="lightbox-caption">JZAC ERP</span>
+        <button class="lightbox-close" type="button" data-lightbox-close aria-label="Cerrar vista ampliada">×</button>
+      </div>
+      <div class="lightbox-stage">
+        <button class="lightbox-nav prev" type="button" id="lightbox-prev" aria-label="Captura anterior">‹</button>
+        <img id="lightbox-img" src="assets/app/panel-claro.png" alt="Captura ampliada de JZAC ERP">
+        <button class="lightbox-nav next" type="button" id="lightbox-next" aria-label="Captura siguiente">›</button>
+      </div>
+      <p class="lightbox-hint">Usa ← → para cambiar · Esc para cerrar</p>
+    </div>
+  </div>
+
   <script src="vendor/gsap.min.js"></script>
   <script src="vendor/ScrollTrigger.min.js"></script>
+  <script src="vendor/SplitText.min.js"></script>
   <script src="vendor/lenis.min.js"></script>
   <script src="https://js.culqi.com/checkout-js"></script>
   <script src="script.js"></script>

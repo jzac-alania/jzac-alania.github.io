@@ -40,14 +40,36 @@
   var year = $("#year");
   if (year) year.textContent = String(new Date().getFullYear());
 
-  /* ---------- Preloader ---------- */
+  /* ---------- Intro cinematográfica ---------- */
   var preloader = $("#preloader");
-  function ocultarPreloader() {
-    if (!preloader || preloader.classList.contains("done")) return;
+  var introSaltada = false;
+  var introReducida = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var introVista = false;
+  try { introVista = sessionStorage.getItem("jzac_intro") === "1"; } catch (e) {}
+  if (preloader && introVista) preloader.classList.add("intro-quick");
+
+  function cerrarIntro() {
+    if (!preloader || preloader.classList.contains("done") || introSaltada) return;
+    introSaltada = true;
+    preloader.classList.add("preloader-out");
+    try { sessionStorage.setItem("jzac_intro", "1"); } catch (e) {}
+    setTimeout(function () {
+      if (preloader) preloader.classList.add("done");
+    }, introReducida ? 80 : 1050);
+  }
+  if (preloader && !introReducida) {
+    var inicioIntro = performance.now();
+    var esperaIntro = introVista ? 420 : 2250;
+    window.addEventListener("load", function () {
+      var falta = Math.max(0, esperaIntro - (performance.now() - inicioIntro));
+      setTimeout(cerrarIntro, falta);
+    });
+    setTimeout(cerrarIntro, 4800);
+    var saltar = $("#intro-skip");
+    if (saltar) saltar.addEventListener("click", cerrarIntro);
+  } else if (preloader) {
     preloader.classList.add("done");
   }
-  window.addEventListener("load", ocultarPreloader);
-  setTimeout(ocultarPreloader, 2400);
 
   /* ---------- Barra de progreso ---------- */
   var progress = $("#scroll-progress");
@@ -99,6 +121,206 @@
   } else {
     reveals.forEach(function (el) { el.classList.add("is-visible"); });
   }
+
+  /* ---------- Hero: luz que sigue al mouse ---------- */
+  var hero = $(".hero");
+  if (hero && window.matchMedia("(hover: hover)").matches) {
+    hero.addEventListener("pointermove", function (e) {
+      var r = hero.getBoundingClientRect();
+      hero.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
+      hero.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+    }, { passive: true });
+  }
+
+  /* ---------- Recorrido interactivo por la app ---------- */
+  var APP_VIEWS = {
+    claro: { url: "jzac-erp.app/inicio", tag: "Panel claro · Vista general", caption: "Panel claro · Todo tu día en una pantalla" },
+    oscuro: { url: "jzac-erp.app/inicio", tag: "Modo oscuro · La misma claridad", caption: "Modo oscuro · La misma claridad, con menos brillo" },
+    acceso: { url: "jzac-erp.app/acceso", tag: "Acceso · Entra en segundos", caption: "Acceso · Tu negocio, en orden desde el primer clic" }
+  };
+  var appShots = $$(".app-shot");
+  var appChapters = $$(".app-chapter");
+  var appNavBtns = $$(".app-dots-nav [data-app-step]");
+  var appTag = $("#app-stage-tag");
+  var appUrl = $("#app-url");
+  var appActual = "claro";
+  var appTagTimer = null;
+
+  function pintarApp(clave) {
+    if (!APP_VIEWS[clave]) return;
+    appActual = clave;
+    appShots.forEach(function (s) { s.classList.toggle("on", s.getAttribute("data-app") === clave); });
+    appChapters.forEach(function (c) { c.classList.toggle("on", c.getAttribute("data-app-step") === clave); });
+    appNavBtns.forEach(function (b) {
+      var on = b.getAttribute("data-app-step") === clave;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    if (appTag) {
+      appTag.textContent = APP_VIEWS[clave].tag;
+      appTag.classList.add("cambiando");
+      setTimeout(function () { appTag.classList.remove("cambiando"); }, 320);
+    }
+    if (appUrl) appUrl.lastChild.nodeValue = " " + APP_VIEWS[clave].url;
+  }
+
+  appNavBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var clave = btn.getAttribute("data-app-step");
+      pintarApp(clave);
+      var cap = appChapters.filter(function (c) { return c.getAttribute("data-app-step") === clave; })[0];
+      if (cap) cap.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+
+  if ("IntersectionObserver" in window && appChapters.length) {
+    var capObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var clave = en.target.getAttribute("data-app-step");
+        if (clave && clave !== appActual) pintarApp(clave);
+      });
+    }, { rootMargin: "-42% 0px -42% 0px", threshold: 0 });
+    appChapters.forEach(function (c) { capObs.observe(c); });
+  }
+
+  $$(".app-hot").forEach(function (hot) {
+    hot.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (!appTag) return;
+      clearTimeout(appTagTimer);
+      appTag.textContent = hot.getAttribute("data-tip") || APP_VIEWS[appActual].tag;
+      appTag.classList.add("is-tip");
+      appTagTimer = setTimeout(function () {
+        appTag.textContent = APP_VIEWS[appActual].tag;
+        appTag.classList.remove("is-tip");
+      }, 2600);
+    });
+  });
+
+  /* ---------- Lightbox de capturas ---------- */
+  var zoomables = $$("[data-zoom]");
+  var lightbox = $("#lightbox");
+  var lightboxImg = $("#lightbox-img");
+  var lightboxCaption = $("#lightbox-caption");
+  var lightboxIdx = 0;
+  var ultimoFocoLb = null;
+
+  function abrirLightbox(el) {
+    if (!lightbox || !lightboxImg) return;
+    var idx = zoomables.indexOf(el);
+    if (idx < 0) return;
+    lightboxIdx = idx;
+    ultimoFocoLb = document.activeElement;
+    pintarLightbox();
+    lightbox.classList.add("open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    var cerrar = $(".lightbox-close");
+    if (cerrar) setTimeout(function () { cerrar.focus(); }, 120);
+  }
+  function pintarLightbox() {
+    var el = zoomables[lightboxIdx];
+    if (!el || !lightboxImg) return;
+    var src = el.getAttribute("data-zoom");
+    lightboxImg.src = src;
+    lightboxImg.alt = el.getAttribute("data-caption") || "Captura de JZAC ERP";
+    if (lightboxCaption) lightboxCaption.textContent = el.getAttribute("data-caption") || "JZAC ERP";
+  }
+  function cerrarLightbox() {
+    if (!lightbox) return;
+    lightbox.classList.remove("open");
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (ultimoFocoLb && ultimoFocoLb.focus) ultimoFocoLb.focus();
+  }
+  function moverLightbox(dir) {
+    if (!zoomables.length) return;
+    lightboxIdx = (lightboxIdx + dir + zoomables.length) % zoomables.length;
+    pintarLightbox();
+  }
+  $$("[data-zoom]").forEach(function (el) {
+    el.addEventListener("click", function (e) {
+      e.preventDefault();
+      abrirLightbox(el);
+    });
+  });
+  $$("[data-lightbox-close]").forEach(function (el) { el.addEventListener("click", cerrarLightbox); });
+  var lbPrev = $("#lightbox-prev");
+  var lbNext = $("#lightbox-next");
+  if (lbPrev) lbPrev.addEventListener("click", function () { moverLightbox(-1); });
+  if (lbNext) lbNext.addEventListener("click", function () { moverLightbox(1); });
+  var appExpand = $("#app-expand");
+  if (appExpand) {
+    appExpand.addEventListener("click", function () {
+      var img = $(".app-shot.on img[data-zoom]");
+      if (img) abrirLightbox(img);
+    });
+  }
+  document.addEventListener("keydown", function (e) {
+    if (!lightbox || !lightbox.classList.contains("open")) return;
+    if (e.key === "Escape") cerrarLightbox();
+    if (e.key === "ArrowLeft") moverLightbox(-1);
+    if (e.key === "ArrowRight") moverLightbox(1);
+  });
+
+  /* ---------- Navegación activa ---------- */
+  var navEnlaces = $$(".nav-links a[href^='#']");
+  var navSecciones = navEnlaces.map(function (a) {
+    return { link: a, sec: document.querySelector(a.getAttribute("href")) };
+  }).filter(function (x) { return !!x.sec; });
+  function actualizarNav() {
+    if (!navSecciones.length) return;
+    var y = window.scrollY + window.innerHeight * 0.34;
+    var actual = null;
+    var mejor = -1;
+    navSecciones.forEach(function (x) {
+      if (x.sec.offsetTop <= y && x.sec.offsetTop > mejor) {
+        mejor = x.sec.offsetTop;
+        actual = x;
+      }
+    });
+    navEnlaces.forEach(function (a) { a.classList.remove("active"); });
+    if (actual) actual.link.classList.add("active");
+  }
+  window.addEventListener("scroll", actualizarNav, { passive: true });
+  window.addEventListener("resize", actualizarNav);
+  actualizarNav();
+
+  /* ---------- Chips de rubro ---------- */
+  var chips = $$(".chip[data-sector]");
+  var mensajeContacto = $("#c-mensaje");
+  chips.forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      chips.forEach(function (c) { c.classList.remove("sel"); });
+      chip.classList.add("sel");
+      var sector = chip.getAttribute("data-sector") || "";
+      if (mensajeContacto && !mensajeContacto.value.trim()) {
+        mensajeContacto.value = "Hola, tengo " + sector +
+          " y quiero saber si JZAC ERP me sirve para ordenar mis ventas.";
+      }
+      var contacto = $("#contacto");
+      if (contacto) contacto.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  /* ---------- FAQ: una abierta a la vez ---------- */
+  var faqs = $$(".faq-item");
+  faqs.forEach(function (item) {
+    item.addEventListener("toggle", function () {
+      if (!item.open) return;
+      faqs.forEach(function (otro) { if (otro !== item) otro.open = false; });
+    });
+  });
+
+  /* ---------- Brillo que sigue al mouse en tarjetas ---------- */
+  $$(".card, .bento-card, .shop-card").forEach(function (card) {
+    card.addEventListener("pointermove", function (e) {
+      var r = card.getBoundingClientRect();
+      card.style.setProperty("--gx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
+      card.style.setProperty("--gy", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+    }, { passive: true });
+  });
 
   /* ---------- Modal de compra ---------- */
   var modal = $("#modal-compra");

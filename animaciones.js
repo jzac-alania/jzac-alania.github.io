@@ -98,7 +98,7 @@
     .fromTo(".hero-actions.hero-in", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, "-=0.5")
     .fromTo(".hero-note.hero-in", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, "-=0.5")
     .fromTo(".hero-stats.hero-in", { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, "-=0.55")
-    .fromTo(".phone.hero-in", { y: 80, opacity: 0, rotate: 5, scale: 0.94 }, { y: 0, opacity: 1, rotate: 0, scale: 1, duration: 1.15 }, "-=1.05")
+    .fromTo(".hero-stage.hero-in", { y: 70, opacity: 0, scale: 0.95 }, { y: 0, opacity: 1, scale: 1, duration: 1.15, clearProps: "transform" }, "-=1.05")
     .from(".float-card", { opacity: 0, duration: 0.6, stagger: 0.16 }, "-=0.55")
     .from(".whatsapp-float", { scale: 0, opacity: 0, duration: 0.7, ease: "back.out(1.7)", clearProps: "transform" }, "-=0.3");
 
@@ -159,6 +159,46 @@
       };
     });
   }
+
+  /* ---------- Pasos en scroll horizontal (desktop) ---------- */
+  var stepsViewport = document.getElementById("steps-viewport");
+  var stepsTrack = document.getElementById("steps-track");
+  if (stepsViewport && stepsTrack) {
+    var mmSteps = gsap.matchMedia();
+    mmSteps.add("(min-width: 1021px)", function () {
+      stepsTrack.classList.add("h-track");
+      var distancia = function () { return stepsTrack.scrollWidth - stepsViewport.clientWidth; };
+      var tween = gsap.to(stepsTrack, {
+        x: function () { return -distancia(); },
+        ease: "none",
+        scrollTrigger: {
+          trigger: stepsViewport,
+          start: "top 64px",
+          end: function () { return "+=" + Math.max(700, distancia() + 420); },
+          scrub: 0.8,
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true
+        }
+      });
+      return function () {
+        tween.kill();
+        stepsTrack.classList.remove("h-track");
+        gsap.set(stepsTrack, { x: 0 });
+      };
+    });
+  }
+
+  /* ---------- Títulos con entrada recortada ---------- */
+  gsap.utils.toArray(".showcase-head .section-title, .section-title-left:not(.reveal)").forEach(function (el) {
+    gsap.fromTo(el,
+      { clipPath: "inset(0 0 100% 0)", y: 24 },
+      {
+        clipPath: "inset(0 0 0% 0)", y: 0, duration: 1.05, ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 86%" }
+      }
+    );
+  });
 
   /* ---------- Contadores ---------- */
   gsap.utils.toArray("[data-contador]").forEach(function (el) {
