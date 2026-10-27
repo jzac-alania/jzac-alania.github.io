@@ -264,6 +264,105 @@
     if (e.key === "ArrowRight") moverLightbox(1);
   });
 
+  /* ---------- Detalle de productos y servicios ---------- */
+  var svcModal = $("#svc-modal");
+  var svcVisual = $("#svc-modal-visual");
+  var svcKicker = $("#svc-modal-kicker");
+  var svcTitulo = $("#svc-modal-title");
+  var svcDesc = $("#svc-modal-desc");
+  var svcFeatures = $("#svc-modal-features");
+  var svcPrecio = $("#svc-modal-price");
+  var svcNota = $("#svc-modal-note");
+  var svcCta = $("#svc-modal-cta");
+  var svcUltimoFoco = null;
+  var svcActual = null;
+
+  function abrirSvc(card) {
+    if (!svcModal || !card) return;
+    var datos = card.dataset;
+    svcActual = card;
+    svcUltimoFoco = document.activeElement;
+
+    if (svcVisual) {
+      svcVisual.textContent = "";
+      var arte = $(".svc-art", card);
+      if (arte) {
+        var clon = arte.cloneNode(true);
+        clon.setAttribute("aria-hidden", "true");
+        svcVisual.appendChild(clon);
+      }
+    }
+    if (svcKicker) svcKicker.textContent = datos.svcKicker || "Producto";
+    if (svcTitulo) svcTitulo.textContent = datos.svcTitle || "";
+    if (svcDesc) svcDesc.textContent = datos.svcDesc || "";
+    if (svcPrecio) svcPrecio.textContent = datos.svcPrice || "";
+    if (svcNota) svcNota.textContent = datos.svcNote || "";
+    if (svcFeatures) {
+      svcFeatures.textContent = "";
+      (datos.svcFeatures || "").split("|").forEach(function (texto) {
+        if (!texto) return;
+        var li = document.createElement("li");
+        li.textContent = texto;
+        svcFeatures.appendChild(li);
+      });
+    }
+    if (svcCta) {
+      if (datos.svcBuy === "1") {
+        svcCta.setAttribute("href", "#precio");
+        svcCta.removeAttribute("target");
+        svcCta.removeAttribute("rel");
+        svcCta.textContent = "Comprar ahora";
+      } else {
+        svcCta.setAttribute("href", datos.svcCta || "#servicios");
+        svcCta.setAttribute("target", "_blank");
+        svcCta.setAttribute("rel", "noopener");
+        svcCta.textContent = datos.svcCtaText || "Cotizar por WhatsApp";
+      }
+    }
+
+    svcModal.classList.add("open");
+    svcModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    var cerrar = $(".svc-modal-close", svcModal);
+    if (cerrar) setTimeout(function () { cerrar.focus(); }, 120);
+  }
+
+  function cerrarSvc() {
+    if (!svcModal) return;
+    svcModal.classList.remove("open");
+    svcModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (svcUltimoFoco && svcUltimoFoco.focus) svcUltimoFoco.focus();
+    svcActual = null;
+  }
+
+  $$("[data-svc-open]").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      var card = btn.closest(".svc-card");
+      if (card) abrirSvc(card);
+    });
+  });
+  if (svcModal) {
+    $$("[data-svc-close]", svcModal).forEach(function (el) {
+      el.addEventListener("click", cerrarSvc);
+    });
+  }
+  if (svcCta) {
+    svcCta.addEventListener("click", function (e) {
+      if (svcActual && svcActual.dataset.svcBuy === "1") {
+        e.preventDefault();
+        cerrarSvc();
+        abrirModal();
+        return;
+      }
+      cerrarSvc();
+    });
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && svcModal && svcModal.classList.contains("open")) cerrarSvc();
+  });
+
   /* ---------- Navegación activa ---------- */
   var navEnlaces = $$(".nav-links a[href^='#']");
   var navSecciones = navEnlaces.map(function (a) {
@@ -314,7 +413,7 @@
   });
 
   /* ---------- Brillo que sigue al mouse en tarjetas ---------- */
-  $$(".card, .bento-card, .shop-card").forEach(function (card) {
+  $$(".card, .bento-card, .svc-card").forEach(function (card) {
     card.addEventListener("pointermove", function (e) {
       var r = card.getBoundingClientRect();
       card.style.setProperty("--gx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");

@@ -554,90 +554,223 @@
     </section>
 
     <!-- ===== PRODUCTOS Y SERVICIOS ===== -->
-    <section class="section" id="servicios">
+    <section class="section svc-section" id="servicios">
+      <div class="svc-aura" aria-hidden="true"></div>
       <div class="container">
-        <p class="section-eyebrow reveal">Productos y servicios</p>
-        <h2 class="section-title reveal">Precios claros, sin sorpresas</h2>
-        <p class="section-lead reveal">Compra el ERP, suma facturación electrónica o pide un proyecto a medida. Cada precio se confirma antes de empezar.</p>
+        <div class="svc-head">
+          <div class="svc-headline">
+            <p class="section-eyebrow svc-eyebrow reveal">Productos y servicios</p>
+            <h2 class="section-title svc-title">Precios claros, <span class="grad-text">sin sorpresas</span></h2>
+          </div>
+          <div class="svc-head-aside reveal">
+            <p class="svc-lead">Compra el ERP, suma facturación electrónica o pide un proyecto a medida. Cada precio se confirma antes de empezar.</p>
+            <div class="svc-meta">
+              <span><i></i> 6 soluciones</span>
+              <span>Precio confirmado por escrito</span>
+            </div>
+          </div>
+        </div>
 
-        <div class="grid shop-grid">
-          <article class="shop-card reveal">
-            <div class="shop-media">
-              <img src="img/tienda-erp.svg" alt="JZAC ERP funcionando en un celular" loading="lazy" width="800" height="450">
-            </div>
-            <div class="shop-body">
-              <span class="shop-tag">Más vendido</span>
-              <h3>JZAC ERP</h3>
-              <p>Ventas, inventario, caja y fiados en un solo sistema. Funciona sin internet y se abre desde el navegador.</p>
-              <div class="shop-price"><b>S/ 390</b><small>pago único · 2 equipos</small></div>
-              <button class="btn btn-green btn-small" type="button" data-comprar>Comprar</button>
-            </div>
-          </article>
+        <div class="svc-showcase">
+          <div class="svc-top">
+            <article class="svc-card svc-card--feature" data-svc data-svc-tilt
+              data-svc-title="JZAC ERP"
+              data-svc-kicker="Sistema principal"
+              data-svc-desc="Ventas, inventario, caja y fiados en un solo sistema. Funciona sin internet y se abre desde el navegador, sin instalar nada."
+              data-svc-price="S/ 390"
+              data-svc-note="pago único · 2 equipos"
+              data-svc-features="Funciona sin internet|Ventas, inventario, caja y fiados|Licencia para 2 equipos|Actualizaciones y soporte"
+              data-svc-buy="1">
+              <div class="svc-art svc-art--feature" aria-hidden="true">
+                <img class="svc-art-img" src="assets/app/panel-claro.png" alt="" width="1897" height="940" loading="lazy">
+                <span class="svc-art-shade"></span>
+                <span class="svc-num">01</span>
+                <span class="svc-badge">Más vendido</span>
+                <span class="svc-live"><i></i> EN VIVO</span>
+              </div>
+              <div class="svc-body">
+                <span class="svc-kicker">Sistema principal</span>
+                <h3>JZAC ERP</h3>
+                <p>Ventas, inventario, caja y fiados en un solo sistema. Funciona sin internet y se abre desde el navegador.</p>
+                <ul class="svc-points">
+                  <li>Sin internet</li>
+                  <li>Pago único</li>
+                </ul>
+                <div class="svc-price"><b>S/ 390</b><small>pago único · 2 equipos</small></div>
+                <div class="svc-actions">
+                  <button class="btn btn-green btn-small" type="button" data-comprar>Comprar</button>
+                  <button class="svc-detail" type="button" data-svc-open aria-label="Ver detalles de JZAC ERP">
+                    <span>Ver detalle</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
 
-          <article class="shop-card reveal">
-            <div class="shop-media">
-              <img src="img/tienda-facturacion.svg" alt="Comprobante de facturación electrónica" loading="lazy" width="800" height="450">
-            </div>
-            <div class="shop-body">
-              <span class="shop-tag">Complemento</span>
-              <h3>Facturación electrónica</h3>
-              <p>Boletas y facturas válidas ante SUNAT, integradas al ERP. Incluye configuración y pruebas.</p>
-              <div class="shop-price"><b>S/ 150</b><small>adicional al ERP</small></div>
-              <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20la%20facturaci%C3%B3n%20electr%C3%B3nica%20para%20JZAC%20ERP" target="_blank" rel="noopener">Consultar</a>
-            </div>
-          </article>
+            <div class="svc-side">
+              <article class="svc-card svc-card--wide svc-tone-gold" data-svc data-svc-tilt
+                data-svc-title="Facturación electrónica"
+                data-svc-kicker="Complemento"
+                data-svc-desc="Boletas y facturas válidas ante SUNAT, integradas al ERP. Incluye configuración y pruebas para que empieces a emitir sin complicaciones."
+                data-svc-price="S/ 150"
+                data-svc-note="adicional al ERP"
+                data-svc-features="Boletas y facturas válidas ante SUNAT|Integración directa con JZAC ERP|Configuración y pruebas incluidas"
+                data-svc-cta="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20la%20facturaci%C3%B3n%20electr%C3%B3nica%20para%20JZAC%20ERP"
+                data-svc-cta-text="Consultar por WhatsApp">
+                <div class="svc-art" aria-hidden="true">
+                  <span class="svc-ring"></span>
+                  <span class="svc-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16l-3-2-3 2-3-2-3 2V2Z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+                  </span>
+                  <span class="svc-num">02</span>
+                  <span class="svc-art-tag">SUNAT</span>
+                </div>
+                <div class="svc-body">
+                  <span class="svc-kicker">Complemento</span>
+                  <h3>Facturación electrónica</h3>
+                  <p>Boletas y facturas válidas ante SUNAT, integradas al ERP. Incluye configuración y pruebas.</p>
+                  <div class="svc-price"><b>S/ 150</b><small>adicional al ERP</small></div>
+                  <div class="svc-actions">
+                    <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20la%20facturaci%C3%B3n%20electr%C3%B3nica%20para%20JZAC%20ERP" target="_blank" rel="noopener">Consultar</a>
+                    <button class="svc-detail" type="button" data-svc-open aria-label="Ver detalles de facturación electrónica">
+                      <span>Ver detalle</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
 
-          <article class="shop-card reveal">
-            <div class="shop-media">
-              <img src="img/tienda-web.svg" alt="Diseño de página web profesional" loading="lazy" width="800" height="450">
+              <article class="svc-card svc-card--wide" data-svc data-svc-tilt
+                data-svc-title="Página web o landing"
+                data-svc-kicker="Diseño web"
+                data-svc-desc="Web moderna, rápida y adaptable a celular, con WhatsApp, formulario y SEO básico. Pensada para que tus clientes te encuentren y te escriban."
+                data-svc-price="Desde S/ 500"
+                data-svc-note="según secciones"
+                data-svc-features="Diseño adaptable a celular|Integración con WhatsApp y formulario|SEO básico incluido|Entrega con dominio y hosting configurado"
+                data-svc-cta="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web"
+                data-svc-cta-text="Cotizar por WhatsApp">
+                <div class="svc-art" aria-hidden="true">
+                  <span class="svc-ring"></span>
+                  <span class="svc-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/><path d="m9 15 2 2 4-4"/></svg>
+                  </span>
+                  <span class="svc-num">03</span>
+                  <span class="svc-art-tag">WEB</span>
+                </div>
+                <div class="svc-body">
+                  <span class="svc-kicker">Diseño web</span>
+                  <h3>Página web o landing</h3>
+                  <p>Web moderna, rápida y adaptable a celular, con WhatsApp, formulario y SEO básico.</p>
+                  <div class="svc-price"><b>Desde S/ 500</b><small>según secciones</small></div>
+                  <div class="svc-actions">
+                    <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web" target="_blank" rel="noopener">Cotizar</a>
+                    <button class="svc-detail" type="button" data-svc-open aria-label="Ver detalles de página web">
+                      <span>Ver detalle</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
             </div>
-            <div class="shop-body">
-              <span class="shop-tag">Diseño web</span>
-              <h3>Página web o landing</h3>
-              <p>Web moderna, rápida y adaptable a celular, con WhatsApp, formulario y SEO básico.</p>
-              <div class="shop-price"><b>Desde S/ 500</b><small>según secciones</small></div>
-              <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web" target="_blank" rel="noopener">Cotizar</a>
-            </div>
-          </article>
+          </div>
 
-          <article class="shop-card reveal">
-            <div class="shop-media">
-              <img src="img/tienda-sistema.svg" alt="Panel de sistema de ventas a medida" loading="lazy" width="800" height="450">
-            </div>
-            <div class="shop-body">
-              <span class="shop-tag">A medida</span>
-              <h3>Sistema de ventas a medida</h3>
-              <p>Un sistema diseñado para tu proceso: productos, stock, clientes, reportes y usuarios.</p>
-              <div class="shop-price"><b>Desde S/ 1,200</b><small>según alcance</small></div>
-              <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20un%20sistema%20de%20ventas%20a%20medida" target="_blank" rel="noopener">Cotizar</a>
-            </div>
-          </article>
+          <div class="svc-bottom">
+            <article class="svc-card svc-card--mini svc-tone-gold" data-svc data-svc-tilt
+              data-svc-title="Sistema de ventas a medida"
+              data-svc-kicker="A medida"
+              data-svc-desc="Un sistema diseñado para tu proceso: productos, stock, clientes, reportes y usuarios. Analizamos tu operación y construimos solo lo que necesitas."
+              data-svc-price="Desde S/ 1,200"
+              data-svc-note="según alcance"
+              data-svc-features="Análisis de tu proceso|Módulos a medida|Reportes y usuarios|Acompañamiento en el lanzamiento"
+              data-svc-cta="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20un%20sistema%20de%20ventas%20a%20medida"
+              data-svc-cta-text="Cotizar por WhatsApp">
+              <div class="svc-art" aria-hidden="true">
+                <span class="svc-ring"></span>
+                <span class="svc-ico">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/><path d="M13 13h4M13 17h3"/></svg>
+                </span>
+                <span class="svc-num">04</span>
+                <span class="svc-art-tag">A MEDIDA</span>
+              </div>
+              <div class="svc-body">
+                <span class="svc-kicker">A medida</span>
+                <h3>Sistema de ventas a medida</h3>
+                <p>Un sistema diseñado para tu proceso: productos, stock, clientes, reportes y usuarios.</p>
+                <div class="svc-price"><b>Desde S/ 1,200</b><small>según alcance</small></div>
+                <div class="svc-actions">
+                  <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20un%20sistema%20de%20ventas%20a%20medida" target="_blank" rel="noopener">Cotizar</a>
+                  <button class="svc-detail" type="button" data-svc-open aria-label="Ver detalles de sistema a medida">
+                    <span>Ver detalle</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
 
-          <article class="shop-card reveal">
-            <div class="shop-media">
-              <img src="img/tienda-automatizacion.svg" alt="Automatización de reportes y avisos" loading="lazy" width="800" height="450">
-            </div>
-            <div class="shop-body">
-              <span class="shop-tag">Eficiencia</span>
-              <h3>Automatización de reportes</h3>
-              <p>Reportes automáticos, avisos de stock y envío de información sin hacerlo a mano.</p>
-              <div class="shop-price"><b>Desde S/ 600</b><small>según procesos</small></div>
-              <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20automatizar%20reportes%20de%20mi%20negocio" target="_blank" rel="noopener">Cotizar</a>
-            </div>
-          </article>
+            <article class="svc-card svc-card--mini" data-svc data-svc-tilt
+              data-svc-title="Automatización de reportes"
+              data-svc-kicker="Eficiencia"
+              data-svc-desc="Reportes automáticos, avisos de stock y envío de información sin hacerlo a mano. Conectamos tus datos para que trabajen mientras tú atiendes."
+              data-svc-price="Desde S/ 600"
+              data-svc-note="según procesos"
+              data-svc-features="Reportes programados|Alertas de stock|Envío por WhatsApp o correo|Integración con tus hojas de cálculo"
+              data-svc-cta="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20automatizar%20reportes%20de%20mi%20negocio"
+              data-svc-cta-text="Cotizar por WhatsApp">
+              <div class="svc-art" aria-hidden="true">
+                <span class="svc-ring"></span>
+                <span class="svc-ico">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
+                </span>
+                <span class="svc-num">05</span>
+                <span class="svc-art-tag">AUTO</span>
+              </div>
+              <div class="svc-body">
+                <span class="svc-kicker">Eficiencia</span>
+                <h3>Automatización de reportes</h3>
+                <p>Reportes automáticos, avisos de stock y envío de información sin hacerlo a mano.</p>
+                <div class="svc-price"><b>Desde S/ 600</b><small>según procesos</small></div>
+                <div class="svc-actions">
+                  <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20automatizar%20reportes%20de%20mi%20negocio" target="_blank" rel="noopener">Cotizar</a>
+                  <button class="svc-detail" type="button" data-svc-open aria-label="Ver detalles de automatización">
+                    <span>Ver detalle</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
 
-          <article class="shop-card reveal">
-            <div class="shop-media">
-              <img src="img/tienda-soporte.svg" alt="Soporte directo por WhatsApp" loading="lazy" width="800" height="450">
-            </div>
-            <div class="shop-body">
-              <span class="shop-tag">Tranquilidad</span>
-              <h3>Mantenimiento y soporte</h3>
-              <p>Actualizaciones, correcciones y ayuda directa por WhatsApp para que todo siga funcionando.</p>
-              <div class="shop-price"><b>Desde S/ 120</b><small>por mes</small></div>
-              <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20el%20plan%20de%20mantenimiento%20y%20soporte" target="_blank" rel="noopener">Cotizar</a>
-            </div>
-          </article>
+            <article class="svc-card svc-card--mini svc-tone-gold" data-svc data-svc-tilt
+              data-svc-title="Mantenimiento y soporte"
+              data-svc-kicker="Tranquilidad"
+              data-svc-desc="Actualizaciones, correcciones y ayuda directa por WhatsApp para que todo siga funcionando. Un respaldo real para tu operación diaria."
+              data-svc-price="Desde S/ 120"
+              data-svc-note="por mes"
+              data-svc-features="Actualizaciones del sistema|Correcciones y respaldo|Atención directa por WhatsApp|Revisión mensual"
+              data-svc-cta="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20el%20plan%20de%20mantenimiento%20y%20soporte"
+              data-svc-cta-text="Cotizar por WhatsApp">
+              <div class="svc-art" aria-hidden="true">
+                <span class="svc-ring"></span>
+                <span class="svc-ico">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><rect x="2" y="13" width="4" height="6" rx="1.5"/><rect x="18" y="13" width="4" height="6" rx="1.5"/><path d="M20 19v1a2 2 0 0 1-2 2h-4"/></svg>
+                </span>
+                <span class="svc-num">06</span>
+                <span class="svc-art-tag">SOPORTE</span>
+              </div>
+              <div class="svc-body">
+                <span class="svc-kicker">Tranquilidad</span>
+                <h3>Mantenimiento y soporte</h3>
+                <p>Actualizaciones, correcciones y ayuda directa por WhatsApp para que todo siga funcionando.</p>
+                <div class="svc-price"><b>Desde S/ 120</b><small>por mes</small></div>
+                <div class="svc-actions">
+                  <a class="btn btn-ghost btn-small" href="https://wa.me/51929068219?text=Hola%20Jimy%2C%20quiero%20el%20plan%20de%20mantenimiento%20y%20soporte" target="_blank" rel="noopener">Cotizar</a>
+                  <button class="svc-detail" type="button" data-svc-open aria-label="Ver detalles de mantenimiento y soporte">
+                    <span>Ver detalle</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
 
         <div class="section-cta reveal">
@@ -646,6 +779,25 @@
         </div>
       </div>
     </section>
+
+    <div class="svc-modal" id="svc-modal" role="dialog" aria-modal="true" aria-labelledby="svc-modal-title" aria-hidden="true">
+      <div class="svc-modal-backdrop" data-svc-close></div>
+      <div class="svc-modal-panel" role="document">
+        <button class="svc-modal-close" type="button" data-svc-close aria-label="Cerrar detalle">×</button>
+        <div class="svc-modal-visual" id="svc-modal-visual"></div>
+        <div class="svc-modal-body">
+          <span class="svc-kicker" id="svc-modal-kicker"></span>
+          <h3 id="svc-modal-title"></h3>
+          <p id="svc-modal-desc"></p>
+          <ul class="svc-modal-features" id="svc-modal-features"></ul>
+          <div class="svc-modal-price"><b id="svc-modal-price"></b><small id="svc-modal-note"></small></div>
+          <div class="svc-modal-actions">
+            <a class="btn btn-green" href="#" id="svc-modal-cta">Cotizar por WhatsApp</a>
+            <button class="btn btn-ghost" type="button" data-svc-close>Volver</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ===== SOBRE MÍ ===== -->
     <section class="section section-alt" id="nosotros">

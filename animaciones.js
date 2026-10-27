@@ -127,7 +127,7 @@
     });
   });
 
-  gsap.utils.toArray(".section-title:not(.reveal)").forEach(function (el) {
+  gsap.utils.toArray(".section-title:not(.reveal):not(.svc-title)").forEach(function (el) {
     gsap.from(el, {
       y: 34,
       opacity: 0,
@@ -186,6 +186,75 @@
         stepsTrack.classList.remove("h-track");
         gsap.set(stepsTrack, { x: 0 });
       };
+    });
+  }
+
+  /* ---------- Productos y servicios ---------- */
+  var svcSec = document.querySelector(".svc-section");
+  var svcTitle = document.querySelector(".svc-title");
+  var svcCards = gsap.utils.toArray(".svc-card");
+
+  if (svcTitle) {
+    var tlSvc = gsap.timeline({
+      scrollTrigger: { trigger: svcTitle, start: "top 86%" }
+    });
+    tlSvc.fromTo(svcTitle,
+      { clipPath: "inset(0 0 100% 0)", y: 28 },
+      { clipPath: "inset(0 0 0% 0)", y: 0, duration: 1, ease: "power3.out" }
+    ).fromTo(svcTitle.querySelector(".grad-text"),
+      { x: -18, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.8, ease: "power3.out" }, "-=0.55"
+    );
+  }
+
+  if (svcCards.length) {
+    gsap.from(svcCards, {
+      y: 70, opacity: 0, scale: 0.965, rotateX: 7,
+      transformOrigin: "50% 100%", duration: 0.9, ease: "power3.out", stagger: 0.07,
+      scrollTrigger: { trigger: ".svc-showcase", start: "top 82%", once: true }
+    });
+  }
+
+  if (svcSec) {
+    var svcAura = svcSec.querySelector(".svc-aura");
+    if (svcAura) {
+      gsap.to(svcAura, {
+        yPercent: 22, rotate: 18, ease: "none",
+        scrollTrigger: { trigger: svcSec, start: "top bottom", end: "bottom top", scrub: 0.8 }
+      });
+    }
+    var svcFeatImg = svcSec.querySelector(".svc-art--feature .svc-art-img");
+    if (svcFeatImg) {
+      gsap.fromTo(svcFeatImg,
+        { scale: 1.13, yPercent: -3 },
+        { scale: 1.03, yPercent: 0, ease: "none",
+          scrollTrigger: { trigger: svcSec, start: "top bottom", end: "bottom top", scrub: 0.8 } }
+      );
+    }
+  }
+
+  if (svcCards.length && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    svcCards.forEach(function (card) {
+      var rx = gsap.quickTo(card, "rotationX", { duration: 0.55, ease: "power3" });
+      var ry = gsap.quickTo(card, "rotationY", { duration: 0.55, ease: "power3" });
+      var ty = gsap.quickTo(card, "y", { duration: 0.45, ease: "power3" });
+      var move = card.querySelector(".svc-art-img, .svc-ico");
+      var mx = move ? gsap.quickTo(move, "x", { duration: 0.6, ease: "power3" }) : null;
+      var my = move ? gsap.quickTo(move, "y", { duration: 0.6, ease: "power3" }) : null;
+      gsap.set(card, { transformPerspective: 1200, transformStyle: "preserve-3d" });
+      card.addEventListener("pointerenter", function () { ty(-6); });
+      card.addEventListener("pointermove", function (e) {
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        rx(-py * 6);
+        ry(px * 8);
+        if (mx) { mx(px * 7); my(py * 7); }
+      });
+      card.addEventListener("pointerleave", function () {
+        rx(0); ry(0); ty(0);
+        if (mx) { mx(0); my(0); }
+      });
     });
   }
 
