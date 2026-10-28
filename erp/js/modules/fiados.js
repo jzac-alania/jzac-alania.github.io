@@ -23,6 +23,32 @@
     return Math.round((Number(f.montoTotal || 0) - Number(f.montoPagado || 0)) * 100) / 100;
   }
 
+  // Descuenta stock de productos nuevos del fiado. Los items manuales no descuentan.
+  function aplicarStock(productos, items) {
+    const porId = new Map(productos.map((p) => [String(p.id), p]));
+    const porNombre = new Map(productos.map((p) => [JZAC.negocio.nombreNorm(p.nombre), p]));
+    const cambios = [];
+    const pedido = new Map();
+    for (const it of items) {
+      if (it.stockDescontado) continue;
+      const p = (it.productoId != null && porId.get(String(it.productoId))) || porNombre.get(JZAC.negocio.nombreNorm(it.producto));
+      if (!p) { cambios.push({ it, p: null }); continue; }
+      const cant = Number(it.cantidad || 0);
+      const acum = (pedido.get(p.id) || 0) + cant;
+      pedido.set(p.id, acum);
+      if (Number(p.stock || 0) + 0.0001 < acum) return { error: p.nombre };
+      cambios.push({ it, p });
+    }
+    cambios.forEach(({ it, p }) => {
+      it.stockDescontado = true;
+      if (!p) return;
+      p.stock = Math.round((Number(p.stock || 0) - Number(it.cantidad || 0)) * 1000) / 1000;
+      it.productoId = p.id;
+      it.costo = Number(p.precioCompra || 0);
+    });
+    return { error: null };
+  }
+
   async function render(cont) {
     const fiados = (await JZAC.db.listar('fiados')).sort((a, b) => {
       const oa = a.estado === 'Pendiente' ? 0 : 1;
@@ -96,12 +122,26 @@
       const f = fiados.find((x) => x.id === Number(b.dataset.borrar));
       if (!(await JZAC.ui.confirmar(`¿Eliminar el fiado de <b>${JZAC.ui.esc(f.cliente)}</b>?<br>Se borrará su historial y sus pagos.`))) return;
       await JZAC.db.ready;
-      const t = DB.transaccion(['fiados', 'pagos_fiado'], 'readwrite');
+      const t = DB.transaccion(['fiados', 'pagos_fiado', 'productos'], 'readwrite');
       t.objectStore('fiados').delete(f.id);
-      const ps = t.objectStore('pagos_fiado').openCursor();
-      ps.onsuccess = (e) => {
+      const pgs = t.objectStore('pagos_fiado').openCursor();
+      pgs.onsuccess = (e) => {
         const c = e.target.result;
         if (c) { if (c.value.fiadoId === f.id) c.delete(); c.continue(); }
+      };
+      const prodStore = t.objectStore('productos');
+      const gp = prodStore.getAll();
+      gp.onsuccess = () => {
+        const prods = gp.result || [];
+        const porId = new Map(prods.map((p) => [String(p.id), p]));
+        const porNombre = new Map(prods.map((p) => [JZAC.negocio.nombreNorm(p.nombre), p]));
+        (f.items || []).forEach((it) => {
+          if (!it.stockDescontado) return;
+          const p = (it.productoId != null && porId.get(String(it.productoId))) || porNombre.get(JZAC.negocio.nombreNorm(it.producto));
+          if (!p) return;
+          p.stock = Math.round((Number(p.stock || 0) + Number(it.cantidad || 0)) * 1000) / 1000;
+          prodStore.put(p);
+        });
       };
       t.oncomplete = () => { JZAC.ui.toast('Fiado eliminado.', 'bien'); render(cont); };
       t.onerror = () => JZAC.ui.toast('Error al eliminar el fiado.', 'mal');
@@ -145,11 +185,16 @@
       if (!nombre) { JZAC.ui.toast('Escribe o elige el producto.', 'mal'); return; }
       if (!(cant > 0)) { JZAC.ui.toast('La cantidad debe ser mayor a 0.', 'mal'); return; }
       if (!(precio > 0)) { JZAC.ui.toast('El precio debe ser mayor a 0.', 'mal'); return; }
+      const prod = productos.find((x) => JZAC.negocio.nombreClave(x.nombre) === JZAC.negocio.nombreClave(nombre));
       const k = JZAC.negocio.nombreClave(nombre);
-      const ex = items.find((x) => JZAC.negocio.nombreClave(x.producto) === k && Number(x.precio) === precio);
+      const ex = items.find((x) => !x.stockDescontado && JZAC.negocio.nombreClave(x.producto) === k && Number(x.precio) === precio);
       if (ex) ex.cantidad = Math.round((Number(ex.cantidad) + cant) * 1000) / 1000;
       else items.push({
         fecha: Date.now(), producto: nombre, cantidad: cant, precio,
+        productoId: prod ? prod.id : undefined,
+        costo: prod ? Number(prod.precioCompra || 0) : 0,
+        esPeso: !!(prod && prod.ventaPeso),
+        stockDescontado: false,
         subtotal: Math.round(cant * precio * 100) / 100
       });
       raiz.querySelector('#f-prod').value = '';
@@ -240,32 +285,65 @@
       const notas = raiz.querySelector('#f-notas').value.trim();
       const nueva = !!(raiz.querySelector('#f-nueva') && raiz.querySelector('#f-nueva').checked);
 
-      if (abierto && !nueva) {
-        await JZAC.db.ready;
-        await new Promise((res, rej) => {
-          const t = DB.transaccion(['fiados'], 'readwrite');
-          const st = t.objectStore('fiados');
-          const g = st.get(abierto.id);
-          g.onsuccess = () => {
-            const f = g.result;
-            f.items = (f.items || []).concat(picker.items);
-            f.montoTotal = Math.round((Number(f.montoTotal || 0) + monto) * 100) / 100;
-            f.ultimaActividad = Date.now();
-            if (notas) f.notas = f.notas ? f.notas + ' / ' + notas : notas;
-            if (Number(f.montoPagado || 0) < Number(f.montoTotal)) f.estado = 'Pendiente';
-            st.put(f);
-          };
-          t.oncomplete = res;
-          t.onerror = () => rej(t.error);
-        });
-        JZAC.ui.toast(`Productos sumados a la cuenta de ${cliente}.`, 'bien');
-      } else {
-        await JZAC.db.guardar('fiados', {
-          cliente, montoTotal: monto, montoPagado: 0,
-          estado: 'Pendiente', fecha: Date.now(), notas,
-          items: picker.items, ultimaActividad: Date.now()
-        });
-        JZAC.ui.toast('Fiado registrado.', 'bien');
+      let fallo = null;
+      try {
+        if (abierto && !nueva) {
+          await JZAC.db.ready;
+          await new Promise((res, rej) => {
+            const t = DB.transaccion(['fiados', 'productos'], 'readwrite');
+            const st = t.objectStore('fiados');
+            const ps = t.objectStore('productos');
+            const g = st.get(abierto.id);
+            const gp = ps.getAll();
+            let f = null;
+            let prods = null;
+            const listo = () => {
+              if (!f || !prods) return;
+              const r = aplicarStock(prods, picker.items);
+              if (r.error) { fallo = r.error; try { t.abort(); } catch (e) { } return; }
+              prods.forEach((p) => ps.put(p));
+              f.items = (f.items || []).concat(picker.items);
+              f.montoTotal = Math.round((Number(f.montoTotal || 0) + monto) * 100) / 100;
+              f.ultimaActividad = Date.now();
+              if (notas) f.notas = f.notas ? f.notas + ' / ' + notas : notas;
+              if (Number(f.montoPagado || 0) < Number(f.montoTotal)) f.estado = 'Pendiente';
+              st.put(f);
+            };
+            g.onsuccess = () => { f = g.result; listo(); };
+            gp.onsuccess = () => { prods = gp.result || []; listo(); };
+            t.oncomplete = res;
+            t.onerror = () => rej(t.error);
+            t.onabort = () => rej(new Error(fallo || 'abortado'));
+          });
+          JZAC.ui.toast(`Productos sumados a la cuenta de ${cliente}.`, 'bien');
+        } else {
+          await JZAC.db.ready;
+          await new Promise((res, rej) => {
+            const t = DB.transaccion(['fiados', 'productos'], 'readwrite');
+            const st = t.objectStore('fiados');
+            const ps = t.objectStore('productos');
+            const gp = ps.getAll();
+            gp.onsuccess = () => {
+              const prods = gp.result || [];
+              const r = aplicarStock(prods, picker.items);
+              if (r.error) { fallo = r.error; try { t.abort(); } catch (e) { } return; }
+              prods.forEach((p) => ps.put(p));
+              st.add({
+                cliente, montoTotal: monto, montoPagado: 0,
+                estado: 'Pendiente', fecha: Date.now(), notas,
+                items: picker.items, ultimaActividad: Date.now()
+              });
+            };
+            t.oncomplete = res;
+            t.onerror = () => rej(t.error);
+            t.onabort = () => rej(new Error(fallo || 'abortado'));
+          });
+          JZAC.ui.toast('Fiado registrado.', 'bien');
+        }
+      } catch (e) {
+        JZAC.ui.toast(fallo ? `Stock insuficiente de ${fallo}.` : 'Error al registrar el fiado.', 'mal');
+        console.error(e);
+        return;
       }
       m.cerrar();
       refrescar();
@@ -301,22 +379,39 @@
         return;
       }
       const monto = Math.round((picker.sub() + montoExtra) * 100) / 100;
+      let fallo = null;
       await JZAC.db.ready;
-      await new Promise((res, rej) => {
-        const t = DB.transaccion(['fiados'], 'readwrite');
-        const st = t.objectStore('fiados');
-        const g = st.get(f.id);
-        g.onsuccess = () => {
-          const f2 = g.result;
-          f2.items = (f2.items || []).concat(picker.items);
-          f2.montoTotal = Math.round((Number(f2.montoTotal || 0) + monto) * 100) / 100;
-          f2.ultimaActividad = Date.now();
-          if (Number(f2.montoPagado || 0) < Number(f2.montoTotal)) f2.estado = 'Pendiente';
-          st.put(f2);
-        };
-        t.oncomplete = res;
-        t.onerror = () => rej(t.error);
-      });
+      try {
+        await new Promise((res, rej) => {
+          const t = DB.transaccion(['fiados', 'productos'], 'readwrite');
+          const st = t.objectStore('fiados');
+          const ps = t.objectStore('productos');
+          const g = st.get(f.id);
+          const gp = ps.getAll();
+          let f2 = null;
+          let prods = null;
+          const listo = () => {
+            if (!f2 || !prods) return;
+            const r = aplicarStock(prods, picker.items);
+            if (r.error) { fallo = r.error; try { t.abort(); } catch (e) { } return; }
+            prods.forEach((p) => ps.put(p));
+            f2.items = (f2.items || []).concat(picker.items);
+            f2.montoTotal = Math.round((Number(f2.montoTotal || 0) + monto) * 100) / 100;
+            f2.ultimaActividad = Date.now();
+            if (Number(f2.montoPagado || 0) < Number(f2.montoTotal)) f2.estado = 'Pendiente';
+            st.put(f2);
+          };
+          g.onsuccess = () => { f2 = g.result; listo(); };
+          gp.onsuccess = () => { prods = gp.result || []; listo(); };
+          t.oncomplete = res;
+          t.onerror = () => rej(t.error);
+          t.onabort = () => rej(new Error(fallo || 'abortado'));
+        });
+      } catch (e) {
+        JZAC.ui.toast(fallo ? `Stock insuficiente de ${fallo}.` : 'Error al agregar los productos.', 'mal');
+        console.error(e);
+        return;
+      }
       JZAC.ui.toast('Productos agregados a la cuenta.', 'bien');
       m.cerrar();
       refrescar();
@@ -378,23 +473,40 @@
         return;
       }
       await JZAC.db.ready;
-      await new Promise((res, rej) => {
-        const t = DB.transaccion(['fiados'], 'readwrite');
-        const st = t.objectStore('fiados');
-        const g = st.get(f.id);
-        g.onsuccess = () => {
-          const f2 = g.result;
-          f2.cliente = cliente;
-          f2.montoTotal = monto;
-          f2.notas = notas;
-          f2.items = existentes.concat(picker.items);
-          f2.ultimaActividad = Date.now();
-          f2.estado = Number(f2.montoPagado || 0) >= monto ? 'Pagado' : 'Pendiente';
-          st.put(f2);
-        };
-        t.oncomplete = res;
-        t.onerror = () => rej(t.error);
-      });
+      let fallo = null;
+      try {
+        await new Promise((res, rej) => {
+          const t = DB.transaccion(['fiados', 'productos'], 'readwrite');
+          const st = t.objectStore('fiados');
+          const ps = t.objectStore('productos');
+          const g = st.get(f.id);
+          const gp = ps.getAll();
+          let f2 = null;
+          let prods = null;
+          const listo = () => {
+            if (!f2 || !prods) return;
+            const r = aplicarStock(prods, picker.items);
+            if (r.error) { fallo = r.error; try { t.abort(); } catch (e) { } return; }
+            prods.forEach((p) => ps.put(p));
+            f2.cliente = cliente;
+            f2.montoTotal = monto;
+            f2.notas = notas;
+            f2.items = existentes.concat(picker.items);
+            f2.ultimaActividad = Date.now();
+            f2.estado = Number(f2.montoPagado || 0) >= monto ? 'Pagado' : 'Pendiente';
+            st.put(f2);
+          };
+          g.onsuccess = () => { f2 = g.result; listo(); };
+          gp.onsuccess = () => { prods = gp.result || []; listo(); };
+          t.oncomplete = res;
+          t.onerror = () => rej(t.error);
+          t.onabort = () => rej(new Error(fallo || 'abortado'));
+        });
+      } catch (e) {
+        JZAC.ui.toast(fallo ? `Stock insuficiente de ${fallo}.` : 'Error al actualizar el fiado.', 'mal');
+        console.error(e);
+        return;
+      }
       JZAC.ui.toast(picker.items.length ? 'Fiado actualizado con los productos nuevos.' : 'Fiado actualizado.', 'bien');
       m.cerrar();
       refrescar();
@@ -418,6 +530,7 @@
     m.raiz.querySelector('#guardar-pago').addEventListener('click', async () => {
       const montoIngresado = Number(document.getElementById('p-monto').value || 0);
       const metodo = document.getElementById('p-metodo').value;
+      if (!(montoIngresado > 0)) { JZAC.ui.toast('Ingresa un monto mayor a 0.', 'mal'); return; }
       await JZAC.db.ready;
       const t = DB.transaccion(['fiados', 'pagos_fiado'], 'readwrite');
       const fs = t.objectStore('fiados');
@@ -431,7 +544,7 @@
         // El saldo se recalcula DENTRO de la transaccion (evita sobrepago por saldo viejo).
         const saldo = Math.round((Number(f2.montoTotal || 0) - Number(f2.montoPagado || 0)) * 100) / 100;
         if (saldo <= 0) { fallo = 'pagado'; try { t.abort(); } catch (e) { } return; }
-        monto = Math.min(saldo, Math.max(0.01, montoIngresado || saldo));
+        monto = Math.min(saldo, montoIngresado);
         monto = Math.round(monto * 100) / 100;
         f2.montoPagado = Math.round((Number(f2.montoPagado || 0) + monto) * 100) / 100;
         if (Number(f2.montoPagado) >= Number(f2.montoTotal)) { f2.estado = 'Pagado'; f2.fechaPago = Date.now(); }

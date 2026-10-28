@@ -33,6 +33,7 @@
     const ventas = (await JZAC.db.listar('ventas')).filter((v) => v.fecha >= desde && v.fecha <= hasta);
     const pagos = (await JZAC.db.listar('pagos_fiado')).filter((p) => p.fecha >= desde && p.fecha <= hasta);
     const gastos = (await JZAC.db.listar('gastos')).filter((g) => g.fecha >= desde && g.fecha <= hasta);
+    const notas = (await JZAC.db.listar('notas_credito')).filter((n) => n.fecha >= desde && n.fecha <= hasta);
 
     const porMetodo = {};
     let efectivoVentas = 0;
@@ -45,6 +46,15 @@
       });
     });
 
+    const notasEfectivo = notas.filter((n) => /efectivo/i.test(n.metodo || 'Efectivo')).reduce((a, n) => a + Number(n.total || 0), 0);
+    const notasTotal = notas.reduce((a, n) => a + Number(n.total || 0), 0);
+    efectivoVentas -= notasEfectivo;
+    notas.forEach((n) => {
+      const m = n.metodo || 'Efectivo';
+      porMetodo[m] = porMetodo[m] || { mov: 0, total: 0 };
+      porMetodo[m].total -= Number(n.total || 0);
+    });
+
     let cobrosEfectivo = 0;
     let cobrosOtros = 0;
     pagos.forEach((p) => {
@@ -53,7 +63,7 @@
     });
 
     const gastoTotal = gastos.reduce((a, g) => a + Number(g.monto || 0), 0);
-    const totalVentas = ventas.reduce((a, v) => a + Number(v.total || 0), 0);
+    const totalVentas = ventas.reduce((a, v) => a + Number(v.total || 0), 0) - notasTotal;
 
     return {
       desde, hasta,
@@ -69,6 +79,9 @@
       cobrosTotal: r2(cobrosEfectivo + cobrosOtros),
       nGastos: gastos.length,
       gastoTotal: r2(gastoTotal),
+      nNotas: notas.length,
+      notasTotal: r2(notasTotal),
+      notasEfectivo: r2(notasEfectivo),
       // lo que la caja deberia tener antes de contar (sin fondo inicial)
       entradas: r2(efectivoVentas + cobrosEfectivo),
       salidas: r2(gastoTotal)
@@ -84,6 +97,7 @@
       ['Fondo inicial', Number(fondo || 0)],
       ['+ Ventas en efectivo', r.efectivoVentas],
       ['+ Cobros de fiado en efectivo', r.cobrosEfectivo],
+      ['− Devoluciones en efectivo', r.notasEfectivo],
       ['− Gastos de caja', r.salidas]
     ];
     return `<div class="desglose">
@@ -107,6 +121,7 @@ Período: ${JZAC.ui.fe(c.desde)} al ${JZAC.ui.fe(c.hasta)}
 
 Ventas: ${JZAC.ui.n(c.nVentas)} · ${JZAC.ui.dinero(c.totalVentas)}
 Cobros de fiado: ${JZAC.ui.dinero(c.cobrosTotal)}
+Devoluciones: ${JZAC.ui.dinero(c.notasTotal || 0)}
 Gastos: ${JZAC.ui.dinero(c.gastoTotal)}
 
 Fondo inicial: ${JZAC.ui.dinero(c.fondoInicial)}
@@ -173,8 +188,9 @@ Diferencia: ${JZAC.ui.dinero(c.diferencia)}`;
 
     const r = await calcular(desde, hasta);
     const guardados = leer().sort((a, b) => b.fechaCorte - a.fechaCorte);
-    const claveDia = diaDe(desde);
-    const guardado = guardados.find((c) => c.clave === claveDia) || null;
+    const mismoDia = diaDe(desde) === diaDe(hasta);
+    const claveDia = mismoDia ? diaDe(desde) : 'rango:' + desde + ':' + hasta;
+    const guardado = guardados.find((c) => String(c.clave) === String(claveDia)) || null;
     const fondo = guardado ? guardado.fondoInicial : Number(localStorage.getItem('jzac_fondo_inicial') || 0);
     const contado = guardado ? guardado.contado : null;
 
@@ -217,7 +233,7 @@ Diferencia: ${JZAC.ui.dinero(c.diferencia)}`;
         <div class="tabla-wrap"><table>
           <tr><th>Medio de pago</th><th class="center">Mov.</th><th class="monto">Total</th></tr>
           ${r.porMetodo.map((m) => `<tr><td class="negrita">${JZAC.ui.esc(m.metodo)}</td><td class="center">${m.mov}</td><td class="monto">${JZAC.ui.dinero(m.total)}</td></tr>`).join('')}
-          <tr><td class="negrita">Total cobrado</td><td class="center negrita">${r.porMetodo.reduce((a, m) => a + m.mov, 0)}</td><td class="monto negrita">${JZAC.ui.dinero(r.totalVentas)}</td></tr>
+          <tr><td class="negrita">Total neto</td><td class="center negrita">${r.nVentas}</td><td class="monto negrita">${JZAC.ui.dinero(r.totalVentas)}</td></tr>
         </table></div>
       </div>` : ''}
 
@@ -273,9 +289,10 @@ Diferencia: ${JZAC.ui.dinero(c.diferencia)}`;
         nVentas: r.nVentas,
         totalVentas: r.totalVentas,
         cobrosTotal: r.cobrosTotal,
+        notasTotal: r.notasTotal,
         gastoTotal: r.gastoTotal
       };
-      const i = lista.findIndex((c) => c.clave === claveDia);
+      const i = lista.findIndex((c) => String(c.clave) === String(claveDia));
       if (i >= 0) {
         if (!await JZAC.ui.confirmar('Ya existe un corte guardado para este día. ¿Reemplazarlo con los datos actuales?', 'Actualizar corte')) return;
         lista[i] = registro;
@@ -289,7 +306,7 @@ Diferencia: ${JZAC.ui.dinero(c.diferencia)}`;
 
     const actual = () => {
       const calc = calcula();
-      const i = leer().findIndex((c) => c.clave === claveDia);
+      const i = leer().findIndex((c) => String(c.clave) === String(claveDia));
       if (i >= 0) return leer()[i];
       return {
         id: claveDia, clave: claveDia, fechaCorte: Date.now(), desde, hasta,
@@ -297,7 +314,7 @@ Diferencia: ${JZAC.ui.dinero(c.diferencia)}`;
         contado: calc.contado == null ? 0 : calc.contado,
         diferencia: calc.diferencia == null ? 0 : calc.diferencia,
         nVentas: r.nVentas, totalVentas: r.totalVentas,
-        cobrosTotal: r.cobrosTotal, gastoTotal: r.gastoTotal
+        cobrosTotal: r.cobrosTotal, notasTotal: r.notasTotal, gastoTotal: r.gastoTotal
       };
     };
     document.getElementById('cj-imprimir').addEventListener('click', () => imprimirRegistro(actual()));

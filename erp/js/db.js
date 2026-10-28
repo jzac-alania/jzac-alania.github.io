@@ -79,6 +79,10 @@ function abrirTransaccion(nombres, modo) {
   return DB.db.transaction(nombres, modo);
 }
 
+function abrirTransaccionLibre(nombres, modo) {
+  return DB.db.transaction(nombres, modo);
+}
+
 function tx(store, mode) {
   return abrirTransaccion(store, mode).objectStore(store);
 }
@@ -115,6 +119,7 @@ const db = {
     return pedir(tx(tabla, 'readwrite').clear());
   },
   transaccion: abrirTransaccion,
+  transaccionLibre: abrirTransaccionLibre,
   permitida: licenciaPermitida,
   // ejecuta una funcion con una transaccion de varias tablas
   async transaccional(fn) {
@@ -136,6 +141,7 @@ const db = {
 };
 
 DB.transaccion = abrirTransaccion;
+DB.transaccionLibre = abrirTransaccionLibre;
 DB.permitida = licenciaPermitida;
 DB.transaccional = db.transaccional;
 

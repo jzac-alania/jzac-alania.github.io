@@ -17,6 +17,7 @@
       const ds = t.objectStore('detalle_venta');
       const ps = t.objectStore('productos');
       let resultado = null;
+      let fallo = null;
       const getU = us.get(u.id);
       getU.onsuccess = () => {
         const user = getU.result || u;
@@ -57,6 +58,7 @@
           items.forEach((it) => {
             ds.add({
               ventaId,
+              productoId: it.productoId,
               producto: it.nombre,
               cantidad: Number(it.cantidad),
               precio: Number(it.precio),
@@ -64,11 +66,6 @@
               total: Number(it.precio) * Number(it.cantidad),
               esPeso: !!it.esPeso
             });
-            const gp = ps.get(it.productoId);
-            gp.onsuccess = () => {
-              const p = gp.result;
-              if (p) { p.stock = Math.max(0, Number(p.stock) - Number(it.cantidad)); ps.put(p); }
-            };
           });
           resultado = {
             ventaId,
@@ -76,31 +73,69 @@
             total: venta.total,
             venta: { ...venta, id: ventaId }
           };
+          const gp = ps.getAll();
+          gp.onsuccess = () => {
+            const prods = gp.result || [];
+            const porId = new Map(prods.map((p) => [String(p.id), p]));
+            const porNombre = new Map(prods.map((p) => [JZAC.negocio.nombreNorm(p.nombre), p]));
+            for (const it of items) {
+              const p = (it.productoId != null && porId.get(String(it.productoId))) || porNombre.get(JZAC.negocio.nombreNorm(it.nombre));
+              if (!p) { fallo = { tipo: 'producto', nombre: it.nombre }; try { t.abort(); } catch (err) { } return; }
+              const stock = Number(p.stock || 0);
+              const cant = Number(it.cantidad || 0);
+              if (stock + 0.0001 < cant) { fallo = { tipo: 'stock', nombre: p.nombre }; try { t.abort(); } catch (err) { } return; }
+              p.stock = Math.round((stock - cant) * 1000) / 1000;
+              ps.put(p);
+            }
+          };
         };
       };
       getU.onerror = () => reject(getU.error);
       t.onerror = () => reject(t.error);
+      t.onabort = () => reject(new Error(fallo ? fallo.tipo + ':' + fallo.nombre : 'venta-cancelada'));
       t.oncomplete = () => resolve(resultado);
     });
   }
 
   async function anularVenta(venta) {
-    const productos = await JZAC.db.listar('productos');
-    const dets = (await JZAC.db.listar('detalle_venta')).filter((d) => d.ventaId === venta.id);
+    const notas = await JZAC.db.listar('notas_credito');
+    if (notas.some((n) => n.ventaId === venta.id || n.boletaRef === venta.boleta)) {
+      throw new Error('venta-con-devoluciones');
+    }
     await DB.ready;
     return new Promise((resolve, reject) => {
-      const t = DB.transaccion(['ventas', 'detalle_venta', 'productos'], 'readwrite');
+      const t = DB.transaccion(['ventas', 'detalle_venta', 'productos', 'comprobantes_sunat'], 'readwrite');
       const vs = t.objectStore('ventas');
       const ds = t.objectStore('detalle_venta');
       const ps = t.objectStore('productos');
-      dets.forEach((d) => {
-        ds.delete(d.id);
-        const p = productos.find((x) => JZAC.negocio.nombreNorm(x.nombre) === JZAC.negocio.nombreNorm(d.producto));
-        if (p) { p.stock = Number(p.stock || 0) + Number(d.cantidad); ps.put(p); }
-      });
-      vs.delete(venta.id);
-      t.oncomplete = () => resolve(dets);
+      const cs = t.objectStore('comprobantes_sunat');
+      let dets = null;
+      let productos = null;
+      let comprobantes = null;
+      const listo = () => {
+        if (!dets || !productos || !comprobantes) return;
+        const porId = new Map(productos.map((p) => [String(p.id), p]));
+        const porNombre = new Map(productos.map((p) => [JZAC.negocio.nombreNorm(p.nombre), p]));
+        const faltantes = [];
+        dets.forEach((d) => {
+          ds.delete(d.id);
+          const p = (d.productoId != null && porId.get(String(d.productoId))) || porNombre.get(JZAC.negocio.nombreNorm(d.producto));
+          if (!p) { faltantes.push(d.producto); return; }
+          p.stock = Math.round((Number(p.stock || 0) + Number(d.cantidad || 0)) * 1000) / 1000;
+          ps.put(p);
+        });
+        comprobantes.filter((c) => c.ventaId === venta.id).forEach((c) => cs.delete(c.id));
+        vs.delete(venta.id);
+        t.oncomplete = () => resolve({ dets, faltantes });
+      };
+      const rd = ds.getAll();
+      rd.onsuccess = () => { dets = (rd.result || []).filter((d) => d.ventaId === venta.id); listo(); };
+      const rp = ps.getAll();
+      rp.onsuccess = () => { productos = rp.result || []; listo(); };
+      const rc = cs.getAll();
+      rc.onsuccess = () => { comprobantes = rc.result || []; listo(); };
       t.onerror = () => reject(t.error);
+      t.onabort = () => reject(t.error || new Error('anulacion-cancelada'));
     });
   }
 
@@ -181,7 +216,7 @@
   function crearNotaHTML(u, n, dn) {
     const c = (t) => `<div class="cen">${t}</div>`;
     const filas = dn.map((d) =>
-      `<tr><td>${JZAC.ui.esc(d.producto)} x${JZAC.ui.n(d.cantidad)}${d.esPeso ? ' kg' : ''}</td><td class="r">${JZAC.ui.dinero(d.precio)}</td><td class="r">${JZAC.ui.dinero(Number(d.cantidad) * Number(d.precio))}</td></tr>`
+      `<tr><td>${JZAC.ui.esc(d.producto)} x${JZAC.ui.n(d.cantidad)}${d.esPeso ? ' kg' : ''}</td><td class="r">${JZAC.ui.dinero(d.precio)}</td><td class="r">${JZAC.ui.dinero(d.total != null ? d.total : Number(d.cantidad) * Number(d.precio))}</td></tr>`
     ).join('');
     return `
       <div class="rec">
@@ -193,6 +228,7 @@
         ${c(n.esFactura ? ('RUC: ' + JZAC.ui.esc(n.ruc || '—')) : ('Cliente: ' + JZAC.ui.esc(n.cliente || '—')))}
         ${c('Boleta de referencia: ' + JZAC.ui.esc(n.boletaRef))}
         ${c('Motivo: ' + JZAC.ui.esc(n.motivo || '—'))}
+        ${c('Devuelto por: ' + JZAC.ui.esc(n.metodo || 'Efectivo'))}
         <div class="sep"></div>
         <table>
           <tr><th>Producto</th><th class="r">Pcio</th><th class="r">Sub</th></tr>
@@ -210,8 +246,7 @@
   }
 
   // Recompone el stock y crea la nota NC-XXXXXXXX de la devolucion.
-  async function registrarDevolucion(u, v, det, motivo) {
-    const productos = await JZAC.db.listar('productos');
+  async function registrarDevolucion(u, v, det, motivo, metodo) {
     await DB.ready;
     return new Promise((resolve, reject) => {
       const t = DB.transaccion(['usuarios', 'notas_credito', 'detalle_nota', 'productos'], 'readwrite');
@@ -220,43 +255,67 @@
       const nds = t.objectStore('detalle_nota');
       const ps = t.objectStore('productos');
       let nota = null;
-      const getU = us.get(u.id);
-      getU.onsuccess = () => {
-        const user = getU.result || u;
+      let user = null;
+      let productos = null;
+      let faltantes = [];
+      const factor = Number(v.subtotal) > 0 ? Number(v.total) / Number(v.subtotal) : 1;
+      const listo = () => {
+        if (!user || !productos) return;
         const serie = user.serieNota || 'NC001';
         const numero = Number(user.correlativoNota || 1000);
         user.correlativoNota = numero + 1;
         us.put(user);
-        const total = Math.round(det.reduce((a, d) => a + Number(d.cantidad) * Number(d.precio), 0) * 100) / 100;
+        const lineas = det.map((d) => {
+          const cant = Number(d.cantidad);
+          const precio = Number(d.precio);
+          const totalLinea = d.total != null ? Number(d.total) : cant * precio * factor;
+          return {
+            productoId: d.productoId,
+            producto: d.producto,
+            cantidad: cant,
+            precio,
+            costo: Number(d.costo || 0),
+            total: Math.round(totalLinea * 100) / 100,
+            esPeso: !!d.esPeso
+          };
+        });
+        const total = Math.round(lineas.reduce((a, d) => a + d.total, 0) * 100) / 100;
+        const costoTotal = Math.round(lineas.reduce((a, d) => a + d.costo * d.cantidad, 0) * 100) / 100;
         nota = {
           serie, numero,
           nota: serie + '-' + String(numero).padStart(8, '0'),
+          ventaId: v.id,
           boletaRef: v.boleta, esFactura: !!v.esFactura,
           cliente: v.cliente || '', ruc: v.ruc || '', razonSocial: v.razonSocial || '',
-          motivo: (motivo || '').trim(), total, fecha: Date.now()
+          motivo: (motivo || '').trim(), metodo: String(metodo || 'Efectivo'),
+          total, costoTotal, fecha: Date.now()
         };
+        const porId = new Map(productos.map((p) => [String(p.id), p]));
+        const porNombre = new Map(productos.map((p) => [JZAC.negocio.nombreNorm(p.nombre), p]));
         ns.add(nota).onsuccess = (e) => {
           nota.id = e.target.result;
-          det.forEach((d) => {
-            nds.add({
-              notaId: nota.id, producto: d.producto, cantidad: Number(d.cantidad),
-              precio: Number(d.precio), total: Math.round(Number(d.cantidad) * Number(d.precio) * 100) / 100,
-              esPeso: !!d.esPeso
-            });
-            const p = productos.find((x) => JZAC.negocio.nombreNorm(x.nombre) === JZAC.negocio.nombreNorm(d.producto));
-            if (p) { p.stock = Math.round((Number(p.stock || 0) + Number(d.cantidad)) * 100) / 100; ps.put(p); }
+          lineas.forEach((d) => {
+            nds.add({ notaId: nota.id, ...d });
+            const p = (d.productoId != null && porId.get(String(d.productoId))) || porNombre.get(JZAC.negocio.nombreNorm(d.producto));
+            if (!p) { faltantes.push(d.producto); return; }
+            p.stock = Math.round((Number(p.stock || 0) + Number(d.cantidad)) * 1000) / 1000;
+            ps.put(p);
           });
         };
       };
+      const getU = us.get(u.id);
+      getU.onsuccess = () => { user = getU.result || u; listo(); };
       getU.onerror = () => reject(getU.error);
+      const gp = ps.getAll();
+      gp.onsuccess = () => { productos = gp.result || []; listo(); };
       t.onerror = () => reject(t.error);
-      t.oncomplete = () => resolve(nota);
+      t.oncomplete = () => { if (nota) nota.faltantes = faltantes; resolve(nota); };
     });
   }
 
   // Cantidades aun devolvibles por producto dentro de una boleta.
   async function quedanPorDevolver(v, det) {
-    const notas = (await JZAC.db.listar('notas_credito')).filter((n) => n.boletaRef === v.boleta);
+    const notas = (await JZAC.db.listar('notas_credito')).filter((n) => n.ventaId === v.id || n.boletaRef === v.boleta);
     const dnAll = await JZAC.db.listar('detalle_nota');
     const ids = new Set(notas.map((n) => n.id));
     const devuelto = {};
@@ -274,6 +333,9 @@
     const quedo = (await quedanPorDevolver(v, det)).filter((q) => q.max > 0);
     if (quedo.length === 0) { JZAC.ui.toast('Esta boleta ya fue devuelta por completo.', 'mal'); return; }
     const motivos = ['Cliente no satisfecho', 'Producto dañado', 'Error en la venta', 'Otro motivo'];
+    const metodos = ['Efectivo', 'Yape', 'Plin', 'Transferencia', 'Tarjeta'];
+    const metodoInicial = metodos.indexOf(v.metodoPago) >= 0 ? v.metodoPago : 'Efectivo';
+    const factor = Number(v.subtotal) > 0 ? Number(v.total) / Number(v.subtotal) : 1;
     const m = JZAC.ui.modal(`
       <div class="modal-hdr"><h3>Devolución de ${JZAC.ui.esc(v.boleta)}</h3><button class="cierre" data-cerrar>×</button></div>
       <div class="texto-suave" style="margin-bottom:10px">Marca cuánto devuelves. El stock se repondrá y se imprimirá una nota de crédito.</div>
@@ -287,10 +349,15 @@
             <td class="monto" id="dev-tot-${i}">${JZAC.ui.dinero(0)}</td>
           </tr>`).join('')}
       </table></div>
-      <div class="campo" style="margin-top:12px">
-        <label>Motivo</label>
-        <select id="dev-motivo">${motivos.map((mo) => `<option>${mo}</option>`).join('')}</select>
+      <div class="fila" style="margin-top:12px">
+        <div class="campo"><label>Motivo</label>
+          <select id="dev-motivo">${motivos.map((mo) => `<option>${mo}</option>`).join('')}</select>
+        </div>
+        <div class="campo"><label>Forma de devolución</label>
+          <select id="dev-metodo">${metodos.map((mo) => `<option${mo === metodoInicial ? ' selected' : ''}>${mo}</option>`).join('')}</select>
+        </div>
       </div>
+      <div class="texto-suave" style="font-size:12px;margin-top:-6px">Solo la devolución en efectivo descuenta el efectivo esperado en caja.</div>
       <div class="derecha negrita mt16" style="font-size:16px">TOTAL A DEVOLVER: <span id="dev-total">${JZAC.ui.dinero(0)}</span></div>`,
       `<button class="btn" data-cerrar>Cancelar</button>
        <button class="btn btn-primario" id="dev-ok">Registrar devolución</button>`);
@@ -301,28 +368,44 @@
         const inp = m.raiz.querySelector(`.dev-q[data-i="${i}"]`);
         let val = Math.min(Number(q.max), Math.max(0, Number(inp.value || 0)));
         inp.value = Math.round(val * 1000) / 1000;
-        document.getElementById(`dev-tot-${i}`).textContent = JZAC.ui.dinero(val * Number(q.d.precio));
-        total += val * Number(q.d.precio);
+        const linea = val * Number(q.d.precio) * factor;
+        document.getElementById(`dev-tot-${i}`).textContent = JZAC.ui.dinero(linea);
+        total += linea;
       });
       document.getElementById('dev-total').textContent = JZAC.ui.dinero(total);
     };
     m.raiz.querySelectorAll('.dev-q').forEach((inp) => inp.addEventListener('input', act));
     m.raiz.querySelector('#dev-ok').addEventListener('click', async () => {
       const motivo = document.getElementById('dev-motivo').value;
+      const metodo = document.getElementById('dev-metodo').value;
       const devolucion = [];
       quedo.forEach((q, i) => {
         const val = Number(m.raiz.querySelector(`.dev-q[data-i="${i}"]`).value || 0);
-        if (val > 0) devolucion.push({ producto: q.d.producto, cantidad: val, precio: Number(q.d.precio), esPeso: !!q.d.esPeso });
+        if (val > 0) {
+          devolucion.push({
+            productoId: q.d.productoId,
+            producto: q.d.producto,
+            cantidad: val,
+            precio: Number(q.d.precio),
+            costo: Number(q.d.costo || 0),
+            total: Math.round(val * Number(q.d.precio) * factor * 100) / 100,
+            esPeso: !!q.d.esPeso
+          });
+        }
       });
       if (devolucion.length === 0) { JZAC.ui.toast('Indica cuánto quieres devolver.', 'mal'); return; }
-      if (!await JZAC.ui.confirmar(`¿Registrar la devolución por <b>${JZAC.ui.dinero(devolucion.reduce((a, d) => a + d.cantidad * d.precio, 0))}</b>? Se repondrá el stock.`, 'Confirmar devolución')) return;
+      const totalDev = devolucion.reduce((a, d) => a + d.total, 0);
+      if (!await JZAC.ui.confirmar(`¿Registrar la devolución por <b>${JZAC.ui.dinero(totalDev)}</b>? Se repondrá el stock.`, 'Confirmar devolución')) return;
       try {
-        const n = await registrarDevolucion(u, v, devolucion, motivo);
-        JZAC.ui.toast(`Nota ${n.nota} registrada y stock repuesto.`, 'bien');
+        const n = await registrarDevolucion(u, v, devolucion, motivo, metodo);
+        const avisoStock = n && n.faltantes && n.faltantes.length
+          ? `<br><span style="color:var(--rojo)">No se encontraron ${n.faltantes.length} producto(s) para reponer stock.</span>`
+          : '<br>El stock se repuso automáticamente.';
+        JZAC.ui.toast(`Nota ${n.nota} registrada.`, 'bien');
         m.cerrar();
         const m2 = JZAC.ui.modal(
           `<div class="modal-hdr"><h3>Devolución registrada</h3><button class="cierre" data-cerrar>×</button></div>
-           <p style="margin:0">Nota de crédito <b>${JZAC.ui.esc(n.nota)}</b><br>Total devuelto: <b style="font-size:18px">${JZAC.ui.dinero(n.total)}</b><br>El stock se repuso automáticamente.</p>`,
+           <p style="margin:0">Nota de crédito <b>${JZAC.ui.esc(n.nota)}</b><br>Total devuelto: <b style="font-size:18px">${JZAC.ui.dinero(n.total)}</b><br>Forma: <b>${JZAC.ui.esc(n.metodo)}</b>${avisoStock}</p>`,
           `<button class="btn btn-primario" id="dev-cont">Continuar</button>
            <button class="btn btn-dorado" id="dev-imp">Imprimir nota</button>`);
         m2.raiz.querySelector('#dev-imp').addEventListener('click', () => imprimirNota(u, n, devolucion));
@@ -465,8 +548,7 @@
                 </td>
               </tr>`).join('')}
           </table></div>`;
-      const user = JZAC.auth.usuarioActual();
-      if (!user || (!user.fiscalActivo && user.modoFiscal === 'simulado')) {
+      if (!u || (!u.fiscalActivo && u.modoFiscal === 'simulado')) {
         document.querySelectorAll('[data-sunat]').forEach(b => b.style.display = 'none');
       }
       cont.querySelectorAll('[data-ver]').forEach((b) => b.addEventListener('click', () => {
@@ -484,12 +566,17 @@
       cont.querySelectorAll('[data-anular]').forEach((b) => b.addEventListener('click', async () => {
         const v = ventas.find((x) => x.id === Number(b.dataset.anular));
         if (await JZAC.ui.confirmar(`¿Anular la boleta <b>${v.boleta}</b> por ${JZAC.ui.dinero(v.total)}? Se repondrá el stock.`)) {
-          await anularVenta(v);
-          JZAC.ui.toast('Venta anulada y stock repuesto.', 'bien');
-          const i1 = ventas.indexOf(v); if (i1 > -1) ventas.splice(i1, 1);
-          const i2 = ventasAll.indexOf(v); if (i2 > -1) ventasAll.splice(i2, 1);
-          delete detvByVenta[v.id];
-          pintaTabla();
+          try {
+            const r = await anularVenta(v);
+            JZAC.ui.toast(r.faltantes.length ? `Venta anulada. No se repuso stock de: ${r.faltantes.join(', ')}` : 'Venta anulada y stock repuesto.', r.faltantes.length ? 'mal' : 'bien');
+            const i1 = ventas.indexOf(v); if (i1 > -1) ventas.splice(i1, 1);
+            const i2 = ventasAll.indexOf(v); if (i2 > -1) ventasAll.splice(i2, 1);
+            delete detvByVenta[v.id];
+            pintaTabla();
+          } catch (e) {
+            if (e.message === 'venta-con-devoluciones') JZAC.ui.toast('No se puede anular: la venta tiene devoluciones registradas.', 'mal');
+            else { JZAC.ui.toast('No se pudo anular la venta.', 'mal'); console.error(e); }
+          }
         }
       }));
     }
@@ -1402,7 +1489,10 @@
         m.raiz.querySelector('#imp-ahora').addEventListener('click', () => imprimirBoleta(u, vv, detP));
         m.raiz.querySelector('#cont-luego').addEventListener('click', () => { m.cerrar(); JZAC.ir('ventas'); });
       } catch (e) {
-        JZAC.ui.toast('Error al guardar la venta.', 'mal');
+        const msg = String(e && e.message || '');
+        if (msg.indexOf('stock:') === 0) JZAC.ui.toast(`Stock insuficiente de ${msg.slice(6)}. Actualiza el inventario.`, 'mal');
+        else if (msg.indexOf('producto:') === 0) JZAC.ui.toast(`El producto ${msg.slice(9)} ya no existe en inventario.`, 'mal');
+        else JZAC.ui.toast('Error al guardar la venta.', 'mal');
         console.error(e);
         btn.disabled = false;
       }

@@ -300,7 +300,7 @@ function licPuedeEscribir() {
   if (!_payload) return false;
   const ahora = Date.now();
   if (_payload.tipo === 'activada') return !_payload.exp || ahora <= _payload.exp;
-  if (_payload.tipo === 'prueba') return ahora <= _payload.fin && ahora <= _payload.exp;
+  if (_payload.tipo === 'prueba') return ahora <= Number(_payload.fin || 0) && (!_payload.exp || ahora <= _payload.exp);
   return false;
 }
 

@@ -11,11 +11,20 @@
     const productos = await JZAC.db.listar('productos');
     const fiados = await JZAC.db.listar('fiados');
 
+    const notas = await JZAC.db.listar('notas_credito');
+    const detn = await JZAC.db.listar('detalle_nota');
     const ventasHoy = ventas.filter((v) => v.fecha >= hoy.desde && v.fecha <= hoy.hasta);
+    const notasHoy = notas.filter((n) => n.fecha >= hoy.desde && n.fecha <= hoy.hasta);
     const idsHoy = new Set(ventasHoy.map((v) => v.id));
-    const ingresosHoy = ventasHoy.reduce((a, v) => a + Number(v.total || 0), 0);
-    const costoHoy = detv.filter((d) => idsHoy.has(d.ventaId))
+    const idsNotaHoy = new Set(notasHoy.map((n) => n.id));
+    const notasTotal = notasHoy.reduce((a, n) => a + Number(n.total || 0), 0);
+    const notasEfectivo = notasHoy.filter((n) => /efectivo/i.test(n.metodo || 'Efectivo'))
+      .reduce((a, n) => a + Number(n.total || 0), 0);
+    const costoNotas = detn.filter((d) => idsNotaHoy.has(d.notaId))
       .reduce((a, d) => a + Number(d.costo || 0) * Number(d.cantidad || 0), 0);
+    const ingresosHoy = ventasHoy.reduce((a, v) => a + Number(v.total || 0), 0) - notasTotal;
+    const costoHoy = detv.filter((d) => idsHoy.has(d.ventaId))
+      .reduce((a, d) => a + Number(d.costo || 0) * Number(d.cantidad || 0), 0) - costoNotas;
     const gastosHoy = gastos.filter((g) => g.fecha >= hoy.desde && g.fecha <= hoy.hasta)
       .reduce((a, g) => a + Number(g.monto || 0), 0);
     const gananciaNeta = ingresosHoy - costoHoy - gastosHoy;
@@ -40,12 +49,15 @@
     const fec = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
 
     const ticketProm = ventasHoy.length ? ingresosHoy / ventasHoy.length : 0;
-    const efectivoHoy = ventasHoy.reduce((a, v) => a + (v.pagoEfectivo != null ? Number(v.pagoEfectivo) : (v.metodoPago === 'Efectivo' ? Number(v.total || 0) : 0)), 0);
-    const itemsVendidosHoy = detv.filter((d) => idsHoy.has(d.ventaId)).reduce((a, d) => a + Number(d.cantidad || 0), 0);
+    const efectivoHoy = ventasHoy.reduce((a, v) => a + (v.pagoEfectivo != null ? Number(v.pagoEfectivo) : (/efectivo/i.test(v.metodoPago || '') ? Number(v.total || 0) : 0)), 0) - notasEfectivo;
+    const itemsVendidosHoy = detv.filter((d) => idsHoy.has(d.ventaId)).reduce((a, d) => a + Number(d.cantidad || 0), 0)
+      - detn.filter((d) => idsNotaHoy.has(d.notaId)).reduce((a, d) => a + Number(d.cantidad || 0), 0);
     const porMetodo = {};
     ventasHoy.forEach((v) => { const k = v.metodoPago || 'Efectivo'; porMetodo[k] = (porMetodo[k] || 0) + Number(v.total || 0); });
+    notasHoy.forEach((n) => { const k = n.metodo || 'Efectivo'; porMetodo[k] = (porMetodo[k] || 0) - Number(n.total || 0); });
     const topProd = {};
     detv.filter((d) => idsHoy.has(d.ventaId)).forEach((d) => { topProd[d.producto] = (topProd[d.producto] || 0) + Number(d.total || 0); });
+    detn.filter((d) => idsNotaHoy.has(d.notaId)).forEach((d) => { topProd[d.producto] = (topProd[d.producto] || 0) - Number(d.total || 0); });
     const topArr = Object.entries(topProd).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
     cont.innerHTML = `
@@ -64,7 +76,7 @@
       </div>
 
       <div class="grid grid-4 mt16">
-        <div class="card stat verde"><div class="stat-titulo">Ventas hoy</div><div class="stat-valor">${JZAC.ui.dinero(ingresosHoy)}</div><div class="stat-icono">S</div></div>
+        <div class="card stat verde"><div class="stat-titulo">Ventas netas hoy</div><div class="stat-valor">${JZAC.ui.dinero(ingresosHoy)}</div><div class="stat-icono">S</div></div>
         <div class="card stat azul"><div class="stat-titulo">Ganancia neta</div><div class="stat-valor">${JZAC.ui.dinero(gananciaNeta)}</div><div class="stat-icono">G</div></div>
         <div class="card stat dorado"><div class="stat-titulo">Gastos hoy</div><div class="stat-valor">${JZAC.ui.dinero(gastosHoy)}</div><div class="stat-icono">G</div></div>
         <div class="card stat rojo"><div class="stat-titulo">Fiados por cobrar</div><div class="stat-valor">${JZAC.ui.dinero(fiadosPendientes)}</div><div class="stat-icono">F</div></div>

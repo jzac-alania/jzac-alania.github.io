@@ -210,7 +210,7 @@ async function mostrarApp(usuario) {
   window.JZAC.tema.aplicar();
 }
 
-function cargarModulo() {
+async function cargarModulo() {
   const ruta = rutaActual();
   const nav = NAV.find((x) => x.ruta === ruta);
   if (!nav) { location.hash = '#/dashboard'; return; }
@@ -223,7 +223,13 @@ function cargarModulo() {
   cont.scrollTop = 0;
   window.scrollTo(0, 0);
   const mod = JZAC.modulos[nav.mod];
-  mod.render(cont);
+  try {
+    await mod.render(cont);
+  } catch (e) {
+    console.error(e);
+    cont.innerHTML = '<div class="card"><div class="seccion-titulo" style="margin-top:0">No se pudo cargar esta sección</div><div class="texto-suave">Recarga la página o revisa la consola.</div></div>';
+    return;
+  }
   if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && cont.children.length) {
     gsap.fromTo(cont.children,
       { opacity: 0, y: 12 },

@@ -4,6 +4,7 @@
 (function () {
   const app = document.getElementById('app');
   let _timerLic = null;
+  let _timerSnap = null;
   let _licUser = null;
   let _licListeners = false;
 
@@ -392,10 +393,12 @@
       JZAC.lic.sincronizar(actual).then((est) => aplicarLicencia(actual, est)).catch(() => {});
     };
     _timerLic = setInterval(revisar, 6 * 3600000);
+    if (_timerSnap) clearInterval(_timerSnap);
+    _timerSnap = setInterval(() => { JZAC.backup.hacerSnapshot(); }, 30 * 60 * 1000);
     if (_licListeners) return;
     _licListeners = true;
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) revisar(); });
-    window.addEventListener('online', revisar);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { revisar(); JZAC.backup.hacerSnapshot(); } });
+    window.addEventListener('online', () => { revisar(); JZAC.backup.hacerSnapshot(); });
   }
 
   async function continuarLicencia(u) {
@@ -514,8 +517,22 @@
 
   window.JZAC.mostrarVendedor = mostrarVendedor;
 
+  function errorFatal(msg) {
+    const splash = document.getElementById('splash');
+    if (splash) splash.classList.add('hidden');
+    document.body.innerHTML = `<div style="max-width:520px;margin:15vh auto;padding:24px;font-family:system-ui,sans-serif;text-align:center">
+      <h2 style="margin:0 0 10px">No se pudo abrir JZAC ERP</h2>
+      <p style="color:#666;line-height:1.5">${msg}</p>
+      <button onclick="location.reload()" style="margin-top:12px;padding:10px 18px;border:0;border-radius:8px;background:#1a5fb4;color:#fff;font-weight:600">Recargar</button>
+    </div>`;
+  }
+
   async function boot() {
-    await DB.ready;
+    try { await DB.ready; } catch (e) {
+      console.error('IndexedDB no disponible', e);
+      errorFatal('El navegador no pudo abrir la base de datos local. Revisa el espacio disponible o el modo privado e intenta de nuevo.');
+      return;
+    }
     if (window.JZAC && JZAC.tema) { JZAC.tema.aplicar(); }
     if ('serviceWorker' in navigator) {
       try { navigator.serviceWorker.register('./sw.js'); } catch (e) { /* sin SW */ }
@@ -525,5 +542,5 @@
     await continuarLicencia(u);
   }
 
-  boot();
+  boot().catch((e) => { console.error(e); errorFatal('Ocurrió un error inesperado al iniciar. Recarga la página.'); });
 })();

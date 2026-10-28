@@ -6,8 +6,13 @@
     const ventas = (await JZAC.db.listar('ventas')).filter((v) => v.fecha >= desde && v.fecha <= hasta);
     const detv = (await JZAC.db.listar('detalle_venta')).filter((d) => ventas.some((v) => v.id === d.ventaId));
     const gastos = (await JZAC.db.listar('gastos')).filter((g) => g.fecha >= desde && g.fecha <= hasta);
-    const ingresos = ventas.reduce((a, v) => a + Number(v.total || 0), 0);
-    const costo = detv.reduce((a, d) => a + Number(d.costo || 0) * Number(d.cantidad || 0), 0);
+    const notas = (await JZAC.db.listar('notas_credito')).filter((n) => n.fecha >= desde && n.fecha <= hasta);
+    const idsNota = new Set(notas.map((n) => n.id));
+    const detn = (await JZAC.db.listar('detalle_nota')).filter((d) => idsNota.has(d.notaId));
+    const notasTotal = notas.reduce((a, n) => a + Number(n.total || 0), 0);
+    const costoNotas = detn.reduce((a, d) => a + Number(d.costo || 0) * Number(d.cantidad || 0), 0);
+    const ingresos = ventas.reduce((a, v) => a + Number(v.total || 0), 0) - notasTotal;
+    const costo = detv.reduce((a, d) => a + Number(d.costo || 0) * Number(d.cantidad || 0), 0) - costoNotas;
     const gastoTotal = gastos.reduce((a, g) => a + Number(g.monto || 0), 0);
     const ganancia = ingresos - costo - gastoTotal;
 
@@ -17,6 +22,12 @@
       porProducto[d.producto].cantidad += Number(d.cantidad);
       porProducto[d.producto].venta += Number(d.precio) * Number(d.cantidad);
       porProducto[d.producto].costo += Number(d.costo) * Number(d.cantidad);
+    });
+    detn.forEach((d) => {
+      porProducto[d.producto] = porProducto[d.producto] || { cantidad: 0, venta: 0, costo: 0 };
+      porProducto[d.producto].cantidad -= Number(d.cantidad);
+      porProducto[d.producto].venta -= Number(d.total != null ? d.total : Number(d.precio) * Number(d.cantidad));
+      porProducto[d.producto].costo -= Number(d.costo || 0) * Number(d.cantidad);
     });
     const top = Object.entries(porProducto).map(([n, v]) => ({ producto: n, ...v }))
       .sort((a, b) => b.cantidad - a.cantidad).slice(0, 5);
@@ -28,11 +39,16 @@
       porCliente[c].ventas++;
       porCliente[c].total += Number(v.total);
     });
+    notas.forEach((n) => {
+      const c = n.cliente || 'Sin cliente';
+      porCliente[c] = porCliente[c] || { ventas: 0, total: 0 };
+      porCliente[c].total -= Number(n.total || 0);
+    });
     const clientes = Object.entries(porCliente).map(([n, v]) => ({ cliente: n, ...v }))
       .sort((a, b) => b.total - a.total);
 
     return {
-      ventas, detv, gastos, ingresos, costo, gastoTotal, ganancia, top, clientes,
+      ventas, detv, gastos, notas, detn, ingresos, costo, gastoTotal, notasTotal, ganancia, top, clientes,
       nVentas: ventas.length, ticketProm: ventas.length ? ingresos / ventas.length : 0
     };
   }
@@ -82,7 +98,7 @@
       <div class="grid grid-3 mt16">
         <div class="card"><div class="stat-titulo">Ventas realizadas</div><div class="stat-valor" style="font-size:20px">${r.nVentas}</div></div>
         <div class="card"><div class="stat-titulo">Ticket promedio</div><div class="stat-valor" style="font-size:20px">${JZAC.ui.dinero(r.ticketProm)}</div></div>
-        <div class="card"><div class="stat-titulo">Unidades vendidas</div><div class="stat-valor" style="font-size:20px">${r.detv.reduce((a, d) => a + Number(d.cantidad || 0), 0)}</div></div>
+        <div class="card"><div class="stat-titulo">Unidades vendidas</div><div class="stat-valor" style="font-size:20px">${JZAC.ui.n(r.detv.reduce((a, d) => a + Number(d.cantidad || 0), 0) - r.detn.reduce((a, d) => a + Number(d.cantidad || 0), 0))}</div></div>
       </div>
 
       <div class="grid grid-2 mt16">

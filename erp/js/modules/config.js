@@ -164,7 +164,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.20.2<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.20.3<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -253,15 +253,22 @@
       if (!file) return;
       try {
         const data = JSON.parse(await file.text());
-        if (typeof data !== 'object' || !Array.isArray(data.ventas)) throw new Error('Formato');
-        if (!await JZAC.ui.confirmar('Restaurar este respaldo reemplazará TODOS los datos actuales de este dispositivo. ¿Continuar?', 'Restaurar respaldo')) return;
+        if (!data || typeof data !== 'object') throw new Error('Formato');
+        const requeridas = ['ventas', 'productos', 'clientes'];
+        if (!requeridas.every((k) => Array.isArray(data[k]))) throw new Error('Formato');
+        const incluidas = TABLAS.filter((k) => k !== 'usuarios' && Array.isArray(data[k]));
+        if (!incluidas.length) throw new Error('Sin datos');
+        incluidas.forEach((k) => {
+          if (data[k].some((it) => !it || typeof it !== 'object' || Array.isArray(it))) throw new Error('Formato');
+        });
+        if (!await JZAC.ui.confirmar('Restaurar este respaldo reemplazará TODOS los datos actuales de este dispositivo. Tu cuenta y licencia no cambian. ¿Continuar?', 'Restaurar respaldo')) return;
         await JZAC.db.ready;
-        // Transaccion unica por tabla: o entra el respaldo completo, o no se toca nada.
-        const t = DB.transaccion(TABLAS, 'readwrite');
-        for (const nombre of TABLAS) {
+        // Solo se restauran las tablas presentes; usuarios se conserva para no perder el acceso.
+        const t = DB.transaccionLibre(incluidas, 'readwrite');
+        for (const nombre of incluidas) {
           const st = t.objectStore(nombre);
           st.clear();
-          for (const item of data[nombre] || []) st.put(item);
+          for (const item of data[nombre]) st.put(item);
         }
         await new Promise((resolve, reject) => {
           t.oncomplete = resolve;
