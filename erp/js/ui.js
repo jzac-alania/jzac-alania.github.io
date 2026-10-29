@@ -309,6 +309,16 @@ document.addEventListener('focusout', (e) => {
 window.JZAC.negocio = {
   nombreNorm: (n) => String(n || '').trim().replace(/\s+/g, ' ').toUpperCase(),
   nombreClave: (n) => String(n || '').trim().toLowerCase().replace(/\s+/g, ' '),
+  validaRuc: (ruc) => {
+    if (!/^\d{11}$/.test(ruc)) return false;
+    if (!['10', '15', '16', '17', '20'].includes(ruc.slice(0, 2))) return false;
+    const pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+    let suma = 0;
+    for (let i = 0; i < 10; i++) suma += Number(ruc[i]) * pesos[i];
+    const resto = 11 - (suma % 11);
+    const digito = resto === 10 ? 0 : resto === 11 ? 1 : resto;
+    return digito === Number(ruc[10]);
+  },
   imprimir: () => { try { window.print(); } catch (e) { ui.toast('No se pudo imprimir', 'mal'); } },
   wha: (texto) => {
     JZAC.ui.abrirWha('https://wa.me/51929068219?text=' + encodeURIComponent(texto));

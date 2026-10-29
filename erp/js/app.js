@@ -528,6 +528,10 @@
   }
 
   async function boot() {
+    try {
+      localStorage.removeItem('jzac_padron_cache_v1');
+      localStorage.removeItem('jzac_padron_dni_token');
+    } catch (e) {}
     try { await DB.ready; } catch (e) {
       console.error('IndexedDB no disponible', e);
       errorFatal('El navegador no pudo abrir la base de datos local. Revisa el espacio disponible o el modo privado e intenta de nuevo.');

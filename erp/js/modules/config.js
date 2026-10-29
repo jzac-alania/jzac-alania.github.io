@@ -26,14 +26,6 @@
           </div>
           <button class="btn btn-primario" id="cf-guardar">Guardar cambios</button>
 
-          <div class="seccion-titulo">Consulta DNI / RUC</div>
-          <div class="texto-suave" style="font-size:13px;margin-bottom:8px">El RUC se consulta gratis con OpenRUC. Para autocompletar DNI necesitas un token gratuito de Perú API (1,000 consultas al mes). El RUC de tu negocio y los datos se guardan solo en este dispositivo.</div>
-          <div class="campo"><label>Token de Perú API (solo DNI)</label><input id="cf-dni-token" placeholder="Pega aquí tu token" value="${JZAC.ui.esc(JZAC.padron.token())}"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn" id="cf-dni-guardar">Guardar token DNI</button>
-            <button class="btn btn-sm" id="cf-dni-limpiar">Borrar caché DNI/RUC</button>
-          </div>
-
           <div class="seccion-titulo">Facturación electrónica</div>
           <div class="texto-suave" style="font-size:13px;margin-bottom:8px">Completa los datos fiscales del negocio. En modo <b>simulado</b> el comprobante se registra solo en este dispositivo y no se envía a SUNAT.</div>
           <label class="campo-check" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
@@ -164,7 +156,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.20.3<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.20.4<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -222,15 +214,6 @@
       await JZAC.db.guardar('usuarios', nuevo);
       JZAC.ui.toast('Cambios guardados.', 'bien');
       render(cont);
-    });
-
-    document.getElementById('cf-dni-guardar').addEventListener('click', () => {
-      JZAC.padron.guardarToken(document.getElementById('cf-dni-token').value);
-      JZAC.ui.toast('Token de DNI guardado.', 'bien');
-    });
-    document.getElementById('cf-dni-limpiar').addEventListener('click', () => {
-      JZAC.padron.limpiarCache();
-      JZAC.ui.toast('Caché de consultas borrada.', 'bien');
     });
 
     document.getElementById('cf-licencia').addEventListener('click', () => JZAC.mostrarEstadoLicencia());

@@ -779,21 +779,16 @@
           </div>
           <div class="campo" id="panel-dni">
             <label>DNI del cliente (opcional)</label>
-            <div style="display:flex;gap:6px">
-              <input id="in-dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos">
-              <button type="button" class="btn btn-sm" id="btn-dni">🔎 Consultar</button>
-            </div>
-            <div class="texto-suave" id="dni-aviso" style="font-size:12px;margin-top:4px"></div>
+            <input id="in-dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos">
           </div>
           <div class="campo" style="display:flex;align-items:center;gap:8px;margin-top:-2px">
             <input type="checkbox" id="chk-factura" style="width:18px;height:18px">
             <label for="chk-factura" style="margin:0">Emitir factura (con RUC)</label>
           </div>
           <div class="fila" id="panel-factura" style="display:none">
-            <div class="campo"><label>RUC</label><div style="display:flex;gap:6px"><input id="in-ruc" inputmode="numeric" maxlength="11" placeholder="Ej.: 20123456789"><button type="button" class="btn btn-sm" id="btn-ruc">🔎</button></div></div>
+            <div class="campo"><label>RUC</label><input id="in-ruc" inputmode="numeric" maxlength="11" placeholder="Ej.: 20123456789"></div>
             <div class="campo"><label>Razón social</label><input id="in-razon" placeholder="Nombre o razón social"></div>
             <div class="campo"><label>Dirección fiscal</label><input id="in-direc" placeholder="Dirección para la factura"></div>
-            <div class="texto-suave" id="ruc-aviso" style="font-size:12px"></div>
           </div>
           <div class="campo">
             <label>Método de pago</label>
@@ -1290,69 +1285,10 @@
       document.getElementById('in-ruc').value = op.dataset.ruc || '';
       document.getElementById('in-razon').value = op.dataset.razon || '';
       document.getElementById('in-direc').value = op.dataset.direc || '';
-      document.getElementById('dni-aviso').textContent = '';
-      document.getElementById('ruc-aviso').textContent = '';
     });
-    const inputRuc = document.getElementById('in-ruc');
-    let ultimoRucConsultado = '';
-    let timerRuc = null;
-    let consultandoRuc = false;
-
-    async function consultaDoc(tipo, auto) {
-      const input = document.getElementById(tipo === 'ruc' ? 'in-ruc' : 'in-dni');
-      const aviso = document.getElementById(tipo === 'ruc' ? 'ruc-aviso' : 'dni-aviso');
-      const numero = input.value.replace(/\D/g, '');
-      input.value = numero;
-      if (auto && tipo === 'ruc' && 'ruc:' + numero === ultimoRucConsultado) return;
-      aviso.textContent = 'Consultando…';
-      try {
-        const d = await JZAC.padron.consultar(tipo, numero);
-        input.value = d.numero;
-        if (tipo === 'ruc') {
-          ultimoRucConsultado = 'ruc:' + d.numero;
-          document.getElementById('in-razon').value = d.razonSocial || '';
-          document.getElementById('in-direc').value = d.direccion || '';
-          aviso.textContent = `${d.razonSocial}${d.estado ? ' · ' + d.estado : ''}`;
-        } else {
-          aviso.textContent = 'DNI: ' + (d.nombre || '');
-        }
-      } catch (e) {
-        aviso.textContent = auto ? 'No se pudo consultar. Escribe la razón social manualmente.' : e.message;
-      }
-    }
-
-    async function autoRuc() {
-      if (consultandoRuc) return;
-      const ruc = inputRuc.value.replace(/\D/g, '');
-      if (ruc.length !== 11) return;
-      if (!JZAC.padron.validaRuc(ruc)) {
-        document.getElementById('ruc-aviso').textContent = 'RUC inválido.';
-        return;
-      }
-      consultandoRuc = true;
-      try { await consultaDoc('ruc', true); } finally { consultandoRuc = false; }
-    }
-
-    inputRuc.addEventListener('input', () => {
-      inputRuc.value = inputRuc.value.replace(/\D/g, '').slice(0, 11);
-      clearTimeout(timerRuc);
-      if (inputRuc.value.length === 11) timerRuc = setTimeout(autoRuc, 450);
+    document.getElementById('in-ruc').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
     });
-    inputRuc.addEventListener('blur', () => {
-      clearTimeout(timerRuc);
-      if (inputRuc.value.length === 11) autoRuc();
-    });
-    inputRuc.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter') return;
-      e.preventDefault();
-      clearTimeout(timerRuc);
-      autoRuc();
-    });
-    document.getElementById('btn-ruc').addEventListener('click', () => {
-      clearTimeout(timerRuc);
-      autoRuc();
-    });
-    document.getElementById('btn-dni').addEventListener('click', () => consultaDoc('dni', false));
 
     function leeDocFiscal(docFiscal, cli, m, dsc) {
       const extra = {};
@@ -1375,6 +1311,7 @@
         const ruc = document.getElementById('in-ruc').value.trim();
         const razon = document.getElementById('in-razon').value.trim();
         if (!/^\d{11}$/.test(ruc)) { JZAC.ui.toast('RUC inválido: escribe 11 números.', 'mal'); return null; }
+        if (!JZAC.negocio.validaRuc(ruc)) { JZAC.ui.toast('RUC inválido: revisa los 11 números.', 'mal'); return null; }
         if (!razon) { JZAC.ui.toast('Escribe la razón social.', 'mal'); return null; }
         extra.factura = true;
         extra.ruc = ruc;
@@ -1419,8 +1356,6 @@
       document.getElementById('in-razon').value = '';
       document.getElementById('in-dni').value = '';
       document.getElementById('in-direc').value = '';
-      document.getElementById('dni-aviso').textContent = '';
-      document.getElementById('ruc-aviso').textContent = '';
       document.getElementById('sel-metodo').value = 'Efectivo';
       recibidoManual = false;
       sincPanelPago();
