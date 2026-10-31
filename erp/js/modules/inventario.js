@@ -216,7 +216,7 @@
         stock: Math.max(0, Number(document.getElementById('f-stock').value || 0)),
         stockMin: Math.max(0, Number(document.getElementById('f-stockmin').value || 0)),
         fechaVencimiento: document.getElementById('f-vence').value ? new Date(document.getElementById('f-vence').value).getTime() : null,
-        creado: Date.now()
+        creado: (p && p.creado) || Date.now()
       };
       if (edicion) { obj.id = p.id; }
       const key = await JZAC.db.guardar('productos', obj);
@@ -262,10 +262,19 @@
       `<button class="btn" data-cerrar>Cancelar</button>
        <button class="btn btn-primario" id="guardar-merma">Guardar merma</button>`);
 
+    const selProd = m.raiz.querySelector('#mm-prod');
+    const inCant = m.raiz.querySelector('#mm-cant');
+    selProd.addEventListener('change', () => {
+      const sp = productos.find((x) => x.id === Number(selProd.value));
+      if (sp && sp.ventaPeso) { inCant.step = '0.01'; inCant.min = '0.01'; }
+      else { inCant.step = '1'; inCant.min = '1'; }
+    });
+
     m.raiz.querySelector('#guardar-merma').addEventListener('click', async () => {
       const p = productos.find((x) => x.id === Number(document.getElementById('mm-prod').value));
       if (!p) { JZAC.ui.toast('Selecciona un producto.', 'mal'); return; }
-      const cant = Math.max(1, Number(document.getElementById('mm-cant').value || 1));
+      const bruto = Number(document.getElementById('mm-cant').value || 0);
+      const cant = p.ventaPeso ? Math.max(0.01, bruto) : Math.max(1, bruto || 1);
       const motivo = document.getElementById('mm-motivo').value.trim();
       await JZAC.db.ready;
       // Merma + stock en la misma transaccion: o se registran las dos o ninguna.

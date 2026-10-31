@@ -26,7 +26,7 @@ const ui = {
   esc: (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
 
   dinero: (n) => {
-    const v = Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const v = Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return 'S/ ' + v;
   },
 

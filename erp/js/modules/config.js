@@ -56,8 +56,12 @@
             <span>Los precios de venta ya incluyen IGV</span>
           </label>
           <div class="campo"><label>URL del proxy PSE (recomendado)</label><input id="cf-pse-proxy" value="${JZAC.ui.esc(u.pseProxyUrl || '')}" placeholder="https://tu-worker.workers.dev/emitir"></div>
-          <div class="campo"><label>URL de la API Lucode</label><input id="cf-pse-url" value="${JZAC.ui.esc(u.pseUrl || JZAC.fiscal.PSE_URL)}"></div>
-          <div class="campo"><label>Token Lucode sandbox (solo este dispositivo)</label><input id="cf-pse-token" type="password" value="${JZAC.ui.esc(JZAC.fiscal.token())}" placeholder="Bearer token"></div>
+          <label class="campo-check" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+            <input type="checkbox" id="cf-pse-prod" style="width:18px;height:18px;margin-top:2px">
+            <span><b>Modo producción (PSE real)</b><br><small class="texto-suave">Sin marcar, las boletas van al sandbox de pruebas. Actívalo solo cuando tengas token de producción de Lucode/SUNAT.</small></span>
+          </label>
+          <div class="campo"><label>URL de la API Lucode</label><input id="cf-pse-url" value="${JZAC.ui.esc(u.pseUrl || (u.pseProduccion ? JZAC.fiscal.PSE_PROD : JZAC.fiscal.PSE_URL))}"></div>
+          <div class="campo"><label>Token Lucode (solo este dispositivo)</label><input id="cf-pse-token" type="password" value="${JZAC.ui.esc(JZAC.fiscal.token())}" placeholder="Bearer token"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
             <button class="btn btn-sm" id="cf-pse-token-guardar">Guardar token PSE</button>
             <button class="btn btn-sm" id="cf-pse-token-limpiar">Borrar token PSE</button>
@@ -156,7 +160,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.20.4<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.21.0<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -169,6 +173,15 @@
 
     document.getElementById('cf-fiscal-activo').checked = !!u.fiscalActivo;
     document.getElementById('cf-precio-igv').checked = u.precioIncluyeIgv !== false;
+    const chkProd = document.getElementById('cf-pse-prod');
+    chkProd.checked = !!u.pseProduccion;
+    chkProd.addEventListener('change', () => {
+      const inp = document.getElementById('cf-pse-url');
+      const v = inp.value.trim();
+      if (!v || v === JZAC.fiscal.PSE_URL || v === JZAC.fiscal.PSE_PROD) {
+        inp.value = chkProd.checked ? JZAC.fiscal.PSE_PROD : JZAC.fiscal.PSE_URL;
+      }
+    });
     document.getElementById('cf-pse-token-guardar').addEventListener('click', () => {
       JZAC.fiscal.guardarToken(document.getElementById('cf-pse-token').value);
       JZAC.ui.toast('Token PSE guardado en este dispositivo.', 'bien');
@@ -209,7 +222,8 @@
         fiscalActivo: document.getElementById('cf-fiscal-activo').checked,
         modoFiscal,
         pseProxyUrl: document.getElementById('cf-pse-proxy').value.trim(),
-        pseUrl: document.getElementById('cf-pse-url').value.trim() || JZAC.fiscal.PSE_URL
+        pseProduccion: document.getElementById('cf-pse-prod').checked,
+        pseUrl: document.getElementById('cf-pse-url').value.trim() || (document.getElementById('cf-pse-prod').checked ? JZAC.fiscal.PSE_PROD : JZAC.fiscal.PSE_URL)
       };
       await JZAC.db.guardar('usuarios', nuevo);
       JZAC.ui.toast('Cambios guardados.', 'bien');

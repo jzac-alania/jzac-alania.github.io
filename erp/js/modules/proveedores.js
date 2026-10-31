@@ -81,7 +81,7 @@
         whatsapp: document.getElementById('pv-wha').value.trim(),
         telefono: document.getElementById('pv-tel').value.trim(),
         direccion: document.getElementById('pv-direc').value.trim(),
-        creado: Date.now()
+        creado: (pv && pv.creado) || Date.now()
       };
       if (edicion) obj.id = pv.id;
       await JZAC.db.guardar('proveedores', obj);

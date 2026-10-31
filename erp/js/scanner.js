@@ -155,10 +155,19 @@
       if (video) video.srcObject = null;
     }
 
+    // Esc cierra el escáner (sin cerrar el modal que esté debajo).
+    const onEsc = (e) => {
+      if (e.key !== 'Escape') return;
+      e.stopImmediatePropagation();
+      terminar(null);
+    };
+    document.addEventListener('keydown', onEsc, true);
+
     function terminar(valor) {
       if (fin) return;
       fin = true;
       parado = true;
+      document.removeEventListener('keydown', onEsc, true);
       repintarTicketActual = null;
       detener();
       m.cerrar();

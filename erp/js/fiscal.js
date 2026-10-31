@@ -31,7 +31,7 @@
       serieFactura: c.serieFactura || 'F001',
       serieBoleta: c.serieBoleta || 'B001',
       modo: c.modoFiscal === 'lucode' ? 'lucode' : 'simulado',
-      pseUrl: c.pseUrl || PSE_URL,
+      pseUrl: c.pseUrl || (c.pseProduccion ? PSE_PROD : PSE_URL),
       proxyUrl: c.pseProxyUrl || '',
       produccion: !!c.pseProduccion
     };
@@ -208,7 +208,7 @@
   }
 
   async function enviarPse(cfg, data) {
-    const url = cfg.proxyUrl || cfg.pseUrl || PSE_URL;
+    const url = cfg.proxyUrl || cfg.pseUrl || (cfg.produccion ? PSE_PROD : PSE_URL);
     const headers = { 'Content-Type': 'application/json' };
     if (!cfg.proxyUrl) {
       const t = token();

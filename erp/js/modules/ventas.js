@@ -1044,7 +1044,7 @@
       const rest = Math.max(0, Number(p.stock || 0));
       const alerta = rest <= Number(p.stockMin || 0);
       previewProd.innerHTML =
-        `${p.foto ? `<img src="${p.foto}" alt="" class="gp-foto-mini">` : ''}<b>${JZAC.ui.esc(p.nombre)}</b>${p.ventaPeso ? ' <span class="badge badge-azul">por kg</span>' : ''} · ${JZAC.ui.dinero(p.precioVenta)} · stock: <b class="${alerta ? 'txt-rojo' : ''}">${JZAC.ui.n(rest)}</b> ${alerta ? '<span class="badge badge-rojo">¡bajo!</span>' : ''}`;
+        `${p.foto && /^data:image\//.test(String(p.foto)) ? `<img src="${p.foto}" alt="" class="gp-foto-mini">` : ''}<b>${JZAC.ui.esc(p.nombre)}</b>${p.ventaPeso ? ' <span class="badge badge-azul">por kg</span>' : ''} · ${JZAC.ui.dinero(p.precioVenta)} · stock: <b class="${alerta ? 'txt-rojo' : ''}">${JZAC.ui.n(rest)}</b> ${alerta ? '<span class="badge badge-rojo">¡bajo!</span>' : ''}`;
     }
 
     // "3=código" · "2x código" · "10 *código" → agrega esa cantidad.
@@ -1193,7 +1193,7 @@
         const c = (p.categoria || '').trim() || 'Otros';
         if (cat !== '__todos' && c !== cat) return '';
         const ini = JZAC.ui.esc((p.nombre || 'P')[0].toUpperCase());
-        const foto = p.foto
+        const foto = p.foto && /^data:image\//.test(String(p.foto))
           ? `<img src="${p.foto}" alt="">`
           : `<span class="gp-ini">${ini}</span>`;
         return `<button type="button" class="gp-item" data-id="${p.id}" title="${JZAC.ui.esc(p.nombre)} ${JZAC.ui.dinero(p.precioVenta)}">

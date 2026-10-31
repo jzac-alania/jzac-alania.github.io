@@ -9,7 +9,8 @@
     const deudas = {};
     fiados.filter((f) => f.estado === 'Pendiente').forEach((f) => {
       const saldo = Number(f.montoTotal || 0) - Number(f.montoPagado || 0);
-      deudas[f.cliente] = (deudas[f.cliente] || 0) + saldo;
+      const k = JZAC.negocio.nombreClave(f.cliente);
+      deudas[k] = (deudas[k] || 0) + saldo;
     });
 
     cont.innerHTML = `
@@ -23,7 +24,7 @@
         : `<div class="tabla-wrap"><table>
             <tr><th>Cliente</th><th>WhatsApp</th><th>Teléfono</th><th class="monto">Deuda</th><th></th></tr>
             ${clientes.map((c) => {
-              const deuda = deudas[c.nombre] || 0;
+              const deuda = deudas[JZAC.negocio.nombreClave(c.nombre)] || 0;
               return `<tr>
                 <td class="negrita">${JZAC.ui.esc(c.nombre)}${c.dni || c.ruc ? `<div class="texto-suave" style="font-size:12px">${c.ruc ? 'RUC ' + JZAC.ui.esc(c.ruc) : 'DNI ' + JZAC.ui.esc(c.dni)}</div>` : ''}</td>
                 <td>${c.whatsapp ? `<a target="_blank" rel="noopener" href="https://wa.me/${String(c.whatsapp).replace(/[^0-9]/g, '')}">${JZAC.ui.esc(c.whatsapp)}</a>` : '—'}</td>
@@ -92,7 +93,7 @@
         ruc,
         razonSocial: document.getElementById('c-razon').value.trim(),
         notas: document.getElementById('c-notas').value.trim(),
-        creado: Date.now()
+        creado: (c && c.creado) || Date.now()
       };
       if (edicion) obj.id = c.id;
       await JZAC.db.guardar('clientes', obj);
