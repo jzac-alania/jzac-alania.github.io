@@ -262,6 +262,7 @@ button { font-family: inherit; }
 .nav-links a:not(.btn):hover::after { width: 100%; }
 .nav-links a:not(.btn).active { color: var(--verde-bright); }
 .nav-links a:not(.btn).active::after { width: 100%; }
+.nav-links a.btn.active { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.55), 0 10px 28px rgba(22, 185, 106, 0.32); }
 
 .nav-toggle {
   display: none; flex-direction: column; gap: 5px;
@@ -584,7 +585,7 @@ button { font-family: inherit; }
 
 /* ---------- Showcase / recorrido por la app ---------- */
 
-.showcase { overflow: hidden; }
+.showcase { overflow: clip; }
 .showcase-head { max-width: 760px; margin: 0 auto 3.4rem; }
 .showcase-head .section-lead { margin-bottom: 0; }
 
@@ -705,6 +706,7 @@ button { font-family: inherit; }
 
 /* ---------- Steps ---------- */
 
+#como { padding-bottom: 4rem; }
 .steps-viewport { position: relative; overflow: hidden; }
 .steps-head { margin-bottom: 2.4rem; }
 .steps-head .section-title { margin-bottom: 0; }
@@ -738,6 +740,7 @@ button { font-family: inherit; }
   .steps-viewport {
     min-height: calc(100vh - 64px);
     display: flex; flex-direction: column; justify-content: center;
+    padding-bottom: 3rem;
   }
   .steps.h-track {
     display: flex; flex-wrap: nowrap; width: max-content;
@@ -745,7 +748,10 @@ button { font-family: inherit; }
   }
   .steps.h-track .step { width: 430px; flex: 0 0 430px; }
   .steps.h-track .step:hover { transform: none; }
-  .steps-scroll-hint { display: flex; }
+  .steps-scroll-hint {
+    display: flex; position: absolute; left: 0; right: 0; bottom: 1.5rem;
+    margin-top: 0;
+  }
 }
 
 /* ---------- Precio ---------- */
@@ -801,15 +807,47 @@ button { font-family: inherit; }
 /* ---------- Pagos ---------- */
 
 .pay-grid { grid-template-columns: repeat(3, 1fr); }
-.pay-card { padding: 1.9rem 1.5rem; display: flex; flex-direction: column; }
+.pay-card { padding: 1.9rem 1.5rem; display: flex; flex-direction: column; transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease; }
+.pay-card:hover { transform: translateY(-6px); border-color: rgba(240, 176, 82, 0.4); box-shadow: 0 24px 48px rgba(2, 6, 18, 0.5); }
 .pay-logo {
-  display: inline-grid; place-items: center; width: 58px; height: 58px;
-  border-radius: 16px; font-weight: 900; font-size: 0.78rem; letter-spacing: 0.02em;
-  margin-bottom: 1.1rem;
+  position: relative; overflow: hidden;
+  display: inline-grid; place-items: center; width: 76px; height: 76px;
+  border-radius: 18px; margin-bottom: 1.1rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(2, 6, 18, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
 }
-.pay-logo.yape { background: linear-gradient(135deg, #7B2FF7, #4A00E0); color: #fff; box-shadow: 0 10px 26px rgba(123, 47, 247, 0.35); }
-.pay-logo.card { background: var(--grad-gold); color: #241B06; box-shadow: 0 10px 26px rgba(240, 176, 82, 0.3); }
-.pay-logo.bank { background: linear-gradient(135deg, #2D9CDB, #1B6FA8); color: #fff; box-shadow: 0 10px 26px rgba(45, 156, 219, 0.3); }
+.pay-logo::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 48%);
+}
+.pay-logo img {
+  position: relative; z-index: 1;
+  width: 100%; height: 100%; object-fit: contain; display: block;
+  padding: 7px;
+}
+.pay-logo.yape img { padding: 0; object-fit: cover; transform: scale(1.55); }
+.pay-logo.card img { padding: 8px 6px; }
+.pay-logo.bank img { padding: 9px; }
+.pay-card:hover .pay-logo { transform: scale(1.08) rotate(-4deg); }
+.pay-card:hover .pay-logo { box-shadow: 0 18px 38px rgba(2, 6, 18, 0.55), 0 0 0 3px rgba(240, 176, 82, 0.35); }
+
+.fx { position: absolute; pointer-events: none; }
+.fx-sheen {
+  inset: -40% auto -40% -60%; width: 45%; z-index: 1;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-18deg);
+  animation: card-sheen 3.4s ease-in-out infinite;
+}
+@keyframes card-sheen {
+  0%, 55% { left: -60%; opacity: 0; }
+  62% { opacity: 1; }
+  92% { left: 130%; opacity: 1; }
+  100% { left: 130%; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-sheen { animation: none; display: none; }
+}
 .pay-card h3 { font-size: 1.08rem; font-weight: 700; margin-bottom: 0.4rem; }
 .pay-card p { color: var(--text-muted); font-size: 0.92rem; }
 .pay-badge {
