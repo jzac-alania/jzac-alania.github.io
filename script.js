@@ -107,6 +107,32 @@
     cerrarMenu();
   });
 
+  /* ---------- Tema claro/oscuro ---------- */
+  var themeBtn = $("#theme-toggle");
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function aplicarTema(t, guardar) {
+    document.documentElement.setAttribute("data-theme", t);
+    if (themeMeta) themeMeta.setAttribute("content", t === "light" ? "#F6F8FC" : "#0B1120");
+    if (guardar) {
+      try { localStorage.setItem("jzac_theme", t); } catch (e) {}
+    }
+  }
+  function animarTema(fn) {
+    var root = document.documentElement;
+    root.classList.add("theme-anim");
+    fn();
+    window.setTimeout(function () {
+      root.classList.remove("theme-anim");
+    }, 400);
+  }
+  if (themeBtn) {
+    themeBtn.addEventListener("click", function () {
+      var actual = document.documentElement.getAttribute("data-theme") || "dark";
+      var sig = actual === "light" ? "dark" : "light";
+      animarTema(function () { aplicarTema(sig, true); });
+    });
+  }
+
   /* ---------- Reveal fallback (sin GSAP) ---------- */
   var reveals = $$(".reveal");
   if (window.gsap) {
