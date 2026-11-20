@@ -110,13 +110,21 @@
   /* ---------- Tema claro/oscuro ---------- */
   var themeBtn = $("#theme-toggle");
   var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function sincronizarBoton(t) {
+    if (!themeBtn) return;
+    themeBtn.setAttribute("aria-pressed", t === "light" ? "true" : "false");
+    themeBtn.setAttribute("title", t === "light" ? "Cambiar a tema oscuro" : "Cambiar a tema claro");
+    themeBtn.setAttribute("aria-label", t === "light" ? "Cambiar a tema oscuro" : "Cambiar a tema claro");
+  }
   function aplicarTema(t, guardar) {
     document.documentElement.setAttribute("data-theme", t);
     if (themeMeta) themeMeta.setAttribute("content", t === "light" ? "#F6F8FC" : "#0B1120");
+    sincronizarBoton(t);
     if (guardar) {
       try { localStorage.setItem("jzac_theme", t); } catch (e) {}
     }
   }
+  sincronizarBoton(document.documentElement.getAttribute("data-theme") || "dark");
   function animarTema(fn) {
     var root = document.documentElement;
     root.classList.add("theme-anim");
@@ -130,8 +138,32 @@
       var actual = document.documentElement.getAttribute("data-theme") || "dark";
       var sig = actual === "light" ? "dark" : "light";
       animarTema(function () { aplicarTema(sig, true); });
+      themeBtn.classList.add("spin");
+      window.setTimeout(function () { themeBtn.classList.remove("spin"); }, 480);
     });
   }
+  try {
+    window.addEventListener("storage", function (e) {
+      if (e.key === "jzac_theme" && (e.newValue === "light" || e.newValue === "dark")) {
+        animarTema(function () { aplicarTema(e.newValue, false); });
+      }
+    });
+  } catch (e) {}
+
+  /* ---------- Ripple en botones ---------- */
+  document.addEventListener("pointerdown", function (e) {
+    var btn = e.target.closest ? e.target.closest(".btn, .chip, .theme-toggle") : null;
+    if (!btn || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var r = btn.getBoundingClientRect();
+    var size = Math.max(r.width, r.height) * 2;
+    var onda = document.createElement("span");
+    onda.className = "ripple";
+    onda.style.width = onda.style.height = size + "px";
+    onda.style.left = (e.clientX - r.left - size / 2) + "px";
+    onda.style.top = (e.clientY - r.top - size / 2) + "px";
+    btn.appendChild(onda);
+    window.setTimeout(function () { onda.remove(); }, 650);
+  });
 
   /* ---------- Reveal fallback (sin GSAP) ---------- */
   var reveals = $$(".reveal");

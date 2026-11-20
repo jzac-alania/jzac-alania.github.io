@@ -319,7 +319,7 @@
   });
 
   /* ---------- Botones magnéticos ---------- */
-  document.querySelectorAll(".hero-actions .btn, .section-cta .btn, .showcase-actions .btn, .pay-bar .btn").forEach(function (btn) {
+  document.querySelectorAll(".hero-actions .btn, .section-cta .btn, .showcase-actions .btn, .pay-bar .btn, .nav-links .btn-gold").forEach(function (btn) {
     var xTo = gsap.quickTo(btn, "x", { duration: 0.4, ease: "power3" });
     var yTo = gsap.quickTo(btn, "y", { duration: 0.4, ease: "power3" });
     btn.addEventListener("pointermove", function (e) {

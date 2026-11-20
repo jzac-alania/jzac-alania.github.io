@@ -35,6 +35,63 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="preload" as="image" href="assets/app/panel-oscuro.webp" fetchpriority="high">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "JZAC ERP",
+    "description": "Sistema de ventas, inventario, caja y fiados para bodegas y pequeños negocios. Funciona sin internet, se abre desde el navegador y se paga una sola vez.",
+    "brand": { "@type": "Brand", "name": "JZAC" },
+    "image": "https://jzac-alania.github.io/og-ja.png",
+    "url": "https://jzac-alania.github.io/",
+    "offers": {
+      "@type": "Offer",
+      "price": "390",
+      "priceCurrency": "PEN",
+      "availability": "https://schema.org/InStock",
+      "url": "https://jzac-alania.github.io/#precio",
+      "priceValidUntil": "2027-12-31"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "¿Funciona sin internet?", "acceptedAnswer": { "@type": "Answer", "text": "Sí. Una vez que abres el sistema, puedes vender y registrar todo sin conexión. Tus datos se guardan en tu equipo y quedan disponibles cuando vuelvas a entrar." } },
+      { "@type": "Question", "name": "¿Necesito instalar algo?", "acceptedAnswer": { "@type": "Answer", "text": "No. Se abre desde el navegador de tu celular, tablet o computadora. Puedes guardarlo en tu pantalla de inicio para que parezca una app." } },
+      { "@type": "Question", "name": "¿En cuántos equipos puedo usarlo?", "acceptedAnswer": { "@type": "Answer", "text": "Tu licencia cubre 2 equipos. Cada equipo guarda sus propios datos; puedes respaldar y restaurar la información cuando lo necesites. Si cambias de celular, liberamos el equipo anterior para que actives el nuevo." } },
+      { "@type": "Question", "name": "¿Los datos se sincronizan entre celular y PC?", "acceptedAnswer": { "@type": "Answer", "text": "No en tiempo real. Cada equipo tiene su propia base de datos local. Para pasar información de un equipo a otro se usa el respaldo (exportar/importar). Si necesitas sincronización real, es un proyecto adicional." } },
+      { "@type": "Question", "name": "¿Cómo activo mi licencia después de pagar?", "acceptedAnswer": { "@type": "Answer", "text": "Después del pago recibes un código de activación. Abres el sistema, entras a Activar licencia, pegas el código y listo. También puedes pedirlo por WhatsApp." } },
+      { "@type": "Question", "name": "¿Emiten boleta o factura electrónica?", "acceptedAnswer": { "@type": "Answer", "text": "El sistema maneja comprobantes internos. La facturación electrónica SUNAT está disponible bajo pedido: se configura con tu PSE y tiene un costo adicional de S/ 150." } },
+      { "@type": "Question", "name": "¿Qué pasa si se malogran mi celular o mi PC?", "acceptedAnswer": { "@type": "Answer", "text": "Tus datos se pueden respaldar. Cuando tengas un equipo nuevo, liberamos el anterior y activas la licencia sin costo adicional." } },
+      { "@type": "Question", "name": "¿Hay mensualidades?", "acceptedAnswer": { "@type": "Answer", "text": "No. Es un pago único de S/ 390. Incluye soporte y actualizaciones por 6 meses. Después, si quieres seguir recibiendo soporte, es opcional." } }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "JZAC ERP",
+    "description": "Sistemas de ventas, inventario y facturación para pequeños negocios. Desarrollo de software a medida.",
+    "url": "https://jzac-alania.github.io/",
+    "image": "https://jzac-alania.github.io/og-ja.png",
+    "logo": "https://jzac-alania.github.io/favicon.png",
+    "telephone": "+51929068219",
+    "email": "jimyalaniasegura@gmail.com",
+    "priceRange": "S/ 390 - S/ 500",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Oxapampa",
+      "addressRegion": "Pasco",
+      "addressCountry": "PE"
+    },
+    "areaServed": { "@type": "Place", "name": "Oxapampa, Pasco, Perú" }
+  }
+  </script>
 </head>
 <body>
 
@@ -152,8 +209,8 @@
                 </span>
                 <span class="app-live"><i></i> EN VIVO</span>
               </div>
-              <button class="app-screen app-screen-hero" type="button" data-zoom="assets/app/panel-oscuro.png" data-caption="Panel principal de JZAC ERP en modo oscuro" aria-label="Ampliar captura del panel de JZAC ERP">
-                <img src="assets/app/panel-oscuro.png" alt="Panel principal de JZAC ERP con ventas, ganancia, gastos y fiados del día" width="1901" height="942" loading="eager">
+              <button class="app-screen app-screen-hero" type="button" data-zoom="assets/app/panel-oscuro.webp" data-caption="Panel principal de JZAC ERP en modo oscuro" aria-label="Ampliar captura del panel de JZAC ERP">
+                <img src="assets/app/panel-oscuro.webp" alt="Panel principal de JZAC ERP con ventas, ganancia, gastos y fiados del día" width="1901" height="942" loading="eager" fetchpriority="high" decoding="async">
                 <span class="app-zoom-hint" aria-hidden="true">Ver captura</span>
               </button>
             </div>
@@ -367,19 +424,19 @@
               </div>
               <div class="app-shots" id="app-shots">
                 <figure class="app-shot on" data-app="claro">
-                  <img src="assets/app/panel-claro.png" alt="Panel claro de JZAC ERP con ventas del día, ganancia, gastos y fiados" width="1897" height="940" loading="lazy" data-zoom="assets/app/panel-claro.png" data-caption="Panel claro · Todo tu día en una pantalla">
+                  <img src="assets/app/panel-claro.webp" alt="Panel claro de JZAC ERP con ventas del día, ganancia, gastos y fiados" width="1897" height="940" loading="lazy" data-zoom="assets/app/panel-claro.webp" data-caption="Panel claro · Todo tu día en una pantalla">
                   <button class="app-hot" type="button" style="--x:25%;--y:24%" data-tip="Ventas y ganancia neta del día"><i></i><span>Ventas del día</span></button>
                   <button class="app-hot" type="button" style="--x:84%;--y:24%" data-tip="Fiados por cobrar, siempre a la vista"><i></i><span>Fiados</span></button>
                   <button class="app-hot" type="button" style="--x:23%;--y:82%" data-tip="Alertas de stock para pedir a tiempo"><i></i><span>Stock bajo</span></button>
                 </figure>
                 <figure class="app-shot" data-app="oscuro">
-                  <img src="assets/app/panel-oscuro.png" alt="Panel de JZAC ERP en modo oscuro con las mismas métricas del negocio" width="1901" height="942" loading="lazy" data-zoom="assets/app/panel-oscuro.png" data-caption="Modo oscuro · La misma claridad, con menos brillo">
+                  <img src="assets/app/panel-oscuro.webp" alt="Panel de JZAC ERP en modo oscuro con las mismas métricas del negocio" width="1901" height="942" loading="lazy" data-zoom="assets/app/panel-oscuro.webp" data-caption="Modo oscuro · La misma claridad, con menos brillo">
                   <button class="app-hot" type="button" style="--x:25%;--y:24%" data-tip="Métricas legibles también de noche"><i></i><span>Ventas del día</span></button>
                   <button class="app-hot" type="button" style="--x:84%;--y:24%" data-tip="Cobra sin perder de vista quién te debe"><i></i><span>Fiados</span></button>
                   <button class="app-hot" type="button" style="--x:23%;--y:82%" data-tip="Avisos que te ayudan a reponer stock"><i></i><span>Stock bajo</span></button>
                 </figure>
                 <figure class="app-shot" data-app="acceso">
-                  <img src="assets/app/acceso.png" alt="Pantalla de acceso de JZAC ERP con panel visual interactivo" width="1916" height="940" loading="lazy" data-zoom="assets/app/acceso.png" data-caption="Acceso · Tu negocio, en orden desde el primer clic">
+                  <img src="assets/app/acceso.webp" alt="Pantalla de acceso de JZAC ERP con panel visual interactivo" width="1916" height="940" loading="lazy" data-zoom="assets/app/acceso.webp" data-caption="Acceso · Tu negocio, en orden desde el primer clic">
                 </figure>
               </div>
               <span class="app-sheen" aria-hidden="true"></span>
@@ -653,7 +710,7 @@
               data-svc-features="Funciona sin internet|Ventas, inventario, caja y fiados|Licencia para 2 equipos|Actualizaciones y soporte"
               data-svc-buy="1">
               <div class="svc-art svc-art--feature" aria-hidden="true">
-                <img class="svc-art-img" src="assets/app/panel-claro.png" alt="" width="1897" height="940" loading="lazy">
+                <img class="svc-art-img" src="assets/app/panel-claro.webp" alt="" width="1897" height="940" loading="lazy">
                 <span class="svc-art-shade"></span>
                 <span class="svc-num">01</span>
                 <span class="svc-badge">Más vendido</span>
@@ -1138,7 +1195,7 @@
       </div>
       <div class="lightbox-stage">
         <button class="lightbox-nav prev" type="button" id="lightbox-prev" aria-label="Captura anterior">‹</button>
-        <img id="lightbox-img" src="assets/app/panel-claro.png" alt="Captura ampliada de JZAC ERP">
+        <img id="lightbox-img" src="assets/app/panel-claro.webp" alt="Captura ampliada de JZAC ERP">
         <button class="lightbox-nav next" type="button" id="lightbox-next" aria-label="Captura siguiente">›</button>
       </div>
       <p class="lightbox-hint">Usa ← → para cambiar · Esc para cerrar</p>
