@@ -2152,3 +2152,95 @@ html[data-theme="light"] .btn-green .ripple { opacity: 0.16; }
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---------- Foto "Sobre mí" ---------- */
+.about-photo {
+  position: relative; margin: 0 auto 3rem; max-width: 1080px;
+  border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid var(--border); box-shadow: var(--shadow);
+  background: var(--surface);
+}
+.about-photo img {
+  width: 100%; height: clamp(280px, 42vw, 460px); object-fit: cover;
+  object-position: center 32%; display: block;
+}
+.about-photo figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; gap: 0.1rem;
+  padding: 2.6rem 1.6rem 1.2rem;
+  background: linear-gradient(to top, rgba(7, 12, 24, 0.9), rgba(7, 12, 24, 0.35) 55%, transparent);
+  color: #fff;
+}
+.about-photo figcaption b { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.01em; }
+.about-photo figcaption span { font-size: 0.82rem; color: rgba(255, 255, 255, 0.78); }
+
+/* ---------- Para quién sí / no ---------- */
+.fit-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem;
+  margin-top: 2.4rem; text-align: left;
+}
+.fit-col {
+  padding: 1.6rem 1.5rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: rgba(13, 21, 38, 0.55);
+}
+.fit-col h3 {
+  display: flex; align-items: center; gap: 0.55rem;
+  font-size: 1.05rem; font-weight: 800; margin-bottom: 0.9rem;
+}
+.fit-col h3 svg { width: 22px; height: 22px; flex-shrink: 0; }
+.fit-col ul { list-style: none; display: grid; gap: 0.6rem; }
+.fit-col li { position: relative; padding-left: 1.7rem; font-size: 0.92rem; color: var(--text-muted); line-height: 1.5; }
+.fit-col li::before {
+  position: absolute; left: 0; top: 0.15rem; font-weight: 900; font-size: 0.8rem;
+  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+}
+.fit-yes { border-color: rgba(34, 197, 94, 0.35); }
+.fit-yes h3 { color: #22C55E; }
+.fit-yes li::before { content: "✓"; color: #22C55E; background: rgba(34, 197, 94, 0.14); }
+.fit-no { border-color: rgba(148, 163, 184, 0.28); }
+.fit-no h3 { color: var(--text-muted); }
+.fit-no li::before { content: "✕"; color: var(--muted-2); background: rgba(148, 163, 184, 0.14); }
+
+/* ---------- Garantía ---------- */
+.guarantee {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  margin-top: 1rem; padding: 0.7rem 1rem; border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.09);
+  font-size: 0.84rem; color: var(--text-muted);
+}
+.guarantee svg { width: 20px; height: 20px; color: #22C55E; flex-shrink: 0; }
+.guarantee b { color: var(--text); }
+
+/* ---------- CTA fija móvil ---------- */
+.mobile-cta { display: none; }
+@media (max-width: 760px) {
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .whatsapp-float { display: none; }
+  .mobile-cta {
+    display: flex; align-items: center; gap: 0.6rem;
+    position: fixed; left: 0; right: 0; z-index: 96;
+    bottom: calc(0.7rem + env(safe-area-inset-bottom));
+    margin: 0 0.7rem; padding: 0.6rem;
+    border-radius: 16px; border: 1px solid var(--border);
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    box-shadow: 0 14px 34px rgba(2, 6, 18, 0.4);
+    transform: translateY(140%); opacity: 0; pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+  }
+  .mobile-cta.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .mobile-cta .btn { flex: 1; }
+  .mobile-cta .btn svg { width: 17px; height: 17px; }
+  .fit-grid { grid-template-columns: 1fr; }
+  .about-photo { margin-bottom: 2.2rem; }
+  .about-photo img { height: 300px; object-position: center 28%; }
+}
+
+/* ---------- Light: nuevos componentes ---------- */
+html[data-theme="light"] .about-photo { background: #fff; }
+html[data-theme="light"] .fit-col { background: rgba(240, 244, 250, 0.7); }
+html[data-theme="light"] .fit-yes h3 { color: #15803D; }
+html[data-theme="light"] .fit-yes li::before { color: #15803D; background: rgba(34, 197, 94, 0.14); }
+html[data-theme="light"] .guarantee { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.35); }
+html[data-theme="light"] .guarantee svg { color: #15803D; }
+html[data-theme="light"] .mobile-cta { box-shadow: 0 14px 34px rgba(15, 27, 51, 0.16); }

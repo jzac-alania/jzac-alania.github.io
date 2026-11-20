@@ -150,6 +150,18 @@
     });
   } catch (e) {}
 
+  /* ---------- CTA fija móvil ---------- */
+  var mobileCta = $("#mobile-cta");
+  if (mobileCta) {
+    var actualizarCta = function () {
+      var mostrar = window.scrollY > 460;
+      mobileCta.classList.toggle("show", mostrar);
+      mobileCta.setAttribute("aria-hidden", mostrar ? "false" : "true");
+    };
+    window.addEventListener("scroll", actualizarCta, { passive: true });
+    actualizarCta();
+  }
+
   /* ---------- Ripple en botones ---------- */
   document.addEventListener("pointerdown", function (e) {
     var btn = e.target.closest ? e.target.closest(".btn, .chip, .theme-toggle") : null;
