@@ -2244,3 +2244,5 @@ html[data-theme="light"] .fit-yes li::before { color: #15803D; background: rgba(
 html[data-theme="light"] .guarantee { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.35); }
 html[data-theme="light"] .guarantee svg { color: #15803D; }
 html[data-theme="light"] .mobile-cta { box-shadow: 0 14px 34px rgba(15, 27, 51, 0.16); }
+
+.pago-top-actions { display: flex; align-items: center; gap: 0.9rem; }

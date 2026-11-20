@@ -3,8 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0B1120">
   <title>Libro de reclamaciones | JZAC ERP</title>
   <meta name="description" content="Libro de reclamaciones virtual de JZAC ERP conforme al Código de Protección y Defensa del Consumidor.">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("jzac_theme");
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", t === "light" ? "#F6F8FC" : "#0B1120");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    })();
+  </script>
   <link rel="icon" href="favicon.ico" sizes="48x48">
   <link rel="icon" type="image/png" href="favicon.png" sizes="256x256">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,11 +75,25 @@
         <span class="logo-mark">JA</span>
         <span class="brand-text"><b>JZAC ERP</b><small>por Jimy Alania</small></span>
       </a>
-      <nav class="nav-links" aria-label="Principal">
+      <nav class="nav-links" id="nav-links" aria-label="Principal">
         <a href="index.html#sistema">El sistema</a>
         <a href="index.html#precio">Precio</a>
         <a href="index.html#contacto" class="btn btn-gold btn-small">Contacto</a>
       </nav>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema claro/oscuro" title="Cambiar tema">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a6.5 6.5 0 0 0 11.5 11.5z"></path>
+          </svg>
+        </button>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -307,5 +337,6 @@
       });
     })();
   </script>
+  <script src="tema.js"></script>
 </body>
 </html>
