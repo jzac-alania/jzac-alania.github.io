@@ -176,6 +176,9 @@
             <button class="btn btn-ghost btn-lg" type="button" data-comprar>Comprar · S/ 390</button>
           </div>
           <p class="hero-note hero-in" style="--d:4">Prueba sin tarjeta · Pago único · Soporte en tu idioma</p>
+          <p class="hero-demo-link hero-in" style="--d:4">
+            <a href="#demo">o prueba la demo interactiva <span aria-hidden="true">↓</span></a>
+          </p>
 
           <div class="hero-stats hero-in" style="--d:5">
             <div class="stat">
@@ -499,6 +502,60 @@
       </div>
     </section>
 
+    <!-- ===== DEMO INTERACTIVA ===== -->
+    <section class="section demo-section" id="demo">
+      <div class="container">
+        <div class="demo-head">
+          <p class="section-eyebrow reveal">Demo interactiva</p>
+          <h2 class="section-title reveal">Haz una venta <span class="grad-text">ahora mismo</span></h2>
+          <p class="section-lead reveal">Sin registro ni descargas. Toca un producto, cobra y mira cómo se actualiza la caja del día. Es una simulación con datos de ejemplo.</p>
+        </div>
+
+        <div class="demo-wrap reveal">
+          <div class="demo-device">
+            <div class="demo-bar">
+              <span class="app-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="demo-title">JZAC ERP · Caja</span>
+              <span class="demo-live"><i></i> DEMO</span>
+            </div>
+            <div class="demo-body">
+              <div class="demo-topline">
+                <div class="demo-caja">
+                  <span>Caja del día</span>
+                  <b id="demo-caja">S/ 0.00</b>
+                  <em id="demo-ventas">0 ventas</em>
+                </div>
+                <button class="demo-reset" id="demo-reset" type="button">Reiniciar</button>
+              </div>
+
+              <p class="demo-hint" id="demo-hint">Toca un producto para agregarlo al carrito.</p>
+              <div class="demo-products" id="demo-products"></div>
+
+              <div class="demo-cart">
+                <div class="demo-cart-lines" id="demo-cart-lines">
+                  <span class="demo-empty">Carrito vacío</span>
+                </div>
+                <div class="demo-total"><span>Total</span><b id="demo-total">S/ 0.00</b></div>
+                <button class="btn btn-green btn-block" id="demo-cobrar" type="button" disabled>Cobrar venta</button>
+              </div>
+              <div class="demo-ticket" id="demo-ticket" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="demo-side">
+            <span class="demo-side-kicker">Lo que acabas de ver</span>
+            <ul class="demo-points">
+              <li><b>Stock en tiempo real</b> — cada venta descuenta unidades al instante.</li>
+              <li><b>Caja automática</b> — el total del día se suma sin calculadora ni cuaderno.</li>
+              <li><b>Carrito simple</b> — toca, cobra y sigue atendiendo.</li>
+            </ul>
+            <a class="btn btn-green btn-lg btn-block" href="erp/" target="_blank" rel="noopener">Abrir el sistema real</a>
+            <span class="demo-note">La demo es una simulación y no guarda ningún dato.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== CÓMO FUNCIONA ===== -->
     <section class="section section-alt" id="como">
       <div class="container">
@@ -531,6 +588,45 @@
             </article>
           </div>
           <p class="steps-scroll-hint" aria-hidden="true">Desliza para avanzar <span>→</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CALCULADORA ===== -->
+    <section class="section calc-section" id="calculadora">
+      <div class="container container-narrow">
+        <p class="section-eyebrow reveal">Calculadora rápida</p>
+        <h2 class="section-title reveal">¿Cuánto te cuesta <span class="grad-text">no tener control</span>?</h2>
+        <p class="section-lead reveal">Mueve los valores y descubre cuánto dinero se te escapa cada mes. Es una estimación realista, no una promesa.</p>
+
+        <div class="calc-card reveal">
+          <div class="calc-fields">
+            <label class="calc-field" for="calc-ventas">
+              <span>Ventas por día <output id="calc-ventas-out">S/ 300</output></span>
+              <input type="range" id="calc-ventas" min="50" max="2000" step="10" value="300">
+            </label>
+            <label class="calc-field" for="calc-fiado">
+              <span>% de ventas al fiado <output id="calc-fiado-out">15%</output></span>
+              <input type="range" id="calc-fiado" min="0" max="60" step="1" value="15">
+            </label>
+            <label class="calc-field" for="calc-mora">
+              <span>% de fiados que no cobras <output id="calc-mora-out">10%</output></span>
+              <input type="range" id="calc-mora" min="0" max="50" step="1" value="10">
+            </label>
+            <label class="calc-field" for="calc-descuadre">
+              <span>Descuadre de caja por semana <output id="calc-descuadre-out">S/ 20</output></span>
+              <input type="range" id="calc-descuadre" min="0" max="200" step="5" value="20">
+            </label>
+          </div>
+
+          <div class="calc-result" aria-live="polite">
+            <span class="calc-label">Pierdes aproximadamente</span>
+            <b class="calc-big" id="calc-mes">S/ 0</b>
+            <span class="calc-sub">al mes</span>
+            <div class="calc-year" id="calc-anio">S/ 0 al año</div>
+            <p class="calc-note" id="calc-note"></p>
+            <a class="btn btn-green btn-block" id="calc-wa" href="https://wa.me/51929068219">Quiero recuperar ese dinero</a>
+          </div>
         </div>
       </div>
     </section>
@@ -1241,6 +1337,18 @@
         <button class="lightbox-nav next" type="button" id="lightbox-next" aria-label="Captura siguiente">›</button>
       </div>
       <p class="lightbox-hint">Usa ← → para cambiar · Esc para cerrar</p>
+    </div>
+  </div>
+
+  <!-- ===== EASTER EGG ===== -->
+  <div class="easter" id="easter" role="dialog" aria-modal="true" aria-labelledby="easter-title" aria-hidden="true">
+    <div class="easter-confetti" id="easter-confetti" aria-hidden="true"></div>
+    <div class="easter-card">
+      <span class="easter-star" aria-hidden="true">★</span>
+      <h3 id="easter-title">Encontraste el secreto</h3>
+      <p>Gracias por llegar hasta aquí. Si eres familia, amigo o compa: este proyecto también es por ustedes. Hecho con cariño en Oxapampa.</p>
+      <p class="easter-sign">— Jimy</p>
+      <button class="btn btn-green btn-small" id="easter-close" type="button">Seguir explorando</button>
     </div>
   </div>
 

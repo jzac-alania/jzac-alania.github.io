@@ -162,6 +162,290 @@
     actualizarCta();
   }
 
+  /* ---------- Demo interactiva ---------- */
+  var demo = $("#demo");
+  if (demo) {
+    var demoBase = [
+      { id: "pan", nombre: "Pan francés", precio: 0.5, stock: 24 },
+      { id: "gaseosa", nombre: "Gaseosa 500 ml", precio: 2.5, stock: 12 },
+      { id: "arroz", nombre: "Arroz 1 kg", precio: 4.5, stock: 8 },
+      { id: "aceite", nombre: "Aceite 1 L", precio: 9, stock: 5 },
+      { id: "fideos", nombre: "Fideos 500 g", precio: 3.2, stock: 15 },
+      { id: "leche", nombre: "Leche 1 L", precio: 4.2, stock: 6 }
+    ];
+    var demoCatalogo = demoBase.map(function (p) { return { id: p.id, nombre: p.nombre, precio: p.precio, stock: p.stock }; });
+    var demoCarrito = [];
+    var demoCaja = 0;
+    var demoVentas = 0;
+    var demoProductos = $("#demo-products");
+    var demoLineas = $("#demo-cart-lines");
+    var demoTicketEl = $("#demo-ticket");
+    var demoCajaEl = $("#demo-caja");
+    var demoVentasEl = $("#demo-ventas");
+    var demoTotalEl = $("#demo-total");
+    var demoCobrarEl = $("#demo-cobrar");
+    var demoHintEl = $("#demo-hint");
+    var demoHintBase = "Toca un producto para agregarlo al carrito.";
+
+    function demoDinero(n) {
+      return "S/ " + n.toFixed(2);
+    }
+
+    function demoProducto(id) {
+      for (var i = 0; i < demoCatalogo.length; i++) {
+        if (demoCatalogo[i].id === id) return demoCatalogo[i];
+      }
+      return null;
+    }
+
+    function demoEnCarrito(id) {
+      for (var i = 0; i < demoCarrito.length; i++) {
+        if (demoCarrito[i].id === id) return demoCarrito[i];
+      }
+      return null;
+    }
+
+    function demoPintar() {
+      demoProductos.innerHTML = "";
+      demoCatalogo.forEach(function (p) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "demo-product" + (p.stock <= 0 ? " is-sold" : "");
+        btn.disabled = p.stock <= 0;
+        btn.setAttribute("aria-label", p.nombre + ", " + demoDinero(p.precio) + ", stock " + p.stock);
+        var nombre = document.createElement("b");
+        nombre.textContent = p.nombre;
+        var stock = document.createElement("span");
+        stock.textContent = p.stock > 0 ? "Stock: " + p.stock : "Agotado";
+        var precio = document.createElement("em");
+        precio.textContent = demoDinero(p.precio);
+        btn.appendChild(nombre);
+        btn.appendChild(stock);
+        btn.appendChild(precio);
+        btn.addEventListener("click", function () { demoAgregar(p.id); });
+        demoProductos.appendChild(btn);
+      });
+
+      demoLineas.innerHTML = "";
+      var total = 0;
+      if (!demoCarrito.length) {
+        var vacio = document.createElement("span");
+        vacio.className = "demo-empty";
+        vacio.textContent = "Carrito vacío";
+        demoLineas.appendChild(vacio);
+      }
+      demoCarrito.forEach(function (item) {
+        var p = demoProducto(item.id);
+        if (!p) return;
+        var linea = document.createElement("div");
+        linea.className = "demo-line";
+        var izq = document.createElement("span");
+        var qty = document.createElement("span");
+        qty.className = "demo-qty";
+        qty.textContent = item.cant + "×";
+        izq.appendChild(qty);
+        izq.appendChild(document.createTextNode(p.nombre));
+        var der = document.createElement("b");
+        der.textContent = demoDinero(p.precio * item.cant);
+        linea.appendChild(izq);
+        linea.appendChild(der);
+        demoLineas.appendChild(linea);
+        total += p.precio * item.cant;
+      });
+
+      demoTotalEl.textContent = demoDinero(total);
+      demoCajaEl.textContent = demoDinero(demoCaja);
+      demoVentasEl.textContent = demoVentas === 1 ? "1 venta" : demoVentas + " ventas";
+      demoCobrarEl.disabled = total <= 0;
+    }
+
+    function demoAgregar(id) {
+      var p = demoProducto(id);
+      if (!p || p.stock <= 0) return;
+      var item = demoEnCarrito(id);
+      var cant = item ? item.cant : 0;
+      if (cant >= p.stock) {
+        demoHintEl.textContent = "Solo quedan " + p.stock + " de " + p.nombre + ".";
+        demoHintEl.classList.add("ok");
+        window.setTimeout(function () {
+          demoHintEl.textContent = demoHintBase;
+          demoHintEl.classList.remove("ok");
+        }, 1600);
+        return;
+      }
+      if (item) { item.cant++; } else { demoCarrito.push({ id: id, cant: 1 }); }
+      demoHintEl.textContent = "Agregado: " + p.nombre;
+      demoHintEl.classList.add("ok");
+      window.setTimeout(function () {
+        demoHintEl.textContent = demoHintBase;
+        demoHintEl.classList.remove("ok");
+      }, 1200);
+      demoTicketEl.classList.remove("show");
+      demoPintar();
+    }
+
+    function demoCobrar() {
+      if (!demoCarrito.length) return;
+      var total = 0;
+      var unidades = 0;
+      demoCarrito.forEach(function (item) {
+        var p = demoProducto(item.id);
+        if (!p) return;
+        total += p.precio * item.cant;
+        unidades += item.cant;
+        p.stock -= item.cant;
+        if (p.stock < 0) p.stock = 0;
+      });
+      demoCaja += total;
+      demoVentas++;
+      demoCarrito = [];
+      demoTicketEl.textContent = "Venta #" + demoVentas + " registrada · " + unidades + (unidades === 1 ? " producto" : " productos") + " · " + demoDinero(total);
+      demoTicketEl.classList.add("show");
+      demoPintar();
+      window.setTimeout(function () { demoTicketEl.classList.remove("show"); }, 3200);
+    }
+
+    function demoReiniciar() {
+      demoCatalogo = demoBase.map(function (p) { return { id: p.id, nombre: p.nombre, precio: p.precio, stock: p.stock }; });
+      demoCarrito = [];
+      demoCaja = 0;
+      demoVentas = 0;
+      demoTicketEl.classList.remove("show");
+      demoHintEl.textContent = demoHintBase;
+      demoHintEl.classList.remove("ok");
+      demoPintar();
+    }
+
+    demoCobrarEl.addEventListener("click", demoCobrar);
+    $("#demo-reset").addEventListener("click", demoReiniciar);
+    demoPintar();
+  }
+
+  /* ---------- Calculadora de pérdidas ---------- */
+  var calcVentas = $("#calc-ventas");
+  if (calcVentas) {
+    var calcFiado = $("#calc-fiado");
+    var calcMora = $("#calc-mora");
+    var calcDescuadre = $("#calc-descuadre");
+    var calcVentasOut = $("#calc-ventas-out");
+    var calcFiadoOut = $("#calc-fiado-out");
+    var calcMoraOut = $("#calc-mora-out");
+    var calcDescuadreOut = $("#calc-descuadre-out");
+    var calcMes = $("#calc-mes");
+    var calcAnio = $("#calc-anio");
+    var calcNota = $("#calc-note");
+    var calcWa = $("#calc-wa");
+    var CALC_PRECIO = 390;
+
+    function calcDinero(n) {
+      return "S/ " + Math.round(n).toLocaleString("es-PE");
+    }
+
+    function calcActualizar() {
+      var ventas = Number(calcVentas.value);
+      var fiado = Number(calcFiado.value) / 100;
+      var mora = Number(calcMora.value) / 100;
+      var descuadre = Number(calcDescuadre.value);
+
+      calcVentasOut.textContent = "S/ " + ventas.toLocaleString("es-PE");
+      calcFiadoOut.textContent = calcFiado.value + "%";
+      calcMoraOut.textContent = calcMora.value + "%";
+      calcDescuadreOut.textContent = "S/ " + descuadre.toLocaleString("es-PE");
+
+      var perdidaFiado = ventas * 30 * fiado * mora;
+      var perdidaCaja = descuadre * 4.33;
+      var mes = perdidaFiado + perdidaCaja;
+      var anio = mes * 12;
+
+      calcMes.textContent = calcDinero(mes);
+      calcAnio.textContent = calcDinero(anio) + " al año";
+
+      if (mes > 0) {
+        var dias = Math.ceil(CALC_PRECIO / (mes / 30));
+        if (dias <= 1) {
+          calcNota.textContent = "El sistema cuesta S/ 390: lo recuperarías en menos de un día.";
+        } else {
+          calcNota.textContent = "El sistema cuesta S/ 390: lo recuperarías en unos " + dias + " días.";
+        }
+      } else {
+        calcNota.textContent = "Ajusta los valores para ver tu estimación.";
+      }
+
+      calcWa.href = "https://wa.me/51929068219?text=" + encodeURIComponent(
+        "Hola Jimy, calculé que pierdo aproximadamente " + calcDinero(mes) + " al mes y quiero controlar mi negocio."
+      );
+    }
+
+    [calcVentas, calcFiado, calcMora, calcDescuadre].forEach(function (input) {
+      input.addEventListener("input", calcActualizar);
+    });
+    calcActualizar();
+  }
+
+  /* ---------- Easter egg ---------- */
+  var easter = $("#easter");
+  if (easter) {
+    var easterSecuencia = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+    var easterPos = 0;
+    var easterTaps = 0;
+    var easterUltimoTap = 0;
+    var easterAbierto = false;
+    var easterConfetti = $("#easter-confetti");
+    var easterCerrarBtn = $("#easter-close");
+
+    function abrirEaster() {
+      if (easterAbierto) return;
+      easterAbierto = true;
+      easter.classList.add("show");
+      easter.setAttribute("aria-hidden", "false");
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        var colores = ["#22C55E", "#F0B052", "#FFD27D", "#60A5FA", "#F87171", "#A78BFA"];
+        easterConfetti.innerHTML = "";
+        for (var i = 0; i < 70; i++) {
+          var pieza = document.createElement("i");
+          pieza.style.left = (Math.random() * 100) + "%";
+          pieza.style.background = colores[Math.floor(Math.random() * colores.length)];
+          pieza.style.animationDuration = (2 + Math.random() * 2.2) + "s";
+          pieza.style.animationDelay = (Math.random() * 0.6) + "s";
+          easterConfetti.appendChild(pieza);
+        }
+        window.setTimeout(function () { easterConfetti.innerHTML = ""; }, 5200);
+      }
+      if (easterCerrarBtn) easterCerrarBtn.focus();
+    }
+
+    function cerrarEaster() {
+      easter.classList.remove("show");
+      easter.setAttribute("aria-hidden", "true");
+      easterAbierto = false;
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (easterAbierto && e.key === "Escape") { cerrarEaster(); return; }
+      var tecla = e.key.toLowerCase();
+      if (tecla === easterSecuencia[easterPos]) {
+        easterPos++;
+        if (easterPos === easterSecuencia.length) { easterPos = 0; abrirEaster(); }
+      } else {
+        easterPos = tecla === easterSecuencia[0] ? 1 : 0;
+      }
+    });
+
+    easterCerrarBtn.addEventListener("click", cerrarEaster);
+    easter.addEventListener("click", function (e) { if (e.target === easter) cerrarEaster(); });
+
+    var easterLogo = document.querySelector(".navbar .logo-mark");
+    if (easterLogo) {
+      easterLogo.addEventListener("click", function () {
+        var ahora = Date.now();
+        if (ahora - easterUltimoTap > 900) easterTaps = 0;
+        easterUltimoTap = ahora;
+        easterTaps++;
+        if (easterTaps >= 5) { easterTaps = 0; abrirEaster(); }
+      });
+    }
+  }
+
   /* ---------- Ripple en botones ---------- */
   document.addEventListener("pointerdown", function (e) {
     var btn = e.target.closest ? e.target.closest(".btn, .chip, .theme-toggle") : null;
