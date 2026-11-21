@@ -10,7 +10,6 @@
   var CONFIG = {
     whatsapp: "51929068219",
     precio: "390",
-    contactoEndpoint: "https://formsubmit.co/ajax/jimyalaniasegura@gmail.com",
     worker: "https://jzac-license.jzac.workers.dev",
     culqiPublico: "pk_live_GVLjB4eefHF1u9OQ",
     culqiListo: true
@@ -1085,42 +1084,11 @@
         return;
       }
 
-      if (CONFIG.contactoEndpoint) {
-        btnContacto.disabled = true;
-        setNota(notaContacto, "Enviando...", "ok");
-        try {
-          var datos = {
-            nombre: nombre,
-            negocio: negocio,
-            contacto: contacto,
-            mensaje: mensaje,
-            _subject: "Nuevo contacto desde la web de JZAC ERP",
-            _template: "table",
-            _captcha: "false"
-          };
-          if (contacto.indexOf("@") > -1) datos._replyto = contacto;
-          var r = await fetch(CONFIG.contactoEndpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify(datos)
-          });
-          if (!r.ok) throw new Error("http " + r.status);
-          formContacto.reset();
-          setNota(notaContacto, "¡Mensaje enviado! Te responderé pronto.", "ok");
-          if (typeof enviarAnalitica === "function") enviarAnalitica("ev", "contacto");
-        } catch (err) {
-          setNota(notaContacto, "No se pudo enviar. Te paso a WhatsApp.", "bad");
-          abrirWa(textoContacto(nombre, negocio, contacto, mensaje));
-          if (typeof enviarAnalitica === "function") enviarAnalitica("ev", "contacto_wa");
-        } finally {
-          btnContacto.disabled = false;
-        }
-        return;
-      }
-
+      enviarContacto({ nombre: nombre, negocio: negocio, contacto: contacto, mensaje: mensaje });
+      enviarAnalitica("ev", "contacto");
       abrirWa(textoContacto(nombre, negocio, contacto, mensaje));
       formContacto.reset();
-      setNota(notaContacto, "Abriendo WhatsApp con tu mensaje...", "ok");
+      setNota(notaContacto, "Abriendo WhatsApp… tu mensaje también quedó guardado en el panel.", "ok");
     });
   }
 
@@ -1153,6 +1121,24 @@
         ? { t: "ev", n: nombre }
         : { t: "pv", p: location.pathname, r: document.referrer || "", s: analiticaSesion };
       var cuerpo = JSON.stringify(datos);
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(ANALITICA_URL, new Blob([cuerpo], { type: "text/plain;charset=UTF-8" }));
+      } else {
+        fetch(ANALITICA_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: cuerpo,
+          keepalive: true,
+          mode: "cors"
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  function enviarContacto(datos) {
+    try {
+      if (/^(localhost|127\.0\.0\.1|::1)$/.test(location.hostname)) return;
+      var cuerpo = JSON.stringify({ t: "ct", n: datos.nombre, g: datos.negocio, c: datos.contacto, m: datos.mensaje });
       if (navigator.sendBeacon) {
         navigator.sendBeacon(ANALITICA_URL, new Blob([cuerpo], { type: "text/plain;charset=UTF-8" }));
       } else {
