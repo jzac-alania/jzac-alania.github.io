@@ -31,7 +31,13 @@
   function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
   function limpiar(s) { return String(s == null ? "" : s).trim(); }
   function abrirWa(texto) {
-    window.open("https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(texto), "_blank", "noopener");
+    var enlace = document.createElement("a");
+    enlace.href = "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(texto);
+    enlace.target = "_blank";
+    enlace.rel = "noopener";
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
   }
 
   /* ---------- Año ---------- */
