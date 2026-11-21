@@ -10,8 +10,7 @@
   var CONFIG = {
     whatsapp: "51929068219",
     precio: "390",
-    // Pega aquí el endpoint de Formspree cuando lo crees:
-    formspree: "",
+    contactoEndpoint: "https://formsubmit.co/ajax/jimyalaniasegura@gmail.com",
     worker: "https://jzac-license.jzac.workers.dev",
     culqiPublico: "pk_live_GVLjB4eefHF1u9OQ",
     culqiListo: true
@@ -299,6 +298,7 @@
       demoCaja += total;
       demoVentas++;
       demoCarrito = [];
+      if (typeof enviarAnalitica === "function") enviarAnalitica("ev", "demo_venta");
       demoTicketEl.textContent = "Venta #" + demoVentas + " registrada · " + unidades + (unidades === 1 ? " producto" : " productos") + " · " + demoDinero(total);
       demoTicketEl.classList.add("show");
       demoPintar();
@@ -742,14 +742,14 @@
 
   /* ---------- Chips de rubro ---------- */
   var chips = $$(".chip[data-sector]");
-  var mensajeContacto = $("#c-mensaje");
+  var campoMensajeContacto = $("#c-mensaje");
   chips.forEach(function (chip) {
     chip.addEventListener("click", function () {
       chips.forEach(function (c) { c.classList.remove("sel"); });
       chip.classList.add("sel");
       var sector = chip.getAttribute("data-sector") || "";
-      if (mensajeContacto && !mensajeContacto.value.trim()) {
-        mensajeContacto.value = "Hola, tengo " + sector +
+      if (campoMensajeContacto && !campoMensajeContacto.value.trim()) {
+        campoMensajeContacto.value = "Hola, tengo " + sector +
           " y quiero saber si JZAC ERP me sirve para ordenar mis ventas.";
       }
       var contacto = $("#contacto");
@@ -1085,40 +1085,99 @@
         return;
       }
 
-      if (CONFIG.formspree) {
+      if (CONFIG.contactoEndpoint) {
         btnContacto.disabled = true;
         setNota(notaContacto, "Enviando...", "ok");
         try {
-          var r = await fetch(CONFIG.formspree, {
+          var datos = {
+            nombre: nombre,
+            negocio: negocio,
+            contacto: contacto,
+            mensaje: mensaje,
+            _subject: "Nuevo contacto desde la web de JZAC ERP",
+            _template: "table",
+            _captcha: "false"
+          };
+          if (contacto.indexOf("@") > -1) datos._replyto = contacto;
+          var r = await fetch(CONFIG.contactoEndpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ nombre: nombre, negocio: negocio, contacto: contacto, mensaje: mensaje })
+            body: JSON.stringify(datos)
           });
           if (!r.ok) throw new Error("http " + r.status);
           formContacto.reset();
           setNota(notaContacto, "¡Mensaje enviado! Te responderé pronto.", "ok");
+          if (typeof enviarAnalitica === "function") enviarAnalitica("ev", "contacto");
         } catch (err) {
           setNota(notaContacto, "No se pudo enviar. Te paso a WhatsApp.", "bad");
-          abrirWa(mensajeContacto(nombre, negocio, contacto, mensaje));
+          abrirWa(textoContacto(nombre, negocio, contacto, mensaje));
+          if (typeof enviarAnalitica === "function") enviarAnalitica("ev", "contacto_wa");
         } finally {
           btnContacto.disabled = false;
         }
         return;
       }
 
-      abrirWa(mensajeContacto(nombre, negocio, contacto, mensaje));
+      abrirWa(textoContacto(nombre, negocio, contacto, mensaje));
       formContacto.reset();
       setNota(notaContacto, "Abriendo WhatsApp con tu mensaje...", "ok");
     });
   }
 
-  function mensajeContacto(nombre, negocio, contacto, mensaje) {
+  function textoContacto(nombre, negocio, contacto, mensaje) {
     return "¡Hola Jimy! Vi tu página de JZAC ERP.\n\n" +
       "Nombre: " + nombre + "\n" +
       (negocio ? "Negocio: " + negocio + "\n" : "") +
       "Contacto: " + contacto + "\n\n" +
       "Mensaje: " + mensaje;
   }
+
+  /* ---------- Analítica propia (sin cookies) ---------- */
+  var ANALITICA_URL = "https://jzac-landing-analytics.jzac.workers.dev/e";
+  var analiticaSesion = (function () {
+    try {
+      var s = localStorage.getItem("jzac_sid");
+      if (!s) {
+        s = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        localStorage.setItem("jzac_sid", s);
+      }
+      return s;
+    } catch (e) { return ""; }
+  })();
+
+  function enviarAnalitica(tipo, nombre) {
+    try {
+      if (navigator.doNotTrack === "1" || window.doNotTrack === "1" || navigator.globalPrivacyControl === true) return;
+      if (/^(localhost|127\.0\.0\.1|::1)$/.test(location.hostname)) return;
+      var datos = tipo === "ev"
+        ? { t: "ev", n: nombre }
+        : { t: "pv", p: location.pathname, r: document.referrer || "", s: analiticaSesion };
+      var cuerpo = JSON.stringify(datos);
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(ANALITICA_URL, new Blob([cuerpo], { type: "text/plain;charset=UTF-8" }));
+      } else {
+        fetch(ANALITICA_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: cuerpo,
+          keepalive: true,
+          mode: "cors"
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  window.setTimeout(function () { enviarAnalitica("pv"); }, 700);
+
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest ? e.target.closest("[data-comprar], #m-continuar, #calc-wa, .whatsapp-float, #mobile-cta a, a[href*='erp/']") : null;
+    if (!el) return;
+    if (el.hasAttribute("data-comprar")) enviarAnalitica("ev", "comprar");
+    else if (el.id === "m-continuar") enviarAnalitica("ev", "pago_iniciado");
+    else if (el.id === "calc-wa") enviarAnalitica("ev", "calc_whatsapp");
+    else if (el.classList.contains("whatsapp-float") || el.closest("#mobile-cta")) enviarAnalitica("ev", "whatsapp");
+    else enviarAnalitica("ev", "abrir_sistema");
+  }, true);
 
   /* ---------- Exponer config por si se necesita ---------- */
   window.JZAC_LANDING = { config: CONFIG };

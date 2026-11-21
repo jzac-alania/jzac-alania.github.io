@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /pago.html
+
+Sitemap: https://jzac-alania.github.io/sitemap.xml
