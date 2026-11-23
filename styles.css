@@ -1272,7 +1272,7 @@ button { font-family: inherit; }
 .footer-links { display: flex; gap: 1.3rem; flex-wrap: wrap; align-items: center; }
 .footer-links a, .footer-legal a { color: var(--text-muted); font-size: 0.88rem; transition: color 0.2s ease; }
 .footer-links a:hover, .footer-legal a:hover { color: var(--verde-bright); }
-.footer-legal { display: flex; gap: 1rem; }
+.footer-legal { display: flex; gap: 1rem; flex-wrap: wrap; }
 .footer-bottom { border-top: 1px solid var(--border-soft); margin-top: 1.6rem; padding-top: 1.2rem; }
 .footer-bottom p { color: var(--muted-2); font-size: 0.82rem; }
 .footer-bottom a { color: var(--text-muted); text-decoration: none; }
