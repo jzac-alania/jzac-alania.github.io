@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0B1120">
+  <title>Página no encontrada | JZAC ERP</title>
+  <meta name="description" content="La página que buscas no existe o cambió de lugar.">
+  <meta name="robots" content="noindex">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("jzac_theme");
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", t === "light" ? "#F6F8FC" : "#0B1120");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    })();
+  </script>
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" type="image/png" href="favicon.png" sizes="256x256">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .error-page { padding: 6rem 0 6rem; text-align: center; }
+    .error-page .code { font-size: clamp(4rem, 14vw, 8rem); font-weight: 800; letter-spacing: -0.04em; color: var(--dorado); line-height: 1; }
+    .error-page h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); font-weight: 800; margin: 1rem 0 0.6rem; }
+    .error-page p { color: var(--text-muted); max-width: 520px; margin: 0 auto 1.8rem; }
+    .error-page .btns { display: flex; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
+    .error-page .links { margin-top: 2.2rem; display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
+    .error-page .links a { color: var(--verde-bright); font-size: 0.9rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="brand">
+        <span class="logo-mark">JA</span>
+        <span class="brand-text"><b>JZAC ERP</b><small>por Jimy Alania</small></span>
+      </a>
+      <nav class="nav-links" id="nav-links" aria-label="Principal">
+        <a href="index.html#sistema">El sistema</a>
+        <a href="index.html#precio">Precio</a>
+        <a href="index.html#contacto" class="btn btn-gold btn-small">Contacto</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema claro/oscuro" title="Cambiar tema">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a6.5 6.5 0 0 0 11.5 11.5z"></path>
+          </svg>
+        </button>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="error-page">
+    <div class="container">
+      <p class="code">404</p>
+      <h1>Esta página no existe</h1>
+      <p>Puede que el enlace esté mal escrito o que la página haya cambiado. Vuelve al inicio o escríbeme por WhatsApp.</p>
+      <div class="btns">
+        <a class="btn btn-green" href="index.html">Volver al inicio</a>
+        <a class="btn btn-ghost" href="https://wa.me/51929068219?text=Hola%20Jimy%20%F0%9F%91%8B%20no%20encontr%C3%A9%20una%20p%C3%A1gina%20en%20tu%20web" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      </div>
+      <div class="links">
+        <a href="sistema-ventas-bodega.html">Guía para bodegas</a>
+        <a href="control-de-fiados.html">Control de fiados</a>
+        <a href="index.html#precio">Precio</a>
+        <a href="index.html#demo">Probar la demo</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="brand">
+          <span class="logo-mark">JA</span>
+          <span class="brand-text"><b>JZAC ERP</b><small>por Jimy Alania</small></span>
+        </a>
+      </div>
+      <div class="footer-legal">
+        <a href="sistema-ventas-bodega.html">Guía para bodegas</a>
+        <a href="control-de-fiados.html">Control de fiados</a>
+        <a href="terminos.html">Términos</a>
+        <a href="privacidad.html">Privacidad</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Jimy Alania · RUC 10766139596 · Oxapampa, Pasco, Perú</p>
+    </div>
+  </footer>
+  <script>var y=document.getElementById('year');if(y)y.textContent=new Date().getFullYear();</script>
+  <script src="tema.js"></script>
+</body>
+</html>

@@ -191,6 +191,14 @@ button { font-family: inherit; }
 .section-cta { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; margin-top: 3rem; }
 .section-cta-note { font-size: 0.84rem; color: var(--muted-2); }
 
+.guias-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; margin-top: 2.2rem; }
+.guia-card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.5rem; border: 1px solid var(--linea); border-radius: 16px; background: var(--superficie-2); transition: transform 0.2s ease, border-color 0.2s ease; }
+.guia-card:hover { transform: translateY(-3px); border-color: var(--dorado); }
+.guia-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dorado-bright); }
+.guia-card h3 { font-size: 1.08rem; line-height: 1.35; color: var(--text); }
+.guia-card p { font-size: 0.9rem; color: var(--text-muted); }
+.guia-leer { margin-top: auto; font-size: 0.88rem; font-weight: 600; color: var(--verde-bright); }
+
 .grad-text {
   background: var(--grad-text);
   -webkit-background-clip: text; background-clip: text;
@@ -1415,6 +1423,7 @@ button { font-family: inherit; }
   .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
   .section { padding: 4.6rem 0; }
+  .guias-grid { grid-template-columns: 1fr; }
   .section-lead { margin-bottom: 2.4rem; }
   .hero { padding: 2.4rem 0 4rem; }
   .hero-title { font-size: clamp(2.1rem, 9vw, 3rem); }
