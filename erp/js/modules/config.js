@@ -14,6 +14,16 @@
       ? (Date.now() - info.snapshot < 45 * 60 * 1000 ? 'hace unos minutos' : `hace ${Math.max(1, Math.round((Date.now() - info.snapshot) / 3600000))} h (${JZAC.ui.fh(info.snapshot)})`)
       : 'aún no se ha guardado';
 
+    let almacen = 'no disponible';
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        const usado = (est.usage || 0) / 1048576;
+        const persistente = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+        almacen = `${usado < 1 ? usado.toFixed(2) : usado.toFixed(1)} MB usados · ${persistente ? 'protegido' : 'sin protección persistente'}`;
+      }
+    } catch (e) { almacen = 'no disponible'; }
+
     cont.innerHTML = `
       <div class="grid grid-2">
         <div class="card">
@@ -98,7 +108,9 @@
             ${JZAC.backup.avisoHTML()}
             <div class="estado-respaldo">
               Última descarga de respaldo: <b>${ultima}</b>.<br>
-              Copia automática local: <b>${copia}</b>.
+              Copia automática local: <b>${copia}</b>.<br>
+              Almacenamiento: <b>${almacen}</b>.<br>
+              Conexión: <span class="badge" id="cf-conexion">…</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-primario" id="cf-compartir">Compartir respaldo</button>
@@ -161,7 +173,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.2<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.3<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -237,6 +249,18 @@
     document.getElementById('cf-exportar').addEventListener('click', () => JZAC.backup.exportar());
     const btnCompartir = document.getElementById('cf-compartir');
     if (btnCompartir) btnCompartir.addEventListener('click', () => JZAC.backup.compartir());
+
+    const conex = document.getElementById('cf-conexion');
+    if (conex) {
+      const pintaConex = () => {
+        const on = navigator.onLine !== false;
+        conex.textContent = on ? 'en línea' : 'sin conexión';
+        conex.className = 'badge ' + (on ? 'badge-verde' : 'badge-rojo');
+      };
+      pintaConex();
+      window.addEventListener('online', pintaConex);
+      window.addEventListener('offline', pintaConex);
+    }
 
     const btnCopia = document.getElementById('cf-copia');
     if (btnCopia) btnCopia.addEventListener('click', async () => {
