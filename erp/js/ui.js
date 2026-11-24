@@ -1,17 +1,19 @@
 // ============================================================
 // JZAC ERP - UI: vista app, navegacion y ayudantes
 // ============================================================
+const ICO = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+
 const NAV = [
-  { ruta: 'dashboard',    label: 'Inicio',        mod: 'dashboard',  ico: '🏠' },
-  { ruta: 'ventas',       label: 'Ventas',        mod: 'ventas',     ico: '🛒' },
-  { ruta: 'inventario',   label: 'Inventario',    mod: 'inventario', ico: '📦' },
-  { ruta: 'clientes',     label: 'Clientes',      mod: 'clientes',   ico: '👥' },
-  { ruta: 'fiados',       label: 'Fiados',        mod: 'fiados',     ico: '📒' },
-  { ruta: 'proveedores',  label: 'Proveedores',   mod: 'proveedores', ico: '🚚' },
-  { ruta: 'gastos',       label: 'Gastos',        mod: 'gastos',     ico: '💸' },
-  { ruta: 'caja',         label: 'Caja',          mod: 'caja',       ico: '🧾' },
-  { ruta: 'reportes',     label: 'Reportes',      mod: 'reportes',   ico: '📊' },
-  { ruta: 'config',       label: 'Configuración', mod: 'config',     ico: '⚙️' }
+  { ruta: 'dashboard',    label: 'Inicio',        mod: 'dashboard',  ico: ICO('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>') },
+  { ruta: 'ventas',       label: 'Ventas',        mod: 'ventas',     ico: ICO('<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2l2.6 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 7H6"/>') },
+  { ruta: 'inventario',   label: 'Inventario',    mod: 'inventario', ico: ICO('<path d="M21 8.5 12 3 3 8.5v7L12 21l9-5.5z"/><path d="M3 8.5 12 14l9-5.5M12 14v7"/>') },
+  { ruta: 'clientes',     label: 'Clientes',      mod: 'clientes',   ico: ICO('<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6M17.5 14.4A5.5 5.5 0 0 1 20.5 20"/>') },
+  { ruta: 'fiados',       label: 'Fiados',        mod: 'fiados',     ico: ICO('<path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M5 4v14M9 8h6M9 12h6"/>') },
+  { ruta: 'proveedores',  label: 'Proveedores',   mod: 'proveedores', ico: ICO('<path d="M3 7h10v9H3zM13 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>') },
+  { ruta: 'gastos',       label: 'Gastos',        mod: 'gastos',     ico: ICO('<path d="M4 6h16v12H4z"/><circle cx="12" cy="12" r="2.5"/><path d="M7 9v6M17 9v6"/>') },
+  { ruta: 'caja',         label: 'Caja',          mod: 'caja',       ico: ICO('<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/>') },
+  { ruta: 'reportes',     label: 'Reportes',      mod: 'reportes',   ico: ICO('<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>') },
+  { ruta: 'config',       label: 'Configuración', mod: 'config',     ico: ICO('<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>') }
 ];
 
 // Esc cierra el modal abierto (comodidad en PC/laptop)
