@@ -101,6 +101,7 @@
               Copia automática local: <b>${copia}</b>.
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primario" id="cf-compartir">Compartir respaldo</button>
               <button class="btn" id="cf-exportar">Descargar respaldo (.json)</button>
               <button class="btn" id="cf-importar">Restaurar respaldo</button>
               ${info.snapshot ? '<button class="btn" id="cf-copia">Restaurar copia automática</button>' : ''}
@@ -160,7 +161,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.0<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.1<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -234,6 +235,8 @@
     document.getElementById('cf-vendedor').addEventListener('click', () => JZAC.mostrarVendedor());
 
     document.getElementById('cf-exportar').addEventListener('click', () => JZAC.backup.exportar());
+    const btnCompartir = document.getElementById('cf-compartir');
+    if (btnCompartir) btnCompartir.addEventListener('click', () => JZAC.backup.compartir());
 
     const btnCopia = document.getElementById('cf-copia');
     if (btnCopia) btnCopia.addEventListener('click', async () => {

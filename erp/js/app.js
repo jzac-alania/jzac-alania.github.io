@@ -538,6 +538,7 @@
       return;
     }
     if (window.JZAC && JZAC.tema) { JZAC.tema.aplicar(); }
+    if (JZAC.backup && JZAC.backup.persistir) { JZAC.backup.persistir(); }
     if ('serviceWorker' in navigator) {
       try { navigator.serviceWorker.register('./sw.js'); } catch (e) { /* sin SW */ }
     }

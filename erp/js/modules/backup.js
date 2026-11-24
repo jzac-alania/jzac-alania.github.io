@@ -127,7 +127,44 @@
   function enlazar(raiz) {
     if (!raiz) return;
     raiz.querySelectorAll('[data-exportar]').forEach((b) => b.addEventListener('click', () => exportar()));
+    raiz.querySelectorAll('[data-compartir]').forEach((b) => b.addEventListener('click', () => compartir()));
   }
 
-  window.JZAC.backup = { estadoExport, marcarExport, exportar, datosExport, informacion, hacerSnapshot, restaurarSnapshot, avisoHTML, enlazar };
+  async function persistir() {
+    try {
+      if (!navigator.storage || !navigator.storage.persist) return { soportado: false, persistente: false };
+      const ya = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+      const concedido = ya || await navigator.storage.persist();
+      return { soportado: true, persistente: !!concedido };
+    } catch (e) {
+      return { soportado: false, persistente: false };
+    }
+  }
+
+  async function compartir() {
+    const data = await datosExport();
+    const nombre = 'JZAC_ERP_respaldo_' + new Date().toISOString().slice(0, 10) + '.json';
+    marcarExport();
+    try {
+      const file = new File([JSON.stringify(data, null, 2)], nombre, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Respaldo JZAC ERP', text: 'Respaldo de datos de JZAC ERP' });
+        JZAC.ui.toast('Respaldo compartido. Guárdalo en tu nube o chat.', 'bien');
+        return true;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return false;
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+    JZAC.ui.toast('Tu navegador no permite compartir; se descargó el respaldo.', 'bien');
+    return true;
+  }
+
+  window.JZAC.backup = { estadoExport, marcarExport, exportar, compartir, persistir, datosExport, informacion, hacerSnapshot, restaurarSnapshot, avisoHTML, enlazar };
 })();
