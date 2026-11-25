@@ -210,6 +210,7 @@ async function mostrarApp(usuario) {
   window.addEventListener('hashchange', cargarModulo);
   window.JZAC.tema.sincronizar();
   window.JZAC.tema.aplicar();
+  if (window.JZAC.lock) window.JZAC.lock.iniciar(usuario);
 }
 
 async function cargarModulo() {

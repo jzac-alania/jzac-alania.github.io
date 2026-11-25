@@ -1,4 +1,4 @@
-const CACHE = 'jzac-erp-v1.22.3';
+const CACHE = 'jzac-erp-v1.22.4';
 const BASE = './';
 const ASSETS = [
   './',
@@ -13,6 +13,7 @@ const ASSETS = [
   './js/license.js',
   './js/auth.js',
   './js/ui.js',
+  './js/lock.js',
   './js/fiscal.js',
   './js/scanner.js',
   './lib/jsqr.min.js',

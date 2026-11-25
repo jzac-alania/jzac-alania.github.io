@@ -203,6 +203,7 @@
             const u = await JZAC.auth.login(correo.value, pass.value);
             localStorage.setItem('jzac_ultimo_correo', correo.value.trim().toLowerCase());
             JZAC.auth.guardarSesion(u);
+            if (JZAC.lock) JZAC.lock.markAuth();
             return continuarLicencia(u);
           });
         } catch (err) { JZAC.ui.toast(err.message, 'mal'); }
@@ -267,6 +268,7 @@
             const u = await JZAC.auth.registrar(nombre.value, negocio.value, mail.value, pass.value);
             localStorage.setItem('jzac_ultimo_correo', mail.value.trim().toLowerCase());
             JZAC.auth.guardarSesion(u);
+            if (JZAC.lock) JZAC.lock.markAuth();
             vistaIniciarPrueba(u);
           });
         } catch (err) { JZAC.ui.toast(err.message, 'mal'); }

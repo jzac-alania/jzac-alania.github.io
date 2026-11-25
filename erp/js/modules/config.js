@@ -122,6 +122,12 @@
           </div>
 
           <div class="card mt16">
+            <div class="seccion-titulo" style="margin-top:0">Bloqueo por PIN</div>
+            <div class="texto-suave" id="cf-pin-estado" style="font-size:13px;margin-bottom:8px">${JZAC.lock && JZAC.lock.tienePin(u) ? `Activado · se bloquea tras ${JZAC.lock.idleMin()} min sin uso.` : 'Desactivado. Protege la app cuando dejas el equipo.'}</div>
+            <button class="btn" id="cf-pin-config">${JZAC.lock && JZAC.lock.tienePin(u) ? 'Cambiar PIN' : 'Activar bloqueo por PIN'}</button>
+          </div>
+
+          <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Caja e impresión</div>
             <div class="campo">
               <label>Ancho de la impresora térmica</label>
@@ -173,7 +179,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.3<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.4<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -249,6 +255,9 @@
     document.getElementById('cf-exportar').addEventListener('click', () => JZAC.backup.exportar());
     const btnCompartir = document.getElementById('cf-compartir');
     if (btnCompartir) btnCompartir.addEventListener('click', () => JZAC.backup.compartir());
+
+    const bpin = document.getElementById('cf-pin-config');
+    if (bpin) bpin.addEventListener('click', () => JZAC.lock.abrirAjuste(u, () => render(cont)));
 
     const conex = document.getElementById('cf-conexion');
     if (conex) {
