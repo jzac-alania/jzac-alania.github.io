@@ -140,6 +140,16 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn" id="cf-probar">Probar impresión de boleta</button>
             </div>
+            <div class="seccion-titulo" style="margin-top:16px">Impresora térmica directa (USB)</div>
+            <div class="texto-suave" style="font-size:13px;margin-bottom:10px">Imprime la boleta directo a la impresora ESC/POS por USB, sin el diálogo del navegador. Requiere Chrome o Edge.</div>
+            <label class="campo-check" style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+              <input type="checkbox" id="cf-imp-directa" style="width:18px;height:18px">
+              <span><b>Usar impresión directa por USB</b><br><small class="texto-suave" id="cf-imp-estado"></small></span>
+            </label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" id="cf-imp-conectar">Conectar impresora</button>
+              <button class="btn" id="cf-imp-probar">Imprimir prueba</button>
+            </div>
           </div>
 
           <div class="card mt16">
@@ -179,7 +189,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.4<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.5<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -329,6 +339,46 @@
       const usr = await JZAC.auth.usuarioActual();
       if (!JZAC.impresion) { JZAC.ui.toast('Carga el sistema primero.', 'mal'); return; }
       JZAC.ui.imprimirHTML(JZAC.impresion.test(usr) + '<div style="margin-top:8px"></div>', JZAC.impresion.css(JZAC.impresion.ancho()));
+    });
+
+    const impChk = document.getElementById('cf-imp-directa');
+    const impEstado = document.getElementById('cf-imp-estado');
+    const pintaImp = () => {
+      const sop = JZAC.impresora && JZAC.impresora.soporta();
+      if (impChk) impChk.disabled = !sop;
+      if (impEstado) impEstado.textContent = sop
+        ? (impChk && impChk.checked ? 'Activada: la boleta sale directo por USB.' : 'Disponible en este navegador.')
+        : 'Este navegador no soporta USB. Usa Chrome o Edge en PC.';
+    };
+    if (impChk) {
+      impChk.checked = JZAC.impresora.activa();
+      pintaImp();
+      impChk.addEventListener('change', () => {
+        if (!JZAC.impresora.soporta()) { impChk.checked = false; pintaImp(); return; }
+        JZAC.impresora.setActiva(impChk.checked);
+        pintaImp();
+        JZAC.ui.toast(impChk.checked ? 'Impresión directa activada.' : 'Impresión directa desactivada.', 'bien');
+      });
+    }
+    const impConectar = document.getElementById('cf-imp-conectar');
+    if (impConectar) impConectar.addEventListener('click', async () => {
+      try {
+        await JZAC.impresora.conectar();
+        if (impChk) { impChk.checked = true; impChk.disabled = false; }
+        JZAC.impresora.setActiva(true);
+        pintaImp();
+        JZAC.ui.toast('Impresora conectada.', 'bien');
+      } catch (e) { JZAC.ui.toast(e.message || 'No se pudo conectar la impresora.', 'mal'); }
+    });
+    const impProbar = document.getElementById('cf-imp-probar');
+    if (impProbar) impProbar.addEventListener('click', async () => {
+      if (!JZAC.impresora.soporta()) { JZAC.ui.toast('Conecta la impresora por USB en Chrome o Edge.', 'mal'); return; }
+      let ok = await JZAC.impresora.probar();
+      if (!ok) {
+        try { await JZAC.impresora.conectar(); ok = await JZAC.impresora.probar(); } catch (e) { ok = false; }
+      }
+      if (ok) { if (impChk) impChk.checked = true; JZAC.impresora.setActiva(true); pintaImp(); }
+      JZAC.ui.toast(ok ? 'Prueba enviada a la impresora.' : 'No se pudo imprimir. Revisa la conexión USB.', ok ? 'bien' : 'mal');
     });
 
     // ---------- apariencia (tema) ----------

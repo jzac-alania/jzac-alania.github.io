@@ -209,6 +209,12 @@
   }
 
   function imprimirBoleta(u, v, det) {
+    if (window.JZAC.impresora && JZAC.impresora.activa()) {
+      JZAC.impresora.imprimirBoleta(u, v, det).then((ok) => {
+        if (!ok) JZAC.ui.imprimirHTML(crearBoletaHTML(u, v, det), cssRecibo(getAnchoBoleta()));
+      });
+      return;
+    }
     JZAC.ui.imprimirHTML(crearBoletaHTML(u, v, det), cssRecibo(getAnchoBoleta()));
   }
 
@@ -242,6 +248,12 @@
   }
 
   function imprimirNota(u, n, dn) {
+    if (window.JZAC.impresora && JZAC.impresora.activa()) {
+      JZAC.impresora.imprimirNota(u, n, dn).then((ok) => {
+        if (!ok) JZAC.ui.imprimirHTML(crearNotaHTML(u, n, dn), cssRecibo(getAnchoBoleta()));
+      });
+      return;
+    }
     JZAC.ui.imprimirHTML(crearNotaHTML(u, n, dn), cssRecibo(getAnchoBoleta()));
   }
 
