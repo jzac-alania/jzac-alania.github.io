@@ -5,11 +5,27 @@
   const CHOICE_KEY = 'jzac_imp_usb';
   const ON_KEY = 'jzac_imp_directa';
   const ANCHO_KEY = 'jzac_ancho_boleta';
+  const MODO_KEY = 'jzac_imp_modo';
+  const BLE_ID_KEY = 'jzac_imp_ble_id';
   const SEP = '--------------------------------';
 
-  function soporta() { return !!(typeof navigator !== 'undefined' && navigator && navigator.usb); }
+  const BLE_SERVICES = [
+    '000018f0-0000-1000-8000-00805f9b34fb',
+    '0000ff00-0000-1000-8000-00805f9b34fb',
+    '0000ffe0-0000-1000-8000-00805f9b34fb',
+    '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+  ];
+  let bleDev = null;
+  let bleChar = null;
+
+  function soportaUSB() { return !!(typeof navigator !== 'undefined' && navigator && navigator.usb); }
+  function soportaBLE() { return !!(typeof navigator !== 'undefined' && navigator && navigator.bluetooth); }
+  function soporta() { return soportaUSB() || soportaBLE(); }
+  function modo() { try { return localStorage.getItem(MODO_KEY) === 'ble' ? 'ble' : 'usb'; } catch (e) { return 'usb'; } }
+  function setModo(m) { try { localStorage.setItem(MODO_KEY, m === 'ble' ? 'ble' : 'usb'); } catch (e) {} }
+  function soportaModo() { return modo() === 'ble' ? soportaBLE() : soportaUSB(); }
   function activa() {
-    try { return soporta() && localStorage.getItem(ON_KEY) === '1'; } catch (e) { return false; }
+    try { return soportaModo() && localStorage.getItem(ON_KEY) === '1'; } catch (e) { return false; }
   }
   function setActiva(v) { try { localStorage.setItem(ON_KEY, v ? '1' : '0'); } catch (e) {} }
   function cols() { try { return localStorage.getItem(ANCHO_KEY) === '80' ? 48 : 32; } catch (e) { return 32; } }
@@ -27,13 +43,65 @@
       (!prev.serial || (d.serialNumber || '') === prev.serial)) || null;
   }
 
-  async function conectar() {
-    if (!soporta()) throw new Error('La impresión USB requiere Chrome o Edge.');
+  async function conectarUSB() {
+    if (!soportaUSB()) throw new Error('La impresión USB requiere Chrome o Edge.');
     const d = await navigator.usb.requestDevice({ filters: [] });
     await d.open();
     await d.close();
     guardarEleccion(d);
     return d;
+  }
+
+  async function prepararBLE(device) {
+    bleDev = device;
+    if (!device.gatt) throw new Error('El dispositivo no expone GATT.');
+    const server = await device.gatt.connect();
+    let char = null;
+    let servicios = [];
+    try { servicios = await server.getPrimaryServices(); } catch (e) { servicios = []; }
+    for (const s of servicios) {
+      let chars = [];
+      try { chars = await s.getCharacteristics(); } catch (e) { continue; }
+      for (const c of chars) {
+        const p = c.properties || {};
+        if (p.writeWithoutResponse) { char = c; break; }
+        if (p.write && !char) char = c;
+      }
+      if (char && char.properties && char.properties.writeWithoutResponse) break;
+    }
+    if (!char) throw new Error('No se encontró un canal de escritura en la impresora Bluetooth.');
+    bleChar = char;
+    return char;
+  }
+
+  async function conectarBLE() {
+    if (!soportaBLE()) throw new Error('La impresión Bluetooth requiere Chrome o Edge (Android o PC).');
+    const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: BLE_SERVICES });
+    await prepararBLE(device);
+    try { localStorage.setItem(BLE_ID_KEY, device.id); } catch (e) {}
+    return device;
+  }
+
+  async function conectarBLEPrevia() {
+    if (!soportaBLE()) return null;
+    let id = null; try { id = localStorage.getItem(BLE_ID_KEY); } catch (e) {}
+    if (bleDev && bleDev.gatt && bleDev.gatt.connected) return bleDev;
+    if (bleDev && (!id || bleDev.id === id)) {
+      try { await prepararBLE(bleDev); return bleDev; } catch (e) {}
+    }
+    if (id && navigator.bluetooth.getDevices) {
+      try {
+        const lista = await navigator.bluetooth.getDevices();
+        const d = (lista || []).find((x) => x.id === id);
+        if (d) { await prepararBLE(d); return d; }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  async function conectar() {
+    if (modo() === 'ble') return conectarBLE();
+    return conectarUSB();
   }
 
   function aBytes(texto) {
@@ -154,7 +222,7 @@
     return t.bytes();
   }
 
-  async function enviar(data) {
+  async function enviarUSB(data) {
     const dev = await conectarPrevia();
     if (!dev) return false;
     await dev.open();
@@ -178,6 +246,23 @@
     }
   }
 
+  async function enviarBLE(data) {
+    const dev = await conectarBLEPrevia();
+    if (!dev || !bleChar) return false;
+    const sinResp = !!(bleChar.properties && bleChar.properties.writeWithoutResponse);
+    for (let i = 0; i < data.length; i += 20) {
+      const trozo = data.slice(i, i + 20);
+      if (sinResp && bleChar.writeValueWithoutResponse) await bleChar.writeValueWithoutResponse(trozo);
+      else await bleChar.writeValue(trozo);
+    }
+    return true;
+  }
+
+  async function enviar(data) {
+    if (modo() === 'ble') return enviarBLE(data);
+    return enviarUSB(data);
+  }
+
   async function imprimirBoleta(u, v, det) {
     try { return await enviar(lineasBoleta(u, v, det)); }
     catch (e) { console.warn('JZAC · impresion directa:', e.message || e); return false; }
@@ -198,12 +283,12 @@
       t.line(new Date().toLocaleString('es-PE'));
       t.line(SEP);
       t.line('Si lees esto, la impresion');
-      t.line('directa por USB funciona.');
+      t.line('directa funciona.');
       t.feed(3); t.cut();
       return await enviar(t.bytes());
     } catch (e) { console.warn('JZAC · prueba impresora:', e.message || e); return false; }
   }
 
   window.JZAC = window.JZAC || {};
-  window.JZAC.impresora = { soporta, activa, setActiva, conectar, probar, imprimirBoleta, imprimirNota };
+  window.JZAC.impresora = { soporta, soportaUSB, soportaBLE, soportaModo, modo, setModo, activa, setActiva, conectar, probar, imprimirBoleta, imprimirNota };
 })();
