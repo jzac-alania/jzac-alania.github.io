@@ -119,6 +119,7 @@
     cont.querySelectorAll('[data-editar]').forEach((b) => b.addEventListener('click', () => modalEditarFiado(
       fiados.find((x) => x.id === Number(b.dataset.editar)), clientes, productos, () => render(cont))));
     cont.querySelectorAll('[data-borrar]').forEach((b) => b.addEventListener('click', async () => {
+      if (!JZAC.auth.esDuenoActual()) { JZAC.ui.toast('Solo el dueño puede eliminar.', 'mal'); return; }
       const f = fiados.find((x) => x.id === Number(b.dataset.borrar));
       if (!(await JZAC.ui.confirmar(`¿Eliminar el fiado de <b>${JZAC.ui.esc(f.cliente)}</b>?<br>Se borrará su historial y sus pagos.`))) return;
       await JZAC.db.ready;

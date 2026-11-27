@@ -99,6 +99,7 @@
       modalProducto(p, () => pintaProductos(cont));
     }));
     cont.querySelectorAll('[data-borrar]').forEach((b) => b.addEventListener('click', async () => {
+      if (!JZAC.auth.esDuenoActual()) { JZAC.ui.toast('Solo el dueño puede eliminar.', 'mal'); return; }
       const p = productos.find((x) => x.id === Number(b.dataset.borrar));
       if (await JZAC.ui.confirmar(`¿Eliminar el producto <b>${p.nombre}</b>?`)) {
         await JZAC.db.borrar('productos', p.id);

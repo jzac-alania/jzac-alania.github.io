@@ -4,16 +4,16 @@
 const ICO = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 
 const NAV = [
-  { ruta: 'dashboard',    label: 'Inicio',        mod: 'dashboard',  ico: ICO('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>') },
+  { ruta: 'dashboard',    label: 'Inicio',        mod: 'dashboard',  soloDueno: true, ico: ICO('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>') },
   { ruta: 'ventas',       label: 'Ventas',        mod: 'ventas',     ico: ICO('<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2l2.6 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 7H6"/>') },
   { ruta: 'inventario',   label: 'Inventario',    mod: 'inventario', ico: ICO('<path d="M21 8.5 12 3 3 8.5v7L12 21l9-5.5z"/><path d="M3 8.5 12 14l9-5.5M12 14v7"/>') },
   { ruta: 'clientes',     label: 'Clientes',      mod: 'clientes',   ico: ICO('<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6M17.5 14.4A5.5 5.5 0 0 1 20.5 20"/>') },
   { ruta: 'fiados',       label: 'Fiados',        mod: 'fiados',     ico: ICO('<path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M5 4v14M9 8h6M9 12h6"/>') },
-  { ruta: 'proveedores',  label: 'Proveedores',   mod: 'proveedores', ico: ICO('<path d="M3 7h10v9H3zM13 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>') },
-  { ruta: 'gastos',       label: 'Gastos',        mod: 'gastos',     ico: ICO('<path d="M4 6h16v12H4z"/><circle cx="12" cy="12" r="2.5"/><path d="M7 9v6M17 9v6"/>') },
+  { ruta: 'proveedores',  label: 'Proveedores',   mod: 'proveedores', soloDueno: true, ico: ICO('<path d="M3 7h10v9H3zM13 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>') },
+  { ruta: 'gastos',       label: 'Gastos',        mod: 'gastos',     soloDueno: true, ico: ICO('<path d="M4 6h16v12H4z"/><circle cx="12" cy="12" r="2.5"/><path d="M7 9v6M17 9v6"/>') },
   { ruta: 'caja',         label: 'Caja',          mod: 'caja',       ico: ICO('<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/>') },
-  { ruta: 'reportes',     label: 'Reportes',      mod: 'reportes',   ico: ICO('<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>') },
-  { ruta: 'config',       label: 'Configuración', mod: 'config',     ico: ICO('<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>') }
+  { ruta: 'reportes',     label: 'Reportes',      mod: 'reportes',   soloDueno: true, ico: ICO('<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>') },
+  { ruta: 'config',       label: 'Configuración', mod: 'config',     soloDueno: true, ico: ICO('<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>') }
 ];
 
 // Esc cierra el modal abierto (comodidad en PC/laptop)
@@ -155,14 +155,19 @@ function ir(ruta) {
 // ---------- shell ----------
 async function mostrarApp(usuario) {
   const app = document.getElementById('app');
+  const negocio = await JZAC.auth.cuenta(usuario);
+  const dueno = JZAC.auth.esDueno(usuario);
+  window.JZAC._esDueno = dueno;
+  const items = NAV.filter((it) => dueno || !it.soloDueno);
+  const badge = usuario.rol === 'cajero' ? ' · Cajero' : '';
   app.innerHTML = `
     <div class="app">
       <nav class="nav" id="nav">
         <div class="nav-brand">
           <img src="./icons/icono.svg" alt="JZAC">
-          <div>JZAC ERP<small>${ui.esc(usuario.nombreNegocio)}</small></div>
+          <div>JZAC ERP<small>${ui.esc(negocio.nombreNegocio)}</small></div>
         </div>
-        ${NAV.map((it) => `<a href="#/${it.ruta}" data-ruta="${it.ruta}"><span class="ico">${it.ico}</span>${ui.esc(it.label)}</a>`).join('')}
+        ${items.map((it) => `<a href="#/${it.ruta}" data-ruta="${it.ruta}"><span class="ico">${it.ico}</span>${ui.esc(it.label)}</a>`).join('')}
         <a href="#" data-salir style="margin-top:14px;color:#F87171;">Cerrar sesión</a>
       </nav>
       <div id="nav-scrim"></div>
@@ -172,14 +177,14 @@ async function mostrarApp(usuario) {
           <h2 id="titulo-mod">Inicio</h2>
           <div class="topbar-fecha">${ui.fe(Date.now())}</div>
           <button class="btn btn-sm btn-suave" id="btn-tema" title="Cambiar entre tema claro y oscuro">Oscuro</button>
-          <div class="topbar-user"><b>${ui.esc(usuario.nombre)}</b></div>
+          <div class="topbar-user"><b>${ui.esc(usuario.nombre)}</b>${badge}</div>
         </div>
         <div id="trial-banner" style="display:none"></div>
         <div class="contenido" id="contenido"></div>
       </div>
     </div>`;
 
-  const est = JZAC.lic.estado(usuario);
+  const est = JZAC.lic.estado(negocio);
   if (est.tipo === 'prueba') {
     const b = document.getElementById('trial-banner');
     b.style.display = 'block';
@@ -217,6 +222,7 @@ async function cargarModulo() {
   const ruta = rutaActual();
   const nav = NAV.find((x) => x.ruta === ruta);
   if (!nav) { location.hash = '#/dashboard'; return; }
+  if (nav.soloDueno && !window.JZAC._esDueno) { location.hash = '#/ventas'; return; }
   document.querySelectorAll('.nav a[data-ruta]').forEach((a) => {
     a.classList.toggle('active', a.dataset.ruta === ruta);
   });

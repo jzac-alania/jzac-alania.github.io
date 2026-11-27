@@ -47,6 +47,7 @@
       modalCliente(c, () => render(cont));
     }));
     cont.querySelectorAll('[data-borrar]').forEach((b) => b.addEventListener('click', async () => {
+      if (!JZAC.auth.esDuenoActual()) { JZAC.ui.toast('Solo el dueño puede eliminar.', 'mal'); return; }
       const c = clientes.find((x) => x.id === Number(b.dataset.borrar));
       if (await JZAC.ui.confirmar(`¿Eliminar el cliente <b>${c.nombre}</b>?`)) {
         await JZAC.db.borrar('clientes', c.id);

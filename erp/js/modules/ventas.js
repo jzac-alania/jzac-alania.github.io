@@ -18,7 +18,7 @@
       const ps = t.objectStore('productos');
       let resultado = null;
       let fallo = null;
-      const getU = us.get(u.id);
+      const getU = us.get((u.rol === 'cajero' && u.duenoId) ? u.duenoId : u.id);
       getU.onsuccess = () => {
         const user = getU.result || u;
         const numero = Number(user[esFactura ? 'correlativoFactura' : 'correlativoBoleta'] || 1000);
@@ -315,7 +315,7 @@
           });
         };
       };
-      const getU = us.get(u.id);
+      const getU = us.get((u.rol === 'cajero' && u.duenoId) ? u.duenoId : u.id);
       getU.onsuccess = () => { user = getU.result || u; listo(); };
       getU.onerror = () => reject(getU.error);
       const gp = ps.getAll();
@@ -576,6 +576,7 @@
         modalSunat(v, () => vistaLista(cont, u));
       }));
       cont.querySelectorAll('[data-anular]').forEach((b) => b.addEventListener('click', async () => {
+        if (!JZAC.auth.esDuenoActual()) { JZAC.ui.toast('Solo el dueño puede anular ventas.', 'mal'); return; }
         const v = ventas.find((x) => x.id === Number(b.dataset.anular));
         if (await JZAC.ui.confirmar(`¿Anular la boleta <b>${v.boleta}</b> por ${JZAC.ui.dinero(v.total)}? Se repondrá el stock.`)) {
           try {

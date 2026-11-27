@@ -68,6 +68,7 @@ async function registrar(nombre, nombreNegocio, correo, pass) {
     correo: correo.trim().toLowerCase(),
     passwordHash: hash,
     passwordSalt: salt,
+    rol: 'dueno',
     serieBoleta: 'B001',
     correlativoBoleta: 1000,
     serieNota: 'NC001',
@@ -87,7 +88,8 @@ async function login(correo, pass) {
 }
 
 function guardarSesion(usuario) {
-  localStorage.setItem(SESION_KEY, JSON.stringify({ usuarioId: usuario.id }));
+  const rol = (usuario && usuario.rol) || 'dueno';
+  localStorage.setItem(SESION_KEY, JSON.stringify({ usuarioId: usuario.id, rol }));
 }
 
 function borrarSesion() {
@@ -102,5 +104,72 @@ async function usuarioActual() {
   } catch (e) { return null; }
 }
 
+// Cuenta del negocio: si el usuario es cajero, devuelve la del dueño.
+async function cuenta(u) {
+  if (!u) return null;
+  if ((u.rol || 'dueno') === 'cajero' && u.duenoId) {
+    const d = await JZAC.db.obtener('usuarios', u.duenoId);
+    if (d) return d;
+  }
+  return u;
+}
+
+function esDueno(u) { return !u || (u.rol || 'dueno') !== 'cajero'; }
+
+function esDuenoActual() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESION_KEY) || 'null');
+    return !s || (s.rol || 'dueno') !== 'cajero';
+  } catch (e) { return true; }
+}
+
+async function listarUsuarios() {
+  const us = await JZAC.db.listar('usuarios');
+  return us.map((u) => ({ id: u.id, nombre: u.nombre, correo: u.correo, rol: u.rol || 'dueno', creado: u.creado || 0 }))
+    .sort((a, b) => (a.rol === b.rol ? a.creado - b.creado : a.rol === 'dueno' ? -1 : 1));
+}
+
+async function crearUsuario(dueno, nombre, correo, pass, rol) {
+  if (!nombre || !correo || !pass) throw new Error('Completa todos los campos.');
+  if (pass.length < 4) throw new Error('La contraseña debe tener al menos 4 caracteres.');
+  if (await usuarioPorCorreo(correo)) throw new Error('Ese correo ya está registrado.');
+  const { hash, salt } = await hashPassword(correo, pass);
+  const usuario = {
+    nombre: nombre.trim(),
+    nombreNegocio: (dueno && dueno.nombreNegocio) || 'Mi Bodega',
+    correo: correo.trim().toLowerCase(),
+    passwordHash: hash,
+    passwordSalt: salt,
+    rol: rol === 'dueno' ? 'dueno' : 'cajero',
+    duenoId: dueno ? dueno.id : null,
+    ruc: dueno ? (dueno.ruc || '') : '',
+    razonSocial: dueno ? (dueno.razonSocial || '') : '',
+    serieBoleta: dueno ? (dueno.serieBoleta || 'B001') : 'B001',
+    serieFactura: dueno ? (dueno.serieFactura || 'F001') : 'F001',
+    serieNota: dueno ? (dueno.serieNota || 'NC001') : 'NC001',
+    creado: Date.now()
+  };
+  const id = await JZAC.db.guardar('usuarios', usuario);
+  usuario.id = id;
+  return usuario;
+}
+
+async function cambiarRol(id, rol) {
+  const u = await JZAC.db.obtener('usuarios', id);
+  if (!u) throw new Error('Usuario no encontrado.');
+  u.rol = rol === 'dueno' ? 'dueno' : 'cajero';
+  if (u.rol === 'dueno') delete u.duenoId;
+  await JZAC.db.guardar('usuarios', u);
+  return u;
+}
+
+async function eliminarUsuario(id) {
+  const u = await JZAC.db.obtener('usuarios', id);
+  if (!u) return;
+  if ((u.rol || 'dueno') === 'dueno') throw new Error('No se puede eliminar al dueño.');
+  await JZAC.db.borrar('usuarios', id);
+}
+
 window.JZAC = window.JZAC || {};
-window.JZAC.auth = { registrar, login, guardarSesion, borrarSesion, usuarioActual, hashPassword };
+window.JZAC.auth = { registrar, login, guardarSesion, borrarSesion, usuarioActual, hashPassword,
+  cuenta, esDueno, esDuenoActual, listarUsuarios, crearUsuario, cambiarRol, eliminarUsuario };

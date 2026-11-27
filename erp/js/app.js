@@ -389,10 +389,11 @@
   function vigilarLicencia(u) {
     _licUser = u;
     if (_timerLic) clearInterval(_timerLic);
-    const revisar = () => {
+    const revisar = async () => {
       const actual = _licUser;
       if (!actual) return;
-      JZAC.lic.sincronizar(actual).then((est) => aplicarLicencia(actual, est)).catch(() => {});
+      const negocio = await JZAC.auth.cuenta(actual);
+      JZAC.lic.sincronizar(negocio).then((est) => aplicarLicencia(actual, est)).catch(() => {});
     };
     _timerLic = setInterval(revisar, 6 * 3600000);
     if (_timerSnap) clearInterval(_timerSnap);
@@ -404,16 +405,17 @@
   }
 
   async function continuarLicencia(u) {
-    await JZAC.lic.inicializar(u);
+    const negocio = await JZAC.auth.cuenta(u);
+    await JZAC.lic.inicializar(negocio);
     JZAC.backup.hacerSnapshot();
     const splash = document.getElementById('splash');
     if (splash) splash.classList.add('hidden');
-    const est = JZAC.lic.estado(u);
-    JZAC.lic.sincronizar(u).then((e) => aplicarLicencia(u, e)).catch(() => {});
+    const est = JZAC.lic.estado(negocio);
+    JZAC.lic.sincronizar(negocio).then((e) => aplicarLicencia(u, e)).catch(() => {});
     if (est.tipo === 'activada') { JZAC.mostrarApp(u); vigilarLicencia(u); return; }
     if (est.tipo === 'prueba' && est.inicio) { JZAC.mostrarApp(u); vigilarLicencia(u); return; }
-    if (est.tipo === 'vencida' || est.tipo === 'bloqueada') { vistaBloqueada(u, est); return; }
-    vistaIniciarPrueba(u);
+    if (est.tipo === 'vencida' || est.tipo === 'bloqueada') { vistaBloqueada(negocio, est); return; }
+    vistaIniciarPrueba(negocio);
   }
 
   // ---------- modal activacion ----------
@@ -503,18 +505,19 @@
   window.JZAC.mostrarEstadoLicencia = async function () {
     const u = await JZAC.auth.usuarioActual();
     if (!u) return;
-    const est = JZAC.lic.estado(u);
+    const negocio = await JZAC.auth.cuenta(u);
+    const est = JZAC.lic.estado(negocio);
     if (est.tipo === 'activada') {
       JZAC.ui.toast('Tu licencia está activa.', 'bien');
       return;
     }
     if (est.tipo === 'prueba' && est.inicio) {
       JZAC.ui.toast(`Prueba activa: quedan ${est.diasRestantes} día(s).`, 'bien');
-      modalActivacion(u, false);
+      modalActivacion(negocio, false);
       return;
     }
-    if (est.tipo === 'vencida' || est.tipo === 'bloqueada') { vistaBloqueada(u, est); return; }
-    vistaIniciarPrueba(u);
+    if (est.tipo === 'vencida' || est.tipo === 'bloqueada') { vistaBloqueada(negocio, est); return; }
+    vistaIniciarPrueba(negocio);
   };
 
   window.JZAC.mostrarVendedor = mostrarVendedor;

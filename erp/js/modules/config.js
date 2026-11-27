@@ -6,6 +6,20 @@
 
   async function render(cont) {
     const u = await JZAC.auth.usuarioActual();
+    if (!JZAC.auth.esDueno(u)) {
+      cont.innerHTML = '<div class="card"><div class="seccion-titulo" style="margin-top:0">Solo el dueño</div><div class="texto-suave">Esta sección es solo para el dueño del negocio.</div></div>';
+      return;
+    }
+    const usuarios = await JZAC.auth.listarUsuarios();
+    const filasUsuarios = usuarios.map((x) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--borde);padding:8px 0">
+        <div style="min-width:0"><b>${JZAC.ui.esc(x.nombre)}</b><br><small class="texto-suave">${JZAC.ui.esc(x.correo)}</small></div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+          <span class="badge">${x.rol === 'dueno' ? 'Dueño' : 'Cajero'}</span>
+          ${x.id !== u.id ? `<button class="btn btn-sm" data-rol="${x.id}" data-nuevo="${x.rol === 'dueno' ? 'cajero' : 'dueno'}">${x.rol === 'dueno' ? 'Hacer cajero' : 'Hacer dueño'}</button>` : ''}
+          ${x.rol !== 'dueno' && x.id !== u.id ? `<button class="btn btn-sm btn-peligro" data-del="${x.id}">Eliminar</button>` : ''}
+        </div>
+      </div>`).join('');
     const lic = JZAC.lic.estado(u);
     const diaLic = Math.max(1, Math.min(JZAC.lic.DIAS_PRUEBA, JZAC.lic.DIAS_PRUEBA - (lic.diasRestantes || 0) + 1));
     const info = await JZAC.backup.informacion();
@@ -184,6 +198,19 @@
           </div>
 
           <div class="card mt16">
+            <div class="seccion-titulo" style="margin-top:0">Usuarios y roles</div>
+            <div class="texto-suave" style="font-size:13px;margin-bottom:12px">El <b>cajero</b> solo ve Ventas, Inventario, Clientes, Fiados y Caja. El <b>dueño</b> ve todo: utilidades, reportes, configuración y borrados.</div>
+            <div id="cf-usuarios">${filasUsuarios || '<div class="texto-suave">No hay usuarios.</div>'}</div>
+            <div class="seccion-titulo" style="margin-top:16px">Agregar cajero</div>
+            <div class="fila">
+              <div class="campo"><label>Nombre</label><input id="cf-u-nombre" placeholder="Nombre del cajero" autocomplete="off"></div>
+              <div class="campo"><label>Correo</label><input type="email" id="cf-u-correo" placeholder="cajero@correo.com" autocomplete="off"></div>
+            </div>
+            <div class="campo"><label>Contraseña</label><input type="password" id="cf-u-pass" placeholder="Mínimo 4 caracteres" autocomplete="new-password"></div>
+            <button class="btn btn-primario" id="cf-u-agregar">Agregar cajero</button>
+          </div>
+
+          <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Cajón registrador (USB)</div>
             <div class="texto-suave" style="font-size:13px;margin-bottom:12px">Se abre automáticamente al cobrar en efectivo (pulso USB a la impresora térmica). Requiere Chrome o Edge.</div>
             <div class="texto-suave" style="font-size:13px;margin-bottom:12px" id="cf-cajon-estado">Esperando dispositivo...</div>
@@ -196,7 +223,7 @@
           <div class="card mt16">
             <div class="seccion-titulo" style="margin-top:0">Acerca de</div>
             <div style="font-size:14px;line-height:1.7;color:var(--texto-suave)">
-              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.6<br>
+              <b style="color:var(--texto)">JZAC ERP</b> · versión web 1.22.7<br>
               Ventas, inventario, fiados y reportes para tu negocio.<br>
               JZAC · Software que trabaja por tu negocio.
             </div>
@@ -268,6 +295,30 @@
 
     document.getElementById('cf-licencia').addEventListener('click', () => JZAC.mostrarEstadoLicencia());
     document.getElementById('cf-vendedor').addEventListener('click', () => JZAC.mostrarVendedor());
+
+    document.getElementById('cf-u-agregar').addEventListener('click', async () => {
+      const nombre = document.getElementById('cf-u-nombre').value.trim();
+      const correo = document.getElementById('cf-u-correo').value.trim();
+      const pass = document.getElementById('cf-u-pass').value;
+      if (!nombre || !correo || !pass) { JZAC.ui.toast('Completa nombre, correo y contraseña.', 'mal'); return; }
+      try {
+        await JZAC.auth.crearUsuario(u, nombre, correo, pass, 'cajero');
+        JZAC.ui.toast('Cajero agregado.', 'bien');
+        render(cont);
+      } catch (e) { JZAC.ui.toast(e.message || 'No se pudo agregar el cajero.', 'mal'); }
+    });
+    cont.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
+      if (!await JZAC.ui.confirmar('¿Eliminar este usuario? Ya no podrá iniciar sesión en este equipo.', 'Eliminar usuario')) return;
+      try { await JZAC.auth.eliminarUsuario(Number(b.dataset.del)); JZAC.ui.toast('Usuario eliminado.', 'bien'); render(cont); }
+      catch (e) { JZAC.ui.toast(e.message || 'No se pudo eliminar.', 'mal'); }
+    }));
+    cont.querySelectorAll('[data-rol]').forEach((b) => b.addEventListener('click', async () => {
+      const nuevo = b.dataset.nuevo;
+      const etiqueta = nuevo === 'dueno' ? 'dueño' : 'cajero';
+      if (!await JZAC.ui.confirmar(`¿Cambiar el rol de este usuario a ${etiqueta}?`, 'Cambiar rol')) return;
+      try { await JZAC.auth.cambiarRol(Number(b.dataset.rol), nuevo); JZAC.ui.toast('Rol actualizado.', 'bien'); render(cont); }
+      catch (e) { JZAC.ui.toast(e.message || 'No se pudo cambiar el rol.', 'mal'); }
+    }));
 
     document.getElementById('cf-exportar').addEventListener('click', () => JZAC.backup.exportar());
     const btnCompartir = document.getElementById('cf-compartir');

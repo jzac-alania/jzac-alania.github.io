@@ -326,6 +326,7 @@ Diferencia: ${JZAC.ui.dinero(c.diferencia)}`;
       if (c) imprimirRegistro(c);
     }));
     caja.querySelectorAll('[data-borrar]').forEach((b) => b.addEventListener('click', async () => {
+      if (!JZAC.auth.esDuenoActual()) { JZAC.ui.toast('Solo el dueño puede eliminar.', 'mal'); return; }
       const c = leer().find((x) => String(x.id) === b.dataset.borrar);
       if (!c) return;
       if (!await JZAC.ui.confirmar(`¿Eliminar el corte del <b>${JZAC.ui.fh(c.fechaCorte)}</b>?`, 'Eliminar corte')) return;
